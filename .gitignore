@@ -1,0 +1,6 @@
+roms
+*.o
+*.exe
+*.res
+*.bin
+*.dmp
