@@ -366,6 +366,7 @@ enum
         GFX_PHOENIX_TRIO32, /*S3 732/Trio32 (Phoenix)*/
         GFX_PHOENIX_TRIO64, /*S3 764/Trio64 (Phoenix)*/
         GFX_RIVATNT,
+        GFX_INCOLOR,
         
         GFX_MAX
 };

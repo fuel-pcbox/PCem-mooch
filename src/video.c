@@ -21,6 +21,7 @@
 #include "vid_et4000.h"
 #include "vid_et4000w32.h"
 #include "vid_hercules.h"
+#include "vid_incolor.h"
 #include "vid_mda.h"
 #include "vid_nv_rivatnt.h"
 #include "vid_olivetti_m24.h"
@@ -60,6 +61,7 @@ static VIDEO_CARD video_cards[] =
         {"Compaq EGA",				   &cpqega_device,           	GFX_COMPAQ_EGA},
         {"Compaq/Paradise VGA",			   &cpqvga_device,           	GFX_COMPAQ_VGA},
         {"Hercules",                               &hercules_device,            GFX_HERCULES},
+	{"Hercules InColor",                       &incolor_device,             GFX_INCOLOR},
         {"MDA",                                    &mda_device,                 GFX_MDA},
 	{"nVidia RIVA TNT",                        &rivatnt_device,             GFX_RIVATNT},
         {"Number Nine 9FX (S3 Trio64)",            &s3_9fx_device,              GFX_N9_9FX},
