@@ -967,6 +967,9 @@ typedef struct voodoo_state_t
         int x, x2;
         
         uint32_t w_depth;
+        
+        float log_temp;
+        uint32_t ebp_store;
 } voodoo_state_t;
 
 static int voodoo_output = 0;
@@ -1704,11 +1707,7 @@ static inline void voodoo_get_texture(voodoo_t *voodoo, voodoo_params_t *params,
 #define dither2x2 (params->fbzMode & FBZ_DITHER_2x2)
 
 #if (defined i386 || defined __i386 || defined __i386__ || defined _X86_ || defined WIN32 || defined _WIN32 || defined _WIN32) && !(defined __amd64__)
-#ifndef NO_CODEGEN
 #include "vid_voodoo_codegen_x86.h"
-#else
-static int voodoo_recomp = 0;
-#endif
 #else
 #define NO_CODEGEN
 static int voodoo_recomp = 0;
@@ -4182,8 +4181,6 @@ static void voodoo_filterline(voodoo_t *voodoo, uint16_t *fil, int column, uint1
 void voodoo_callback(void *p)
 {
         voodoo_t *voodoo = (voodoo_t *)p;
-		int y_add = enable_overscan ? 16 : 0;
-		int x_add = enable_overscan ? 8 : 0;
 
         if (voodoo->fbiInit0 & FBIINIT0_VGA_PASS)
         {
@@ -4191,7 +4188,7 @@ void voodoo_callback(void *p)
                 {
                         if (voodoo->dirty_line[voodoo->line])
                         {
-                                uint32_t *p = &((uint32_t *)buffer32->line[voodoo->line + y_add])[32 + x_add];
+                                uint32_t *p = &((uint32_t *)buffer32->line[voodoo->line])[32];
                                 uint16_t *src = (uint16_t *)&voodoo->fb_mem[voodoo->front_offset + voodoo->line*voodoo->row_width];
                                 int x;
 

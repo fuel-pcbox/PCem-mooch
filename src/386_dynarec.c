@@ -233,6 +233,7 @@ void x86_int_sw(int num)
 //        pclog("x86_int_sw %02x %04x:%04x\n", num, CS,pc);
 //        pclog("x86_int\n");
         flags_rebuild();
+        cycles -= timing_int;
         if (msw&1)
         {
                 pmodeint(num,1);
@@ -260,8 +261,8 @@ void x86_int_sw(int num)
                 oxpc=pc;
                 pc=readmemw(0,addr);
                 loadcs(readmemw(0,addr+2));
+                cycles -= timing_int_rm;
         }
-        cycles-=70;
         trap = 0;
         CPU_BLOCK_END();
 }
@@ -1361,6 +1362,7 @@ inrecomp=0;
                         cpu_new_blocks++;
                         
                         codegen_block_init(phys_addr);
+                        codegen_in_recompile = 1;
 
 //                        if (output) pclog("Recompile block at %04x:%04x  %04x %04x %04x %04x  %04x %04x  ESP=%04x %04x  %02x%02x:%02x%02x %02x%02x:%02x%02x %02x%02x:%02x%02x\n", CS, pc, AX, BX, CX, DX, SI, DI, ESP, BP, ram[0x116330+0x6df4+0xa+3], ram[0x116330+0x6df4+0xa+2], ram[0x116330+0x6df4+0xa+1], ram[0x116330+0x6df4+0xa+0], ram[0x11d136+3],ram[0x11d136+2],ram[0x11d136+1],ram[0x11d136+0], ram[(0x119abe)+0x3],ram[(0x119abe)+0x2],ram[(0x119abe)+0x1],ram[(0x119abe)+0x0]);
                         while (!cpu_block_end)
@@ -1426,6 +1428,8 @@ inrecomp=0;
                         
                         if (x86_was_reset)
                                 codegen_reset();
+
+                        codegen_in_recompile = 0;
 //                        output &= ~2;
                 }
 //                        if (output && (SP & 1))

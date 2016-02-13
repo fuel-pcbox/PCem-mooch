@@ -76,6 +76,11 @@ int timing_mr, timing_mrl;
 int timing_rm, timing_rml;
 int timing_mm, timing_mml;
 int timing_bt, timing_bnt;
+int timing_int, timing_int_rm, timing_int_v86, timing_int_pm, timing_int_pm_outer;
+int timing_iret_rm, timing_iret_v86, timing_iret_pm, timing_iret_pm_outer;
+int timing_call_rm, timing_call_pm, timing_call_pm_gate, timing_call_pm_gate_inner;
+int timing_retf_rm, timing_retf_pm, timing_retf_pm_outer;
+int timing_jmp_rm, timing_jmp_pm, timing_jmp_pm_gate;
 
 static struct
 {
@@ -258,8 +263,6 @@ CPU cpus_Am486[] =
         {"Am486DX4/120", CPU_Am486DX, 11, 120000000, 3, 20000000, 0x482, 0x482, 0, CPU_SUPPORTS_DYNAREC},
         {"Am5x86/P75",   CPU_Am486DX, 12, 133333333, 4, 33333333, 0x4e0, 0x4e0, 0, CPU_SUPPORTS_DYNAREC},
         {"Am5x86/P75+",  CPU_Am486DX, 13, 160000000, 4, 20000000, 0x4e0, 0x4e0, 0, CPU_SUPPORTS_DYNAREC},
-        {"Am5x86/P75 160 OC",   CPU_Am486DX, 18, 160000000, 5, 33333333, 0x4e0, 0x4e0, 0, CPU_SUPPORTS_DYNAREC},
-        {"Am5x86/P75+ 160 OC",  CPU_Am486DX, 18, 160000000, 4, 20000000, 0x4e0, 0x4e0, 0, CPU_SUPPORTS_DYNAREC},
         {"",             -1,        0, 0, 0}
 };
 
@@ -302,10 +305,8 @@ CPU cpus_WinChip[] =
 CPU cpus_Pentium5V[] =
 {
         /*Intel Pentium (5V, socket 4)*/
-        {"Pentium 50 (Q0399)",CPU_PENTIUM,    5,  50000000, 1, 25000000, 0x513, 0x513, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
         {"Pentium 60",       CPU_PENTIUM,     6,  60000000, 1, 30000000, 0x52c, 0x52c, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
         {"Pentium 66",       CPU_PENTIUM,     6,  66666666, 1, 33333333, 0x52c, 0x52c, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
-        {"Pentium OverDrive 100",CPU_PENTIUM,    13, 100000000, 2, 25000000, 0x51A, 0x51A, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
         {"Pentium OverDrive 120",CPU_PENTIUM,    14, 120000000, 2, 30000000, 0x51A, 0x51A, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
         {"Pentium OverDrive 133",CPU_PENTIUM,    16, 133333333, 2, 33333333, 0x51A, 0x51A, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
         {"",             -1,        0, 0, 0}
@@ -319,11 +320,10 @@ CPU cpus_PentiumS5[] =
         {"Pentium 100/50",   CPU_PENTIUM,    13, 100000000, 2, 25000000, 0x525, 0x525, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
         {"Pentium 100/66",   CPU_PENTIUM,    13, 100000000, 2, 33333333, 0x525, 0x525, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
         {"Pentium 120",      CPU_PENTIUM,    14, 120000000, 2, 30000000, 0x526, 0x526, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
-        {"Pentium OverDrive 125",CPU_PENTIUM,15, 120000000, 3, 25000000, 0x52c, 0x52c, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
+        {"Pentium OverDrive 125",CPU_PENTIUM,15, 125000000, 3, 25000000, 0x52c, 0x52c, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
         {"Pentium OverDrive 150",CPU_PENTIUM,17, 150000000, 3, 30000000, 0x52c, 0x52c, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
         {"Pentium OverDrive 166",CPU_PENTIUM,17, 166666666, 3, 33333333, 0x52c, 0x52c, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
         {"Pentium OverDrive MMX 125",       CPU_PENTIUMMMX,15,125000000, 3, 25000000, 0x1542, 0x1542, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
-        {"Pentium OverDrive MMX 150/50",    CPU_PENTIUMMMX,17,150000000, 3, 25000000, 0x1542, 0x1542, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
         {"Pentium OverDrive MMX 150/60",    CPU_PENTIUMMMX,17,150000000, 3, 30000000, 0x1542, 0x1542, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
         {"Pentium OverDrive MMX 166",       CPU_PENTIUMMMX,19,166000000, 3, 33333333, 0x1542, 0x1542, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
         {"Pentium OverDrive MMX 180",       CPU_PENTIUMMMX,20,180000000, 3, 30000000, 0x1542, 0x1542, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
@@ -343,15 +343,6 @@ CPU cpus_Pentium[] =
         {"Pentium 150",      CPU_PENTIUM,    17, 150000000, 3, 30000000, 0x52c, 0x52c, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
         {"Pentium 166",      CPU_PENTIUM,    19, 166666666, 3, 33333333, 0x52c, 0x52c, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
         {"Pentium 200",      CPU_PENTIUM,    21, 200000000, 3, 33333333, 0x52c, 0x52c, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
-        {"Pentium OverDrive 125",CPU_PENTIUM,15, 120000000, 3, 25000000, 0x52c, 0x52c, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
-        {"Pentium OverDrive 150",CPU_PENTIUM,17, 150000000, 3, 30000000, 0x52c, 0x52c, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
-        {"Pentium OverDrive 166",CPU_PENTIUM,17, 166666666, 3, 33333333, 0x52c, 0x52c, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
-        {"Pentium OverDrive MMX 125",       CPU_PENTIUMMMX,15,125000000, 3, 25000000, 0x1542, 0x1542, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
-        {"Pentium OverDrive MMX 150/50",    CPU_PENTIUMMMX,17,150000000, 3, 25000000, 0x1542, 0x1542, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
-        {"Pentium OverDrive MMX 150/60",    CPU_PENTIUMMMX,17,150000000, 3, 30000000, 0x1542, 0x1542, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
-        {"Pentium OverDrive MMX 166",       CPU_PENTIUMMMX,19,166000000, 3, 33333333, 0x1542, 0x1542, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
-        {"Pentium OverDrive MMX 180",       CPU_PENTIUMMMX,20,180000000, 3, 30000000, 0x1542, 0x1542, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
-        {"Pentium OverDrive MMX 200",       CPU_PENTIUMMMX,21,200000000, 3, 33333333, 0x1542, 0x1542, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
         {"Pentium MMX 166",  CPU_PENTIUMMMX, 19, 166666666, 3, 33333333, 0x543, 0x543, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
         {"Pentium MMX 200",  CPU_PENTIUMMMX, 21, 200000000, 3, 33333333, 0x543, 0x543, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
         {"Pentium MMX 233",  CPU_PENTIUMMMX, 24, 233333333, 4, 33333333, 0x543, 0x543, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
@@ -363,6 +354,14 @@ CPU cpus_Pentium[] =
         {"Mobile Pentium MMX 233",  CPU_PENTIUMMMX, 24, 233333333, 4, 33333333, 0x581, 0x581, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
         {"Mobile Pentium MMX 266",  CPU_PENTIUMMMX, 26, 266666666, 4, 33333333, 0x582, 0x582, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
         {"Mobile Pentium MMX 300",  CPU_PENTIUMMMX, 28, 300000000, 5, 33333333, 0x582, 0x582, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
+        {"Pentium OverDrive 125",CPU_PENTIUM,15, 125000000, 3, 25000000, 0x52c, 0x52c, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
+        {"Pentium OverDrive 150",CPU_PENTIUM,17, 150000000, 3, 30000000, 0x52c, 0x52c, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
+        {"Pentium OverDrive 166",CPU_PENTIUM,17, 166666666, 3, 33333333, 0x52c, 0x52c, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
+        {"Pentium OverDrive MMX 125",       CPU_PENTIUMMMX,15,125000000, 3, 25000000, 0x1542, 0x1542, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
+        {"Pentium OverDrive MMX 150/60",    CPU_PENTIUMMMX,17,150000000, 3, 30000000, 0x1542, 0x1542, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
+        {"Pentium OverDrive MMX 166",       CPU_PENTIUMMMX,19,166000000, 3, 33333333, 0x1542, 0x1542, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
+        {"Pentium OverDrive MMX 180",       CPU_PENTIUMMMX,20,180000000, 3, 30000000, 0x1542, 0x1542, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
+        {"Pentium OverDrive MMX 200",       CPU_PENTIUMMMX,21,200000000, 3, 33333333, 0x1542, 0x1542, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
         {"",             -1,        0, 0, 0}
 };
 
@@ -520,6 +519,25 @@ void cpu_set()
                 timing_mml = 11;  /*memory dest   - memory src*/
                 timing_bt  = 7-3; /*branch taken*/
                 timing_bnt = 3;   /*branch not taken*/
+                timing_int = 0;
+                timing_int_rm       = 23;
+                timing_int_v86      = 0;
+                timing_int_pm       = 40;
+                timing_int_pm_outer = 78;
+                timing_iret_rm       = 17;
+                timing_iret_v86      = 0;
+                timing_iret_pm       = 31;
+                timing_iret_pm_outer = 55;
+                timing_call_rm            = 13;
+                timing_call_pm            = 26;
+                timing_call_pm_gate       = 52;
+                timing_call_pm_gate_inner = 82;
+                timing_retf_rm       = 15;
+                timing_retf_pm       = 25;
+                timing_retf_pm_outer = 55;
+                timing_jmp_rm      = 11;
+                timing_jmp_pm      = 23;
+                timing_jmp_pm_gate = 38;
                 break;
 
                 case CPU_386SX:
@@ -532,6 +550,25 @@ void cpu_set()
                 timing_mml = 10;  /*memory dest   - memory src*/
                 timing_bt  = 7-3; /*branch taken*/
                 timing_bnt = 3;   /*branch not taken*/
+                timing_int = 0;
+                timing_int_rm       = 37;
+                timing_int_v86      = 59;
+                timing_int_pm       = 99;
+                timing_int_pm_outer = 119;
+                timing_iret_rm       = 22;
+                timing_iret_v86      = 60;
+                timing_iret_pm       = 38;
+                timing_iret_pm_outer = 82;
+                timing_call_rm            = 17;
+                timing_call_pm            = 34;
+                timing_call_pm_gate       = 52;
+                timing_call_pm_gate_inner = 86;
+                timing_retf_rm       = 18;
+                timing_retf_pm       = 32;
+                timing_retf_pm_outer = 68;
+                timing_jmp_rm      = 12;
+                timing_jmp_pm      = 27;
+                timing_jmp_pm_gate = 45;
                 break;
 
                 case CPU_386DX:
@@ -544,6 +581,25 @@ void cpu_set()
                 timing_mml = 6; /*memory dest   - memory src*/
                 timing_bt  = 7-3; /*branch taken*/
                 timing_bnt = 3; /*branch not taken*/
+                timing_int = 0;
+                timing_int_rm       = 37;
+                timing_int_v86      = 59;
+                timing_int_pm       = 99;
+                timing_int_pm_outer = 119;
+                timing_iret_rm       = 22;
+                timing_iret_v86      = 60;
+                timing_iret_pm       = 38;
+                timing_iret_pm_outer = 82;
+                timing_call_rm            = 17;
+                timing_call_pm            = 34;
+                timing_call_pm_gate       = 52;
+                timing_call_pm_gate_inner = 86;
+                timing_retf_rm       = 18;
+                timing_retf_pm       = 32;
+                timing_retf_pm_outer = 68;
+                timing_jmp_rm      = 12;
+                timing_jmp_pm      = 27;
+                timing_jmp_pm_gate = 45;
                 break;
                 
                 case CPU_486SLC:
@@ -556,6 +612,26 @@ void cpu_set()
                 timing_mml = 7;
                 timing_bt  = 6-1; /*branch taken*/
                 timing_bnt = 1; /*branch not taken*/
+                /*unknown*/
+                timing_int = 4;
+                timing_int_rm       = 14;
+                timing_int_v86      = 82;
+                timing_int_pm       = 49;
+                timing_int_pm_outer = 77;
+                timing_iret_rm       = 14;
+                timing_iret_v86      = 66;
+                timing_iret_pm       = 31;
+                timing_iret_pm_outer = 66;
+                timing_call_rm = 12;
+                timing_call_pm = 30;
+                timing_call_pm_gate = 41;
+                timing_call_pm_gate_inner = 83;
+                timing_retf_rm       = 13;
+                timing_retf_pm       = 26;
+                timing_retf_pm_outer = 61;
+                timing_jmp_rm      = 9;
+                timing_jmp_pm      = 26;
+                timing_jmp_pm_gate = 37;
                 break;
                 
                 case CPU_486DLC:
@@ -568,6 +644,26 @@ void cpu_set()
                 timing_mml = 3;
                 timing_bt  = 6-1; /*branch taken*/
                 timing_bnt = 1; /*branch not taken*/
+                /*unknown*/
+                timing_int = 4;
+                timing_int_rm       = 14;
+                timing_int_v86      = 82;
+                timing_int_pm       = 49;
+                timing_int_pm_outer = 77;
+                timing_iret_rm       = 14;
+                timing_iret_v86      = 66;
+                timing_iret_pm       = 31;
+                timing_iret_pm_outer = 66;
+                timing_call_rm = 12;
+                timing_call_pm = 30;
+                timing_call_pm_gate = 41;
+                timing_call_pm_gate_inner = 83;
+                timing_retf_rm       = 13;
+                timing_retf_pm       = 26;
+                timing_retf_pm_outer = 61;
+                timing_jmp_rm      = 9;
+                timing_jmp_pm      = 26;
+                timing_jmp_pm_gate = 37;
                 break;
                 
                 case CPU_i486SX:
@@ -581,6 +677,25 @@ void cpu_set()
                 timing_mml = 3;
                 timing_bt  = 3-1; /*branch taken*/
                 timing_bnt = 1; /*branch not taken*/
+                timing_int = 4;
+                timing_int_rm       = 26;
+                timing_int_v86      = 82;
+                timing_int_pm       = 44;
+                timing_int_pm_outer = 71;
+                timing_iret_rm       = 15;
+                timing_iret_v86      = 36; /*unknown*/
+                timing_iret_pm       = 20;
+                timing_iret_pm_outer = 36;
+                timing_call_rm = 18;
+                timing_call_pm = 20;
+                timing_call_pm_gate = 35;
+                timing_call_pm_gate_inner = 69;
+                timing_retf_rm       = 13;
+                timing_retf_pm       = 17;
+                timing_retf_pm_outer = 35;
+                timing_jmp_rm      = 17;
+                timing_jmp_pm      = 19;
+                timing_jmp_pm_gate = 32;
                 break;
 
                 case CPU_Am486SX:
@@ -595,6 +710,25 @@ void cpu_set()
                 timing_mml = 3;
                 timing_bt  = 3-1; /*branch taken*/
                 timing_bnt = 1; /*branch not taken*/
+                timing_int = 4;
+                timing_int_rm       = 26;
+                timing_int_v86      = 82;
+                timing_int_pm       = 44;
+                timing_int_pm_outer = 71;
+                timing_iret_rm       = 15;
+                timing_iret_v86      = 36; /*unknown*/
+                timing_iret_pm       = 20;
+                timing_iret_pm_outer = 36;
+                timing_call_rm = 18;
+                timing_call_pm = 20;
+                timing_call_pm_gate = 35;
+                timing_call_pm_gate_inner = 69;
+                timing_retf_rm       = 13;
+                timing_retf_pm       = 17;
+                timing_retf_pm_outer = 35;
+                timing_jmp_rm      = 17;
+                timing_jmp_pm      = 19;
+                timing_jmp_pm_gate = 32;
                 break;
                 
                 case CPU_Cx486S:
@@ -608,6 +742,25 @@ void cpu_set()
                 timing_mml = 3;
                 timing_bt  = 4-1; /*branch taken*/
                 timing_bnt = 1; /*branch not taken*/
+                timing_int = 4;
+                timing_int_rm       = 14;
+                timing_int_v86      = 82;
+                timing_int_pm       = 49;
+                timing_int_pm_outer = 77;
+                timing_iret_rm       = 14;
+                timing_iret_v86      = 66; /*unknown*/
+                timing_iret_pm       = 31;
+                timing_iret_pm_outer = 66;
+                timing_call_rm = 12;
+                timing_call_pm = 30;
+                timing_call_pm_gate = 41;
+                timing_call_pm_gate_inner = 83;
+                timing_retf_rm       = 13;
+                timing_retf_pm       = 26;
+                timing_retf_pm_outer = 61;
+                timing_jmp_rm      = 9;
+                timing_jmp_pm      = 26;
+                timing_jmp_pm_gate = 37;
                 break;
                 
                 case CPU_Cx5x86:
@@ -620,6 +773,25 @@ void cpu_set()
                 timing_mml = 2;
                 timing_bt  = 5-1; /*branch taken*/
                 timing_bnt = 1; /*branch not taken*/
+                timing_int = 0;
+                timing_int_rm       = 9;
+                timing_int_v86      = 82; /*unknown*/
+                timing_int_pm       = 21;
+                timing_int_pm_outer = 32;
+                timing_iret_rm       = 7;
+                timing_iret_v86      = 26; /*unknown*/
+                timing_iret_pm       = 10;
+                timing_iret_pm_outer = 26;
+                timing_call_rm = 4;
+                timing_call_pm = 15;
+                timing_call_pm_gate = 26;
+                timing_call_pm_gate_inner = 35;
+                timing_retf_rm       = 4;
+                timing_retf_pm       = 7;
+                timing_retf_pm_outer = 23;
+                timing_jmp_rm      = 5;
+                timing_jmp_pm      = 7;
+                timing_jmp_pm_gate = 17;
                 break;
 
                 case CPU_WINCHIP:
@@ -638,6 +810,25 @@ void cpu_set()
                 cpu_hasMMX = cpu_hasMSR = 1;
                 cpu_hasCR4 = 1;
                 cpu_CR4_mask = CR4_TSD | CR4_DE | CR4_MCE | CR4_PCE;
+                /*unknown*/
+                timing_int_rm       = 26;
+                timing_int_v86      = 82;
+                timing_int_pm       = 44;
+                timing_int_pm_outer = 71;
+                timing_iret_rm       = 7;
+                timing_iret_v86      = 26;
+                timing_iret_pm       = 10;
+                timing_iret_pm_outer = 26;
+                timing_call_rm = 4;
+                timing_call_pm = 15;
+                timing_call_pm_gate = 26;
+                timing_call_pm_gate_inner = 35;
+                timing_retf_rm       = 4;
+                timing_retf_pm       = 7;
+                timing_retf_pm_outer = 23;
+                timing_jmp_rm      = 5;
+                timing_jmp_pm      = 7;
+                timing_jmp_pm_gate = 17;
                 break;
 
                 case CPU_PENTIUM:
@@ -651,6 +842,25 @@ void cpu_set()
                 timing_mml = 3;
                 timing_bt  = 0; /*branch taken*/
                 timing_bnt = 2; /*branch not taken*/
+                timing_int = 6;
+                timing_int_rm       = 11;
+                timing_int_v86      = 54;
+                timing_int_pm       = 25;
+                timing_int_pm_outer = 42;
+                timing_iret_rm       = 7;
+                timing_iret_v86      = 27; /*unknown*/
+                timing_iret_pm       = 10;
+                timing_iret_pm_outer = 27;
+                timing_call_rm = 4;
+                timing_call_pm = 4;
+                timing_call_pm_gate = 22;
+                timing_call_pm_gate_inner = 44;
+                timing_retf_rm       = 4;
+                timing_retf_pm       = 4;
+                timing_retf_pm_outer = 23;
+                timing_jmp_rm      = 3;
+                timing_jmp_pm      = 3;
+                timing_jmp_pm_gate = 18;
                 cpu_hasrdtsc = 1;
                 msr.fcr = (1 << 8) | (1 << 9) | (1 << 12) |  (1 << 16) | (1 << 19) | (1 << 21);
                 cpu_hasMMX = 0;
@@ -671,6 +881,25 @@ void cpu_set()
                 timing_mml = 3;
                 timing_bt  = 0; /*branch taken*/
                 timing_bnt = 1; /*branch not taken*/
+                timing_int = 6;
+                timing_int_rm       = 11;
+                timing_int_v86      = 54;
+                timing_int_pm       = 25;
+                timing_int_pm_outer = 42;
+                timing_iret_rm       = 7;
+                timing_iret_v86      = 27; /*unknown*/
+                timing_iret_pm       = 10;
+                timing_iret_pm_outer = 27;
+                timing_call_rm = 4;
+                timing_call_pm = 4;
+                timing_call_pm_gate = 22;
+                timing_call_pm_gate_inner = 44;
+                timing_retf_rm       = 4;
+                timing_retf_pm       = 4;
+                timing_retf_pm_outer = 23;
+                timing_jmp_rm      = 3;
+                timing_jmp_pm      = 3;
+                timing_jmp_pm_gate = 18;
                 cpu_hasrdtsc = 1;
                 msr.fcr = (1 << 8) | (1 << 9) | (1 << 12) |  (1 << 16) | (1 << 19) | (1 << 21);
                 cpu_hasMMX = 1;

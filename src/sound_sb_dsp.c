@@ -118,7 +118,8 @@ void sb_dsp_reset(sb_dsp_t *dsp)
         dsp->sb_command = 0;
         
         dsp->sb_8_length = 0xffff;
-
+        dsp->sb_8_autolen = 0xffff;
+        
         sb_irqc(dsp, 0);
         sb_irqc(dsp, 1);
         dsp->sb_16_pause = 0;
@@ -283,6 +284,7 @@ void sb_exec_command(sb_dsp_t *dsp)
                 sb_add_data(dsp, 0);
                 break;
                 case 0x10: /*8-bit direct mode*/
+                sb_dsp_update(dsp);
                 dsp->sbdat = dsp->sbdatl = dsp->sbdatr = (dsp->sb_data[0] ^ 0x80) << 8;
                 break;
                 case 0x14: /*8-bit single cycle DMA output*/
@@ -594,7 +596,7 @@ void sb_dsp_init(sb_dsp_t *dsp, int type)
 {
         dsp->sb_type = type;
         
-        dsp->sb_irqnum = 5;
+        dsp->sb_irqnum = 7;
         dsp->sb_8_dmanum = 1;
         
         sb_doreset(dsp);
@@ -631,6 +633,8 @@ void pollsb(void *p)
         if (dsp->sb_8_enable && !dsp->sb_8_pause && dsp->sb_pausetime < 0 && dsp->sb_8_output)
         {
                 int data[2];
+                
+                sb_dsp_update(dsp);
 //                pclog("Dopoll %i %02X %i\n", sb_8_length, sb_8_format, sblatcho);
                 switch (dsp->sb_8_format)
                 {
@@ -795,6 +799,8 @@ void pollsb(void *p)
         }
         if (dsp->sb_16_enable && !dsp->sb_16_pause && dsp->sb_pausetime < 0 && dsp->sb_16_output)
         {
+                sb_dsp_update(dsp);
+                
                 switch (dsp->sb_16_format)
                 {
                         case 0x00: /*Mono unsigned*/
@@ -918,10 +924,13 @@ void sb_poll_i(void *p)
         }
 }
 
-void sb_dsp_poll(sb_dsp_t *dsp, int16_t *l, int16_t *r)
+void sb_dsp_update(sb_dsp_t *dsp)
 {
-        *l = dsp->sbdatl;
-        *r = dsp->sbdatr;
+        for (; dsp->pos < sound_pos_global; dsp->pos++)
+        {
+                dsp->buffer[dsp->pos*2] = dsp->sbdatl;
+                dsp->buffer[dsp->pos*2 + 1] = dsp->sbdatr;
+        }
 }
 
 void sb_dsp_add_status_info(char *s, int max_len, sb_dsp_t *dsp)
