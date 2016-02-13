@@ -7,11 +7,11 @@
 #include "ali1429.h"
 #include "amstrad.h"
 #include "cdrom-ioctl.h"
+#include "cdrom-iso.h"
 #include "disc.h"
 #include "mem.h"
 #include "x86_ops.h"
 #include "codegen.h"
-#include "cdrom-iso.h"
 #include "cdrom-null.h"
 #include "config.h"
 #include "cpu.h"
@@ -21,7 +21,6 @@
 #include "sound_gus.h"
 #include "ide.h"
 #include "keyboard.h"
-#include "keyboard_at.h"
 #include "model.h"
 #include "mouse.h"
 #include "nvr.h"
@@ -38,11 +37,6 @@
 #include "timer.h"
 #include "vid_voodoo.h"
 #include "video.h"
-#include "nethandler.h"
-#define NE2000      1
-#define RTL8029AS   2
-uint8_t ethif;
-int inum;
 
 int start_in_fullscreen = 0;
 int frame = 0;
@@ -69,28 +63,39 @@ int atfullspeed;
 void saveconfig();
 int infocus;
 int mousecapture;
-// FILE *pclogf;
+FILE *pclogf;
 void pclog(const char *format, ...)
 {
 #ifndef RELEASE_BUILD
+   char buf[1024];
+   //return;
+   if (!pclogf)
+      pclogf=fopen("pclog.txt","wt");
+//return;
    va_list ap;
    va_start(ap, format);
-   vprintf(format, ap);
+   vsprintf(buf, format, ap);
    va_end(ap);
-   fflush(stdout);
+   fputs(buf,pclogf);
+//fflush(pclogf);
 #endif
 }
 
 void fatal(const char *format, ...)
 {
+   char buf[256];
+//   return;
+   if (!pclogf)
+      pclogf=fopen("pclog.txt","wt");
+//return;
    va_list ap;
    va_start(ap, format);
-   vprintf(format, ap);
+   vsprintf(buf, format, ap);
    va_end(ap);
-   fflush(stdout);
+   fputs(buf,pclogf);
+   fflush(pclogf);
    dumppic();
    dumpregs();
-   fflush(stdout);
    exit(-1);
 }
 
@@ -195,7 +200,6 @@ void initpc(int argc, char *argv[])
         char *p;
         char *config_file = NULL;
         int c;
-	FILE *ff;
 //        allegro_init();
         get_executable_name(pcempath,511);
         pclog("executable_name = %s\n", pcempath);
@@ -243,22 +247,19 @@ void initpc(int argc, char *argv[])
 //        cpuspeed2=cpuspeed;
         atfullspeed=0;
 
+        device_init();        
+        
         initvideo();
         mem_init();
         loadbios();
         mem_add_bios();
-
-        device_init();        
-                       
+                        
         timer_reset();
         sound_reset();
 	fdc_init();
 	disc_init();
         fdi_init();
         img_init();
-
-	vlan_reset();	//NETWORK
-	network_card_init(network_card_current);
 
         disc_load(0, discfns[0]);
         disc_load(1, discfns[1]);
@@ -267,32 +268,20 @@ void initpc(int argc, char *argv[])
         loadnvr();
         sound_init();
         resetide();
-	if ((cdrom_drive == -1) || (cdrom_drive == 0))
+#if __unix
+	if (cdrom_drive == -1)
 	        cdrom_null_open(cdrom_drive);	
 	else
-	{
-			if (cdrom_drive == 200)
-			{
-				ff = fopen(iso_path, "rb");
-				if (ff)
-				{
-					fclose(ff);
-					iso_open(iso_path);
-				}
-				else
-				{
-#if __unix
-					cdrom_drive = -1;
-#else
-					cdrom_drive = 0;
 #endif
-					cdrom_null_open(cdrom_drive);
-				}
-			}
-			else
-			{
-				ioctl_open(cdrom_drive);
-			}
+	{
+		if (cdrom_drive == CDROM_ISO)
+		{
+			iso_open(iso_path);
+		}
+		else
+		{
+			ioctl_open(cdrom_drive);
+		}
 	}
         
         pit_reset();        
@@ -302,18 +291,20 @@ void initpc(int argc, char *argv[])
 //        pclog("Init - CPUID %i %i\n",CPUID,cpuspeed);
         shadowbios=0;
         
-	if ((cdrom_drive == -1) || (cdrom_drive == 0))
+#if __unix
+	if (cdrom_drive == -1)
 	        cdrom_null_reset();	
 	else
+#endif
 	{
-			if (cdrom_drive == 200)
-			{
-				iso_reset();
-			}
-			else
-			{
-				ioctl_reset();
-			}
+		if (cdrom_drive == CDROM_ISO)
+		{
+			iso_reset();
+		}
+		else
+		{
+			ioctl_reset();
+		}
 	}
 }
 
@@ -326,26 +317,14 @@ void resetpc()
         shadowbios=0;
 }
 
-void pc_keyboard_send(uint8_t val)
-{
-	if (AT)
-	{
-		keyboard_at_adddata_keyboard_raw(val);
-	}
-	else
-	{
-		keyboard_send(val);
-	}
-}
-
 void resetpc_cad()
 {
-	pc_keyboard_send(29);	/* Ctrl key pressed */
-	pc_keyboard_send(56);	/* Alt key pressed */
-	pc_keyboard_send(83);	/* Delete key pressed */
-	pc_keyboard_send(157);	/* Ctrl key released */
-	pc_keyboard_send(184);	/* Alt key released */
-	pc_keyboard_send(211);	/* Delete key released */
+	keyboard_send(29);	/* Ctrl key pressed */
+	keyboard_send(56);	/* Alt key pressed */
+	keyboard_send(83);	/* Delete key pressed */
+	keyboard_send(157);	/* Ctrl key released */
+	keyboard_send(184);	/* Alt key released */
+	keyboard_send(211);	/* Delete key released */
 }
 
 void resetpchard()
@@ -363,13 +342,8 @@ void resetpchard()
 	disc_reset();
         
         model_init();
-	// mem_add_bios();
         video_init();
         speaker_init();        
-
-	vlan_reset();	//NETWORK
-	network_card_init(network_card_current);      
-
         sound_card_init(sound_card_current);
         if (GUS)
                 device_add(&gus_device);
@@ -396,18 +370,20 @@ void resetpchard()
         
 //        output=3;
 
-	if ((cdrom_drive == -1) || (cdrom_drive == 0))
+#if __unix
+	if (cdrom_drive == -1)
 	        cdrom_null_reset();	
 	else
+#endif
 	{
-			if (cdrom_drive == 200)
-			{
-				iso_reset();
-			}
-			else
-			{
-				ioctl_reset();
-			}
+		if (cdrom_drive == CDROM_ISO)
+		{
+			iso_reset();
+		}
+		else
+		{
+			ioctl_reset();
+		}
 	}
 }
 
@@ -585,13 +561,7 @@ void loadconfig(char *fn)
         GUS = config_get_int(NULL, "gus", 0);
         SSI2001 = config_get_int(NULL, "ssi2001", 0);
         voodoo_enabled = config_get_int(NULL, "voodoo", 0);
-
-	//network
-	ethif = config_get_int(NULL, "netinterface", 1);
-        if (ethif >= inum)
-            inum = ethif + 1;
-        network_card_current = config_get_int(NULL, "netcard", NE2000);
-
+        
         model = config_get_int(NULL, "model", 14);
 
         if (model >= model_count())
@@ -619,7 +589,6 @@ void loadconfig(char *fn)
                 mem_size = (models[model].is_at ? models[model].min_ram*1024 : models[model].min_ram);
 
         cdrom_drive = config_get_int(NULL, "cdrom_drive", 0);
-		old_cdrom_drive = cdrom_drive;
         cdrom_enabled = config_get_int(NULL, "cdrom_enabled", 0);
 
         p = (char *)config_get_string(NULL, "cdrom_path", "");
@@ -662,16 +631,6 @@ void loadconfig(char *fn)
 
 	fdd_set_type(0, config_get_int(NULL, "drive_a_type", 0));
         fdd_set_type(1, config_get_int(NULL, "drive_b_type", 0));
-
-	force_43 = config_get_int(NULL, "force_43", 0);
-	enable_overscan = config_get_int(NULL, "enable_overscan", 0);
-        cga_color_burst = config_get_int(NULL, "cga_color_burst", 1);
-        cga_brown = config_get_int(NULL, "cga_brown", 1);
-        enable_flash = config_get_int(NULL, "enable_flash", 1);
-
-        enable_sync = config_get_int(NULL, "enable_sync", 0);
-
-        cdrom_channel = config_get_int(NULL, "cdrom_channel", 2);
 }
 
 void saveconfig()
@@ -680,10 +639,7 @@ void saveconfig()
         config_set_int(NULL, "gus", GUS);
         config_set_int(NULL, "ssi2001", SSI2001);
         config_set_int(NULL, "voodoo", voodoo_enabled);
-
-	config_set_int(NULL, "netinterface", ethif);
-	config_set_int(NULL, "netcard", network_card_current);
-
+        
         config_set_int(NULL, "model", model);
         config_set_int(NULL, "cpu_manufacturer", cpu_manufacturer);
         config_set_int(NULL, "cpu", cpu);
@@ -727,16 +683,6 @@ void saveconfig()
 
         config_set_int(NULL, "drive_a_type", fdd_get_type(0));
         config_set_int(NULL, "drive_b_type", fdd_get_type(1));
-
-        config_set_int(NULL, "force_43", force_43);
-        config_set_int(NULL, "enable_overscan", enable_overscan);
-        config_set_int(NULL, "cga_color_burst", cga_color_burst);
-        config_set_int(NULL, "cga_brown", cga_brown);
-        config_set_int(NULL, "enable_flash", enable_flash);
-        
-        config_set_int(NULL, "enable_sync", enable_sync);
-
-        config_set_int(NULL, "cdrom_channel", cdrom_channel);
         
         config_save(config_file_default);
 }

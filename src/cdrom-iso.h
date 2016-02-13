@@ -9,6 +9,6 @@ extern char iso_path[1024];
 extern int iso_open(char *fn);
 extern void iso_reset();
 
-extern void iso_close(void);
+#define CDROM_ISO 200
 
 #endif /* ! CDROM_ISO_H */

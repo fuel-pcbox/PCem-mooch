@@ -38,7 +38,6 @@ typedef struct rivatnt_t
   struct
   {
     int width;
-    int height;
     int bpp;
     uint32_t config_0;
   } pfb;
@@ -388,6 +387,7 @@ static void rivatnt_out(uint16_t addr, uint8_t val, void *p)
   case 0x1a:
   //if(val & 2) svga->dac8bit = 1;
   //else svga->dac8bit = 0;
+  if(!(val & 4)) svga_recalctimings(svga);
   break;
   case 0x1e:
   rivatnt->read_bank = val >> 1;
@@ -557,12 +557,15 @@ static void rivatnt_recalctimings(svga_t *svga)
 {
   svga->ma_latch |= (svga->crtc[0x19] & 0x1f) << 16;
   svga->rowoffset |= (svga->crtc[0x19] & 0xe0) << 3;
-  if (svga->crtc[0x25] & 0x01) svga->vtotal      += 0x400;
-  if (svga->crtc[0x25] & 0x02) svga->dispend     += 0x400;
-  if (svga->crtc[0x25] & 0x04) svga->vblankstart += 0x400;
-  if (svga->crtc[0x25] & 0x08) svga->vsyncstart  += 0x400;
-  if (svga->crtc[0x25] & 0x10) svga->htotal      += 0x100;
-  if (svga->crtc[0x2d] & 0x01) svga->hdisp       += 0x100;
+  if (svga->crtc[0x25] & 0x01) svga->vtotal      |= 0x400;
+  if (svga->crtc[0x25] & 0x02) svga->dispend     |= 0x400;
+  if (svga->crtc[0x25] & 0x04) svga->vblankstart |= 0x400;
+  if (svga->crtc[0x25] & 0x08) svga->vsyncstart  |= 0x400;
+  if (svga->crtc[0x25] & 0x10) svga->htotal      |= 0x100;
+  if (svga->crtc[0x2d] & 0x01) svga->hdisp       |= 0x100;
+  //The effects of the large screen bit seem to just be doubling the row offset.
+  //However, these large modes still don't work. Possibly core SVGA bug? It does report 640x2 res after all.
+  if (!(svga->crtc[0x1a]) & 0x04) svga->rowoffset <<= 1;
   switch(svga->crtc[0x28] & 3)
   {
     case 1:
@@ -578,7 +581,6 @@ static void rivatnt_recalctimings(svga_t *svga)
     svga->render = svga_render_32bpp_highres;
     break;
   }
-  pclog("RIVA TNT MA %08X %04X:%08X\n", svga->ma_latch, CS, pc);
 }
 
 static void *rivatnt_init()
@@ -689,14 +691,10 @@ static device_config_t rivatnt_config[] =
         .value = 16
       },
       {
-        .description = "32 MB",
-        .value = 32
-      },
-      {
         .description = ""
       }
     },
-    .default_int = 4
+    .default_int = 16
   },
   {
     .type = -1
