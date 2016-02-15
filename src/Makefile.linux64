@@ -1,5 +1,5 @@
 VPATH = . dosbox resid-fp slirp
-CPP  = g++
+CXX  = g++
 CC   = gcc
 WINDRES = windres
 CFLAGS = -O3 -march=core2 -mtune=core2 -fomit-frame-pointer -ffast-math -msse -msse2 -msse3 -mssse3 -mfpmath=sse
@@ -41,7 +41,7 @@ clean :
 	$(CC) $(CFLAGS) -c $<
 
 %.o : %.cc
-	$(CPP) $(CFLAGS) -c $<
+	$(CXX) $(CFLAGS) -c $<
 
 pc.res: pc.rc
 	$(WINDRES) -i pc.rc --input-format=rc -o pc.res -O coff 
