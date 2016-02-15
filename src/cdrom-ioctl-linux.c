@@ -12,7 +12,7 @@ static ATAPI ioctl_atapi;
 static uint32_t last_block = 0;
 static int ioctl_inited = 0;
 static char ioctl_path[8];
-static void ioctl_close(void);
+void ioctl_close(void);
 static int tocvalid = 0;
 static struct cdrom_tocentry toc[100];
 static int first_track, last_track;
@@ -557,7 +557,7 @@ int ioctl_open(char d)
         return 0;
 }
 
-static void ioctl_close(void)
+void ioctl_close(void)
 {
 }
 
