@@ -7,6 +7,7 @@
 
 #include "libretro.h"
 
+#include "plat-joystick.h"
 #include "ibm.h"
 #include "cpu.h"
 #include "model.h"
@@ -23,6 +24,10 @@ int quited = 0;
 
 int romspresent[ROM_MAX];
 int gfx_present[GFX_MAX];
+
+int mouse_buttons;
+joystick_t joystick_state[2];
+int joysticks_present;
 
 void startblit()
 {
