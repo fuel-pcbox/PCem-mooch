@@ -24,6 +24,26 @@ int quited = 0;
 int romspresent[ROM_MAX];
 int gfx_present[GFX_MAX];
 
+void startblit()
+{
+}
+
+void endblit()
+{
+}
+
+static int ticks = 0;
+static void timer_rout()
+{
+        ticks++;
+}
+
+uint64_t timer_freq;
+uint64_t timer_read()
+{
+        return 0;
+}
+
 static void fallback_log(enum retro_log_level level, const char *fmt, ...)
 {
    (void)level;
