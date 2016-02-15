@@ -176,6 +176,7 @@ SOURCES_CXX :=
 include Makefile.common
 
 OBJECTS  = $(SOURCES_CXX:.cc=.o) $(SOURCES_C:.c=.o)
+CFLAGS += -D__LIBRETRO__ $(fpic) $(INCFLAGS) $(COMMONFLAGS)
 CXXFLAGS += -D__LIBRETRO__ $(fpic) $(INCFLAGS) $(COMMONFLAGS)
 CFLAGS   += -D__LIBRETRO__ $(fpic) $(INCFLAGS) $(COMMONFLAGS)
 LDFLAGS  += -lm $(fpic)

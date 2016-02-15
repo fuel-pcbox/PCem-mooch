@@ -29,6 +29,30 @@ int mouse_buttons;
 joystick_t joystick_state[2];
 int joysticks_present;
 
+void initalmain(int argc, char *argv[])
+{
+}
+
+void closeal()
+{
+}
+
+void inital()
+{
+}
+
+void check()
+{
+}
+
+void givealbuffer_cd(int16_t *buf)
+{
+}
+
+void givealbuffer(int16_t *buf)
+{
+}
+
 void startblit()
 {
 }

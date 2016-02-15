@@ -161,8 +161,7 @@ SOURCES_C := $(CORE_DIR)/libretro.c \
 				 $(CORE_DIR)/x87.c \
 				 $(CORE_DIR)/xtide.c 
 
-SOURCES_C += $(CORE_DIR)/soundopenal.c \
-				 $(CORE_DIR)/thread-pthread.c
+SOURCES_C += $(CORE_DIR)/thread-pthread.c
 
 
 ifeq ($(WITH_DYNAREC), arm)
