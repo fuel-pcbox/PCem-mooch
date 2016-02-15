@@ -123,40 +123,40 @@ int main(int argc, char *argv[])
         ticks = 0;
         while (!quited)
         {
-                if (ticks)
-                {
-                        ticks--;
-                        runpc();
-                        frames++;
-                        if (frames >= 200 && nvr_dosave)
-                        {
-                                frames = 0;
-                                nvr_dosave = 0;
-                                savenvr();
-                        }
-                }
-                else
-                        rest(1);
+           if (ticks)
+           {
+              ticks--;
+              runpc();
+              frames++;
+              if (frames >= 200 && nvr_dosave)
+              {
+                 frames = 0;
+                 nvr_dosave = 0;
+                 savenvr();
+              }
+           }
+           else
+              rest(1);
 
-		if (ticks > 10)
-			ticks = 0;
-                
-		if ((mouse_b & 1) && !mousecapture)
-			mousecapture = 1;
+           if (ticks > 10)
+              ticks = 0;
 
-		if (((key[KEY_LCONTROL] || key[KEY_RCONTROL]) && key[KEY_END]) || (mouse_b & 4))
-			mousecapture = 0;
+           if ((mouse_b & 1) && !mousecapture)
+              mousecapture = 1;
 
-                if ((key[KEY_LCONTROL] || key[KEY_RCONTROL]) && key[KEY_ALT] && key[KEY_PGDN])
-                {
-			int old_winsizex = winsizex, old_winsizey = winsizey;
-			if (winsizex < 512 || winsizey < 350)
-				updatewindowsize(512, 350);
-                        gui_enter();
-			if (old_winsizex < 512 || old_winsizey < 350)
-				updatewindowsize(old_winsizex, old_winsizey);
-                        ticks = 0;
-                }
+           if (((key[KEY_LCONTROL] || key[KEY_RCONTROL]) && key[KEY_END]) || (mouse_b & 4))
+              mousecapture = 0;
+
+           if ((key[KEY_LCONTROL] || key[KEY_RCONTROL]) && key[KEY_ALT] && key[KEY_PGDN])
+           {
+              int old_winsizex = winsizex, old_winsizey = winsizey;
+              if (winsizex < 512 || winsizey < 350)
+                 updatewindowsize(512, 350);
+              gui_enter();
+              if (old_winsizex < 512 || old_winsizey < 350)
+                 updatewindowsize(old_winsizex, old_winsizey);
+              ticks = 0;
+           }
         }
         
         closepc();

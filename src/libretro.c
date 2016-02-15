@@ -7,11 +7,22 @@
 
 #include "libretro.h"
 
+#include "ibm.h"
+#include "cpu.h"
+#include "model.h"
+#include "nvr.h"
+#include "video.h"
+
 static struct retro_log_callback logging;
 static retro_log_printf_t log_cb;
 static bool use_audio_cb;
 static float last_aspect;
 static float last_sample_rate;
+
+int quited = 0;
+
+int romspresent[ROM_MAX];
+int gfx_present[GFX_MAX];
 
 static void fallback_log(enum retro_log_level level, const char *fmt, ...)
 {
@@ -22,8 +33,96 @@ static void fallback_log(enum retro_log_level level, const char *fmt, ...)
    va_end(va);
 }
 
+static PALETTE cgapal=
+{
+        {0,0,0},{0,42,0},{42,0,0},{42,21,0},
+        {0,0,0},{0,42,42},{42,0,42},{42,42,42},
+        {0,0,0},{21,63,21},{63,21,21},{63,63,21},
+        {0,0,0},{21,63,63},{63,21,63},{63,63,63},
+
+        {0,0,0},{0,0,42},{0,42,0},{0,42,42},
+        {42,0,0},{42,0,42},{42,21,00},{42,42,42},
+        {21,21,21},{21,21,63},{21,63,21},{21,63,63},
+        {63,21,21},{63,21,63},{63,63,21},{63,63,63},
+
+        {0,0,0},{0,21,0},{0,0,42},{0,42,42},
+        {42,0,21},{21,10,21},{42,0,42},{42,0,63},
+        {21,21,21},{21,63,21},{42,21,42},{21,63,63},
+        {63,0,0},{42,42,0},{63,21,42},{41,41,41},
+        
+        {0,0,0},{0,42,42},{42,0,0},{42,42,42},
+        {0,0,0},{0,42,42},{42,0,0},{42,42,42},
+        {0,0,0},{0,63,63},{63,0,0},{63,63,63},
+        {0,0,0},{0,63,63},{63,0,0},{63,63,63},
+};
+
+static uint32_t pal_lookup[256];
+
+static void libretro_blit_memtoscreen(int x, int y, int y1, int y2, int w, int h)
+{
+#if 0
+   if (h < winsizey)
+   {
+      int yy;
+
+      for (yy = y+y1; yy < y+y2; yy++)
+      {
+         if (yy >= 0)
+         {
+            memcpy(&((uint32_t *)buffer32_vscale->line[yy*2])[x], &((uint32_t *)buffer32->line[yy])[x], w*4);
+            memcpy(&((uint32_t *)buffer32_vscale->line[(yy*2)+1])[x], &((uint32_t *)buffer32->line[yy])[x], w*4);
+         }
+      }
+
+      blit(buffer32_vscale, screen, x, (y+y1)*2, 0, y1, w, (y2-y1)*2);
+   }
+   else
+      blit(buffer32, screen, x, y+y1, 0, y1, w, y2-y1);
+#endif
+}
+
+static void libretro_blit_memtoscreen_8(int x, int y, int w, int h)
+{
+#if 0
+   int xx, yy;
+
+   if (y < 0)
+   {
+      h += y;
+      y = 0;
+   }
+
+   for (yy = y; yy < y+h; yy++)
+   {
+      int dy = yy*2;
+      for (xx = x; xx < x+w; xx++)
+      {
+         ((uint32_t *)buffer32->line[dy])[xx] =
+            ((uint32_t *)buffer32->line[dy + 1])[xx] = pal_lookup[buffer->line[yy][xx]];
+      }
+   }
+
+   if (readflash)
+   {
+      rectfill(buffer32, x+SCREEN_W-40, y*2+8, SCREEN_W-8, y*2+14, makecol(255, 255, 255));
+      readflash = 0;
+   }
+
+   blit(buffer32, screen, x, y*2, 0, 0, w, h*2);
+#endif
+}
+
 void retro_init(void)
 {
+   unsigned c;
+
+   video_blit_memtoscreen   = libretro_blit_memtoscreen;
+   video_blit_memtoscreen_8 = libretro_blit_memtoscreen_8;
+
+   /* video initialization */
+   for (c = 0; c < 256; c++)
+      pal_lookup[c] = makecol(cgapal[c].r << 2, cgapal[c].g << 2, cgapal[c].b << 2);
+
 }
 
 void retro_deinit(void)
@@ -107,6 +206,7 @@ void retro_set_video_refresh(retro_video_refresh_t cb)
 
 void retro_reset(void)
 {
+   resetpchard();
 }
 
 static void check_variables(void)
@@ -120,14 +220,34 @@ static void audio_set_state(bool enable)
 
 void retro_run(void)
 {
-
+   static int ticks = 0;
    bool updated = false;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       check_variables();
 
    input_poll_cb();
-   if (!use_audio_cb)
-      audio_callback();
+
+   while (quited)
+      return;
+
+   if (ticks)
+   {
+      ticks--;
+      runpc();
+      frames++;
+      if (frames >= 200 && nvr_dosave)
+      {
+         frames = 0;
+         nvr_dosave = 0;
+         savenvr();
+      }
+   }
+   else
+      rest(1);
+
+           if (ticks > 10)
+              ticks = 0;
+   /* missing: audio_cb / video_cb */
 }
 
 static void keyboard_cb(bool down, unsigned keycode,
@@ -137,8 +257,19 @@ static void keyboard_cb(bool down, unsigned keycode,
          down ? "yes" : "no", keycode, character, mod);
 }
 
+static void midi_init(void)
+{
+   /* TODO ? */
+}
+
+static void midi_close(void)
+{
+   /* TODO ? */
+}
+
 bool retro_load_game(const struct retro_game_info *info)
 {
+   int c, d;
    enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_XRGB8888;
    if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
    {
@@ -151,12 +282,77 @@ bool retro_load_game(const struct retro_game_info *info)
 
    check_variables();
 
+   midi_init();
+   initpc(NULL, NULL);
+
+   d = romset;
+   for (c = 0; c < ROM_MAX; c++)
+   {
+      romset = c;
+      romspresent[c] = loadbios();
+      pclog("romset %i - %i\n", c, romspresent[c]);
+   }
+
+   for (c = 0; c < ROM_MAX; c++)
+   {
+      if (romspresent[c])
+         break;
+   }
+   if (c == ROM_MAX)
+   {
+      printf("No ROMs present!\nYou must have at least one romset to use PCem.");
+      return 0;
+   }
+
+   romset=d;
+   c=loadbios();
+
+   if (!c)
+   {
+      if (romset != -1)
+         printf("Configured romset not available.\nDefaulting to available romset.");
+      for (c = 0; c < ROM_MAX; c++)
+      {
+         if (romspresent[c])
+         {
+            romset = c;
+            model = model_getmodel(romset);
+            saveconfig();
+            resetpchard();
+            break;
+         }
+      }
+   }
+
+   for (c = 0; c < GFX_MAX; c++)
+      gfx_present[c] = video_card_available(video_old_to_new(c));
+
+   if (!video_card_available(video_old_to_new(gfxcard)))
+   {
+      if (gfxcard) printf("Configured video BIOS not available.\nDefaulting to available romset.");
+      for (c = GFX_MAX-1; c >= 0; c--)
+      {
+         if (gfx_present[c])
+         {
+            gfxcard = c;
+            saveconfig();
+            resetpchard();
+            break;
+         }
+      }
+   }
+
+	resetpchard();
+
    (void)info;
    return true;
 }
 
 void retro_unload_game(void)
 {
+   closepc();
+
+   midi_close();
 }
 
 unsigned retro_get_region(void)
