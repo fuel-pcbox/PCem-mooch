@@ -3,6 +3,7 @@
 #include <linux/cdrom.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <unistd.h>
 #include "ibm.h"
 #include "ide.h"
 #include "cdrom-ioctl.h"
