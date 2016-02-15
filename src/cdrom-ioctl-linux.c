@@ -10,6 +10,9 @@
 
 static ATAPI ioctl_atapi;
 
+int cdrom_drive;
+int old_cdrom_drive;
+
 static uint32_t last_block = 0;
 static int ioctl_inited = 0;
 static char ioctl_path[8];
@@ -482,6 +485,11 @@ static int ioctl_readtoc_raw(unsigned char *b, int maxlen)
 	struct cdrom_tocentry toc2[100];
 	int track, err;
 	int len = 4;
+	int fd = open("/dev/cdrom", O_RDONLY|O_NONBLOCK);
+
+	if (fd <= 0)
+		return;
+	
 //pclog("read_toc\n");
 	err = ioctl(fd, CDROMREADTOCHDR, &toc_hdr);
 	if (err == -1)

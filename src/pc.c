@@ -257,8 +257,10 @@ void initpc(int argc, char *argv[])
         fdi_init();
         img_init();
 
+#ifdef WIN32
 	vlan_reset();	//NETWORK
 	network_card_init(network_card_current);
+#endif
 
         disc_load(0, discfns[0]);
         disc_load(1, discfns[1]);
@@ -367,8 +369,10 @@ void resetpchard()
         video_init();
         speaker_init();        
 
+#ifdef WIN32
 	vlan_reset();	//NETWORK
-	network_card_init(network_card_current);      
+	network_card_init(network_card_current);
+#endif
 
         sound_card_init(sound_card_current);
         if (GUS)
@@ -586,11 +590,13 @@ void loadconfig(char *fn)
         SSI2001 = config_get_int(NULL, "ssi2001", 0);
         voodoo_enabled = config_get_int(NULL, "voodoo", 0);
 
+#ifdef WIN32
 	//network
 	ethif = config_get_int(NULL, "netinterface", 1);
         if (ethif >= inum)
             inum = ethif + 1;
         network_card_current = config_get_int(NULL, "netcard", NE2000);
+#endif
 
         model = config_get_int(NULL, "model", 14);
 
@@ -682,7 +688,9 @@ void saveconfig()
         config_set_int(NULL, "voodoo", voodoo_enabled);
 
 	config_set_int(NULL, "netinterface", ethif);
+#ifdef WIN32
 	config_set_int(NULL, "netcard", network_card_current);
+#endif
 
         config_set_int(NULL, "model", model);
         config_set_int(NULL, "cpu_manufacturer", cpu_manufacturer);
