@@ -19,7 +19,8 @@ SOURCES_CXX := $(CORE_DIR)/dosbox/dbopl.cc \
 					$(CORE_DIR)/resid-fp/wave8580_P_T.cc \
 					$(CORE_DIR)/resid-fp/wave.cc
 
-SOURCES_C := $(CORE_DIR)/386.c \
+SOURCES_C := $(CORE_DIR)/libretro.c \
+				 $(CORE_DIR)/386.c \
 				 $(CORE_DIR)/386_dynarec.c \
 				 $(CORE_DIR)/386_dynarec_ops.c \
 				 $(CORE_DIR)/808x.c \
