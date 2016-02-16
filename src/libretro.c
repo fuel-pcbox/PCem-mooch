@@ -35,6 +35,7 @@ int rawinputkey[272];
 int romspresent[ROM_MAX];
 int gfx_present[GFX_MAX];
 
+
 void set_window_title(char *s)
 {
 }
@@ -347,6 +348,14 @@ static retro_audio_sample_batch_t audio_batch_cb;
 static retro_environment_t environ_cb;
 static retro_input_poll_t input_poll_cb;
 static retro_input_state_t input_state_cb;
+
+const char* retro_get_system_directory(void)
+{
+    const char* dir;
+    environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir);
+
+    return dir ? dir : ".";
+}
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
