@@ -35,6 +35,10 @@ int rawinputkey[272];
 int romspresent[ROM_MAX];
 int gfx_present[GFX_MAX];
 
+void get_executable_name(char *s, int size)
+{
+}
+
 int mouse_buttons;
 joystick_t joystick_state[2];
 int joysticks_present;
@@ -417,8 +421,10 @@ void retro_run(void)
          savenvr();
       }
    }
+#if 0
    else
       rest(1);
+#endif
 
            if (ticks > 10)
               ticks = 0;
