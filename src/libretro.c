@@ -35,6 +35,10 @@ int rawinputkey[272];
 int romspresent[ROM_MAX];
 int gfx_present[GFX_MAX];
 
+void set_window_title(char *s)
+{
+}
+
 void get_executable_name(char *s, int size)
 {
 }
@@ -134,6 +138,17 @@ void keyboard_poll_host()
 }
 
 void updatewindowsize(int x, int y) { }
+
+void hline(BITMAP *b, int x1, int y, int x2, uint32_t col)
+{
+        if (y < 0 || y >= buffer->h)
+           return;
+           
+        if (b == buffer)
+           memset(&b->line[y][x1], col, x2 - x1);
+        else
+           memset(&((uint32_t *)b->line[y])[x1], col, (x2 - x1) * 4);
+}
 
 BITMAP *create_bitmap(int w,int h)
 {
