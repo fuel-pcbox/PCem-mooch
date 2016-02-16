@@ -21,6 +21,9 @@ typedef struct
    unsigned char b;
 }APALETTE;
 
+#define SCREEN_W 320
+#define SCREEN_H 240
+
 static struct retro_log_callback logging;
 static retro_log_printf_t log_cb;
 static bool use_audio_cb;
@@ -35,6 +38,7 @@ int rawinputkey[272];
 int romspresent[ROM_MAX];
 int gfx_present[GFX_MAX];
 
+static BITMAP *buffer32_vscale;
 
 void set_window_title(char *s)
 {
@@ -253,6 +257,8 @@ static PALETTE cgapal=
 
 static uint32_t pal_lookup[256];
 
+static retro_video_refresh_t video_cb;
+
 static void libretro_blit_memtoscreen(int x, int y, int y1, int y2, int w, int h)
 {
 #if 0
@@ -269,16 +275,19 @@ static void libretro_blit_memtoscreen(int x, int y, int y1, int y2, int w, int h
          }
       }
 
-      blit(buffer32_vscale, screen, x, (y+y1)*2, 0, y1, w, (y2-y1)*2);
+      video_cb(buffer32_vscale, w, h, w);
    }
    else
-      blit(buffer32, screen, x, y+y1, 0, y1, w, y2-y1);
 #endif
+      video_cb(buffer32, w, h, w);
+}
+
+void rectfill(BITMAP *b, int x1, int y1, int x2, int y2, uint32_t col)
+{
 }
 
 static void libretro_blit_memtoscreen_8(int x, int y, int w, int h)
 {
-#if 0
    int xx, yy;
 
    if (y < 0)
@@ -303,8 +312,7 @@ static void libretro_blit_memtoscreen_8(int x, int y, int w, int h)
       readflash = 0;
    }
 
-   blit(buffer32, screen, x, y*2, 0, 0, w, h*2);
-#endif
+   video_cb(buffer32, w, h, w);
 }
 
 
@@ -330,7 +338,6 @@ void retro_get_system_info(struct retro_system_info *info)
    info->valid_extensions = NULL; // Anything is fine, we don't care.
 }
 
-static retro_video_refresh_t video_cb;
 static retro_audio_sample_t audio_cb;
 static retro_audio_sample_batch_t audio_batch_cb;
 static retro_environment_t environ_cb;
