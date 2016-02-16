@@ -53,9 +53,9 @@ void joystick_poll()
 {
    int c;
 
+#if 0
    poll_joystick();
 
-#if 0
    for (c = 0; c < MIN(num_joysticks, 2); c++)
    {                
       joystick_state[c].x = joy[c].stick[0].axis[0].pos * 256;
@@ -66,6 +66,14 @@ void joystick_poll()
       joystick_state[c].b[3] = joy[c].button[3].b;
    }
 #endif
+}
+
+void mouse_init()
+{
+}
+
+void mouse_get_mickeys(int *x, int *y)
+{
 }
 
 void mouse_poll_host()
@@ -95,7 +103,9 @@ static int key_convert[128] =
 
 void keyboard_init()
 {
-        install_keyboard();
+#if 0
+   install_keyboard();
+#endif
 }
 
 void keyboard_close()
@@ -422,14 +432,42 @@ static void keyboard_cb(bool down, unsigned keycode,
          down ? "yes" : "no", keycode, character, mod);
 }
 
-static void midi_init(void)
+static int midi_cmd_pos, midi_len;
+static uint8_t midi_command[3];
+static int midi_lengths[8] = {3, 3, 3, 3, 2, 2, 3, 0};
+
+void midi_init(void)
 {
    /* TODO ? */
 }
 
-static void midi_close(void)
+void midi_close(void)
 {
    /* TODO ? */
+}
+
+void midi_write(uint8_t val)
+{
+        if (val & 0x80)
+        {
+                midi_cmd_pos = 0;
+                midi_len = midi_lengths[(val >> 4) & 7];
+                midi_command[0] = midi_command[1] = midi_command[2] = 0;
+        }
+
+        if (midi_len && midi_cmd_pos < 3)
+        {                
+                midi_command[midi_cmd_pos] = val;
+                
+                midi_cmd_pos++;
+                
+#if 0
+#ifdef USE_ALLEGRO_MIDI
+                if (midi_cmd_pos == midi_len)
+                        midi_out(midi_command, midi_len);
+#endif
+#endif
+        }
 }
 
 bool retro_load_game(const struct retro_game_info *info)
