@@ -16,6 +16,7 @@ SOURCES_CXX := $(CORE_DIR)/dosbox/dbopl.cc \
 					$(CORE_DIR)/resid-fp/wave6581_PST.cc \
 					$(CORE_DIR)/resid-fp/wave8580__ST.cc \
 					$(CORE_DIR)/resid-fp/wave8580_PS_.cc \
+					$(CORE_DIR)/resid-fp/wave8580_PST.cc \
 					$(CORE_DIR)/resid-fp/wave8580_P_T.cc \
 					$(CORE_DIR)/resid-fp/wave.cc
 
