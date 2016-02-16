@@ -447,7 +447,7 @@ void retro_run(void)
 
    input_poll_cb();
 
-   while (quited)
+   if (quited)
       return;
 
    if (ticks)
@@ -467,8 +467,8 @@ void retro_run(void)
       rest(1);
 #endif
 
-           if (ticks > 10)
-              ticks = 0;
+   if (ticks > 10)
+      ticks = 0;
    /* missing: audio_cb / video_cb */
 }
 
