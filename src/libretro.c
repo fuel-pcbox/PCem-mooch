@@ -307,18 +307,6 @@ static void libretro_blit_memtoscreen_8(int x, int y, int w, int h)
 #endif
 }
 
-void retro_init(void)
-{
-   unsigned c;
-
-   video_blit_memtoscreen   = libretro_blit_memtoscreen;
-   video_blit_memtoscreen_8 = libretro_blit_memtoscreen_8;
-
-   /* video initialization */
-   for (c = 0; c < 256; c++)
-      pal_lookup[c] = makecol(cgapal[c].r << 2, cgapal[c].g << 2, cgapal[c].b << 2);
-
-}
 
 void retro_deinit(void)
 {
@@ -355,6 +343,28 @@ const char* retro_get_system_directory(void)
     environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir);
 
     return dir ? dir : ".";
+}
+
+void retro_init(void)
+{
+#ifdef _WIN32
+   char slash = '\\';
+#else
+   char slash = '/';
+#endif
+   unsigned c;
+   const char *system_dir = NULL;
+
+   video_blit_memtoscreen   = libretro_blit_memtoscreen;
+   video_blit_memtoscreen_8 = libretro_blit_memtoscreen_8;
+
+   /* video initialization */
+   for (c = 0; c < 256; c++)
+      pal_lookup[c] = makecol(cgapal[c].r << 2, cgapal[c].g << 2, cgapal[c].b << 2);
+
+   system_dir = retro_get_system_directory();
+
+   sprintf(pcempath, "%s%c%s%c", system_dir, slash, "pcem", slash);
 }
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
