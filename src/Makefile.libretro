@@ -165,7 +165,7 @@ endif
 ifeq ($(DEBUG), 1)
 COMMONFLAGS += -O0 -g
 else
-COMMONFLAGS += -O3 -DNDEBUG -DGIT_VERSION=\"$(GIT_VERSION)\" 
+COMMONFLAGS += -O2 -g -DGIT_VERSION=\"$(GIT_VERSION)\" 
 endif
 
 CORE_DIR    := .

@@ -87,7 +87,7 @@ void codegen_init()
 		exit(-1);
 	}
 #endif
-        pclog("Codegen is %p\n", (void *)pages[0xfab12 >> 12].block);
+        //pclog("Codegen is %p\n", (void *)pages[0xfab12 >> 12].block);
 }
 
 void codegen_reset()
