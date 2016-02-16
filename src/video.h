@@ -1,4 +1,4 @@
-#ifdef __unix
+#if defined(__unix) && !defined(__LIBRETRO__)
 
 #include "allegro-main.h"
 

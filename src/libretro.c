@@ -14,6 +14,13 @@
 #include "nvr.h"
 #include "video.h"
 
+typedef struct
+{
+   unsigned char r;
+   unsigned char g;
+   unsigned char b;
+}APALETTE;
+
 static struct retro_log_callback logging;
 static retro_log_printf_t log_cb;
 static bool use_audio_cb;
@@ -28,6 +35,30 @@ int gfx_present[GFX_MAX];
 int mouse_buttons;
 joystick_t joystick_state[2];
 int joysticks_present;
+
+BITMAP *create_bitmap(int w,int h)
+{
+   BITMAP *buff = malloc(sizeof(BITMAP));
+
+   if (!buff)
+      return NULL;
+
+   buff->dat   = (unsigned char*)malloc(1*w*h);
+
+   buff->w     = w;
+   buff->h     = h;
+
+   return buff;
+}
+
+int destroy_bitmap(BITMAP *buff)
+{
+   if (buff->dat)
+      free(buff->dat);
+   free(buff);
+
+   return 0;
+}
 
 void initalmain(int argc, char *argv[])
 {
