@@ -213,7 +213,7 @@ int iso_open(char *fn)
         return 0;
 }
 
-static void iso_close(void)
+void iso_close(void)
 {
         if (iso_image)
         {

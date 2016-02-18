@@ -8,6 +8,7 @@ extern char iso_path[1024];
 
 extern int iso_open(char *fn);
 extern void iso_reset();
+extern void iso_close();
 
 #define CDROM_ISO 200
 
