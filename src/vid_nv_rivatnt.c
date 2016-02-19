@@ -327,17 +327,21 @@ static uint8_t rivatnt_in(uint16_t addr, void *p)
   svga_t *svga = &rivatnt->svga;
   uint8_t ret = 0;
 
+  switch (addr)
+  {
+  case 0x3D0 ... 0x3D3:
+  pclog("RIVA TNT RMA BAR Register read %04X %04X:%08X\n", addr, CS, pc);
+  if(!(rivatnt->rma.mode & 1)) break;
+  ret = rivatnt_rma_in(rivatnt->rma_addr + ((rivatnt->rma.mode & 0xe) << 1) + (addr & 3), rivatnt);
+  break;
+  }
+  
   if (((addr & 0xfff0) == 0x3d0 || (addr & 0xfff0) == 0x3b0) && !(svga->miscout & 1))
     addr ^= 0x60;
 
     //        if (addr != 0x3da) pclog("S3 in %04X %04X:%08X  ", addr, CS, pc);
   switch (addr)
   {
-  case 0x3D0 ... 0x3D3:
-  pclog("RIVA TNT RMA BAR Register read %02X %04X:%08X\n", addr, CS, pc);
-  if(!(rivatnt->rma.mode & 1)) break;
-  ret = rivatnt_rma_in(rivatnt->rma_addr + ((rivatnt->rma.mode & 0xe) << 1) + (addr & 3), rivatnt);
-  break;
   case 0x3D4:
   ret = svga->crtcreg;
   break;
@@ -360,20 +364,24 @@ static void rivatnt_out(uint16_t addr, uint8_t val, void *p)
   svga_t *svga = &rivatnt->svga;
 
   uint8_t old;
+  
+  switch(addr)
+  {
+  case 0x3D0 ... 0x3D3:
+  pclog("RIVA TNT RMA BAR Register write %04X %02x %04X:%08X\n", addr, val, CS, pc);
+  rivatnt->rma.access_reg[addr & 3] = val;
+  if(!(rivatnt->rma.mode & 1)) return;
+  rivatnt_rma_out(rivatnt->rma_addr + ((rivatnt->rma.mode & 0xe) << 1) + (addr & 3), rivatnt->rma.access_reg[addr & 3], rivatnt);
+  return;
+  }
 
   if (((addr & 0xfff0) == 0x3d0 || (addr & 0xfff0) == 0x3b0) && !(svga->miscout & 1))
     addr ^= 0x60;
 
   switch(addr)
   {
-  case 0x3D0 ... 0x3D3:
-  pclog("RIVA TNT RMA BAR Register write %02X %02x %04X:%08X\n", addr, val, CS, pc);
-  rivatnt->rma.access_reg[addr & 3] = val;
-  if(!(rivatnt->rma.mode & 1)) return;
-  rivatnt_rma_out(rivatnt->rma_addr + ((rivatnt->rma.mode & 0xe) << 1) + (addr & 3), rivatnt->rma.access_reg[addr & 3], rivatnt);
-  return;
   case 0x3D4:
-  svga->crtcreg = val & 0x7f;
+  svga->crtcreg = val;
   return;
   case 0x3D5:
   if ((svga->crtcreg < 7) && (svga->crtc[0x11] & 0x80))
@@ -626,6 +634,11 @@ static void *rivatnt_init()
   rivatnt->pci_regs[5] = 0;
   rivatnt->pci_regs[6] = 0;
   rivatnt->pci_regs[7] = 2;
+  
+  rivatnt->pci_regs[0x2c] = 0x02;
+  rivatnt->pci_regs[0x2d] = 0x11;
+  rivatnt->pci_regs[0x2e] = 0x15;
+  rivatnt->pci_regs[0x2f] = 0x10;
 
   pci_add(rivatnt_pci_read, rivatnt_pci_write, rivatnt);
 
