@@ -18,6 +18,13 @@
 
 #define LOD_MAX 8
 
+enum VOODOO_TYPE
+{
+	VOODOO1,
+	VOODOO2,
+	VOODOO2_SLI
+};
+
 static int tris = 0;
 
 static uint64_t status_time = 0;
@@ -158,6 +165,8 @@ typedef struct voodoo_params_t
 
 typedef struct voodoo_t
 {
+		int voodoo_type;
+	
         mem_mapping_t mapping;
                 
         int pci_enable;
@@ -4004,7 +4013,9 @@ uint8_t voodoo_pci_read(int func, int addr, void *p)
                 case 0x00: return 0x1a; /*3dfx*/
                 case 0x01: return 0x12;
                 
-                case 0x02: return 0x01; /*SST-1 (Voodoo Graphics)*/
+                case 0x02:
+				if(voodoo->voodoo_type == VOODOO1) return 0x01; /*SST-1 (Voodoo Graphics)*/
+				else if(voodoo->voodoo_type == VOODOO2) return 0x02; /*Voodoo 2*/
                 case 0x03: return 0x00;
                 
                 case 0x04: return voodoo->pci_enable ? 0x02 : 0x00; /*Respond to memory accesses*/
@@ -4314,6 +4325,8 @@ void *voodoo_init()
         voodoo_t *voodoo = malloc(sizeof(voodoo_t));
         memset(voodoo, 0, sizeof(voodoo_t));
 
+		voodoo->voodoo_type = device_get_config_int("voodoo_type");
+		
         voodoo->bilinear_enabled = device_get_config_int("bilinear");
         voodoo->scrfilter = device_get_config_int("dacfilter");
         voodoo->texture_size = device_get_config_int("texture_memory");
@@ -4437,6 +4450,26 @@ void voodoo_close(void *p)
 
 static device_config_t voodoo_config[] =
 {
+		{
+				.name = "voodoo_type",
+				.description = "Type of Voodoo",
+				.type = CONFIG_SELECTION,
+				.selection =
+				{
+						{
+								.description = "Voodoo 1",
+								.value = VOODOO1
+						},
+						{
+								.description = "Voodoo 2",
+								.value = VOODOO2
+						},
+						{
+								.description = ""
+						},
+				},
+				.default_int = VOODOO1
+		},
         {
                 .name = "framebuffer_memory",
                 .description = "Framebuffer memory size",
