@@ -37,6 +37,28 @@ typedef struct rivatnt_t
 
   struct
   {
+	uint32_t intr;
+	uint32_t intr_en;
+	uint32_t intr_line;
+	uint32_t enable;
+  } pmc;
+  
+  struct
+  {
+	uint32_t intr;
+	uint32_t intr_en;
+  } pbus;
+  
+  struct
+  {
+    uint32_t addr;
+    uint32_t data;
+    uint8_t access_reg[4];
+    uint8_t mode;
+  } rma;
+  
+  struct
+  {
     int width;
     int bpp;
     uint32_t config_0;
@@ -47,15 +69,17 @@ typedef struct rivatnt_t
     uint32_t gen_ctrl;
   } pramdac;
 
-  struct
-  {
-    uint32_t addr;
-    uint32_t data;
-    uint8_t access_reg[4];
-    uint8_t mode;
-  } rma;
-
 } rivatnt_t;
+
+const char* pmc_interrupts[32] =
+{
+	"","","","","PMEDIA","","","","PFIFO","","","","PGRAPH","","","","PRAMDAC.VIDEO","","","","PTIMER","","","","PCRTC","","","","PBUS","","",""
+};
+
+const char* pbus_interrupts[32] =
+{
+	"BUS_ERROR","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""	
+};
 
 static uint8_t rivatnt_pci_read(int func, int addr, void *p);
 
@@ -73,9 +97,47 @@ static uint8_t rivatnt_pmc_read(uint32_t addr, void *p)
   case 0x000001: ret = 0x40; break;
   case 0x000002: ret = 0x00; break;
   case 0x000003: ret = 0x00; break;
+  case 0x000100: ret = rivatnt->pmc.intr & 0xff; break;
+  case 0x000101: ret = (rivatnt->pmc.intr >> 8) & 0xff; break;
+  case 0x000102: ret = (rivatnt->pmc.intr >> 16) & 0xff; break;
+  case 0x000103: ret = (rivatnt->pmc.intr >> 24) & 0xff; break;
+  case 0x000140: ret = rivatnt->pmc.intr & 0xff; break;
+  case 0x000141: ret = (rivatnt->pmc.intr_en  >> 8) & 0xff; break;
+  case 0x000142: ret = (rivatnt->pmc.intr_en >> 16) & 0xff; break;
+  case 0x000143: ret = (rivatnt->pmc.intr_en >> 24) & 0xff; break;
+  case 0x000160: ret = rivatnt->pmc.intr_line & 0xff; break;
+  case 0x000161: ret = (rivatnt->pmc.intr_line >> 8) & 0xff; break;
+  case 0x000162: ret = (rivatnt->pmc.intr_line >> 16) & 0xff; break;
+  case 0x000163: ret = (rivatnt->pmc.intr_line >> 24) & 0xff; break;
+  case 0x000200: ret = rivatnt->pmc.enable & 0xff; break;
+  case 0x000201: ret = (rivatnt->pmc.enable >> 8) & 0xff; break;
+  case 0x000202: ret = (rivatnt->pmc.enable >> 16) & 0xff; break;
+  case 0x000203: ret = (rivatnt->pmc.enable >> 24) & 0xff; break;
   }
 
   return ret;
+}
+
+static void rivatnt_pmc_write(uint32_t addr, uint32_t val, void *p)
+{
+  rivatnt_t *rivatnt = (rivatnt_t *)p;
+  svga_t *svga = &rivatnt->svga;
+  pclog("RIVA TNT PMC write %08X %08X %04X:%08X\n", addr, val, CS, pc);
+
+  switch(addr)
+  {
+  case 0x000100:
+  rivatnt->pmc.intr = val;
+  //if((val & 0x80000000) && (rivatnt->pmc.intr_en & 2)) pci_interrupt(0);
+  break;
+  case 0x000140:
+  rivatnt->pmc.intr_en = val & 3;
+  break;
+  case 0x000200:
+  rivatnt->pmc.enable = val;
+  //if(val & 0x80000000) pci_interrupt(0);
+  break;
+  }
 }
 
 static uint8_t rivatnt_pbus_read(uint32_t addr, void *p)
@@ -88,10 +150,35 @@ static uint8_t rivatnt_pbus_read(uint32_t addr, void *p)
 
   switch(addr)
   {
+  case 0x001100: ret = rivatnt->pbus.intr & 0xff; break;
+  case 0x001101: ret = (rivatnt->pbus.intr >> 8) & 0xff; break;
+  case 0x001102: ret = (rivatnt->pbus.intr >> 16) & 0xff; break;
+  case 0x001103: ret = (rivatnt->pbus.intr >> 24) & 0xff; break;
+  case 0x001140: ret = rivatnt->pbus.intr & 0xff; break;
+  case 0x001141: ret = (rivatnt->pbus.intr_en  >> 8) & 0xff; break;
+  case 0x001142: ret = (rivatnt->pbus.intr_en >> 16) & 0xff; break;
+  case 0x001143: ret = (rivatnt->pbus.intr_en >> 24) & 0xff; break;
   case 0x001800 ... 0x0018ff: ret = rivatnt_pci_read(0, addr - 0x1800, rivatnt); break;
   }
 
   return ret;
+}
+
+static void rivatnt_pbus_write(uint32_t addr, uint32_t val, void *p)
+{
+  rivatnt_t *rivatnt = (rivatnt_t *)p;
+  svga_t *svga = &rivatnt->svga;
+  pclog("RIVA TNT PBUS write %08X %08X %04X:%08X\n", addr, val, CS, pc);
+
+  switch(addr)
+  {
+  case 0x001190:
+  rivatnt->pbus.intr = val;
+  break;
+  case 0x001140:
+  rivatnt->pbus.intr_en = val;
+  break;
+  }
 }
 
 static uint8_t rivatnt_pfb_read(uint32_t addr, void *p)
@@ -240,6 +327,12 @@ static void rivatnt_mmio_write_l(uint32_t addr, uint32_t val, void *p)
 
   switch(addr)
   {
+  case 0x000000 ... 0x000fff:
+  rivatnt_pmc_write(addr, val, rivatnt);
+  break;
+  case 0x001000 ... 0x001fff:
+  rivatnt_pbus_write(addr, val, rivatnt);
+  break;
   case 0x100000 ... 0x100fff:
   rivatnt_pfb_write(addr, val, rivatnt);
   break;
