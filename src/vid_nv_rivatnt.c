@@ -327,14 +327,14 @@ static uint8_t rivatnt_in(uint16_t addr, void *p)
   svga_t *svga = &rivatnt->svga;
   uint8_t ret = 0;
 
-  switch (addr)
+  /*switch (addr)
   {
   case 0x3D0 ... 0x3D3:
   pclog("RIVA TNT RMA BAR Register read %04X %04X:%08X\n", addr, CS, pc);
   if(!(rivatnt->rma.mode & 1)) break;
   ret = rivatnt_rma_in(rivatnt->rma_addr + ((rivatnt->rma.mode & 0xe) << 1) + (addr & 3), rivatnt);
   break;
-  }
+  }*/
   
   if (((addr & 0xfff0) == 0x3d0 || (addr & 0xfff0) == 0x3b0) && !(svga->miscout & 1))
     addr ^= 0x60;
@@ -342,6 +342,11 @@ static uint8_t rivatnt_in(uint16_t addr, void *p)
     //        if (addr != 0x3da) pclog("S3 in %04X %04X:%08X  ", addr, CS, pc);
   switch (addr)
   {
+  case 0x3D0 ... 0x3D3:
+  pclog("RIVA TNT RMA BAR Register read %04X %04X:%08X\n", addr, CS, pc);
+  if(!(rivatnt->rma.mode & 1)) break;
+  ret = rivatnt_rma_in(rivatnt->rma_addr + ((rivatnt->rma.mode & 0xe) << 1) + (addr & 3), rivatnt);
+  break;
   case 0x3D4:
   ret = svga->crtcreg;
   break;
@@ -365,6 +370,19 @@ static void rivatnt_out(uint16_t addr, uint8_t val, void *p)
 
   uint8_t old;
   
+  /*switch(addr)
+  {
+  case 0x3D0 ... 0x3D3:
+  pclog("RIVA TNT RMA BAR Register write %04X %02x %04X:%08X\n", addr, val, CS, pc);
+  rivatnt->rma.access_reg[addr & 3] = val;
+  if(!(rivatnt->rma.mode & 1)) return;
+  rivatnt_rma_out(rivatnt->rma_addr + ((rivatnt->rma.mode & 0xe) << 1) + (addr & 3), rivatnt->rma.access_reg[addr & 3], rivatnt);
+  return;
+  }*/
+
+  if (((addr & 0xfff0) == 0x3d0 || (addr & 0xfff0) == 0x3b0) && !(svga->miscout & 1))
+    addr ^= 0x60;
+
   switch(addr)
   {
   case 0x3D0 ... 0x3D3:
@@ -373,13 +391,6 @@ static void rivatnt_out(uint16_t addr, uint8_t val, void *p)
   if(!(rivatnt->rma.mode & 1)) return;
   rivatnt_rma_out(rivatnt->rma_addr + ((rivatnt->rma.mode & 0xe) << 1) + (addr & 3), rivatnt->rma.access_reg[addr & 3], rivatnt);
   return;
-  }
-
-  if (((addr & 0xfff0) == 0x3d0 || (addr & 0xfff0) == 0x3b0) && !(svga->miscout & 1))
-    addr ^= 0x60;
-
-  switch(addr)
-  {
   case 0x3D4:
   svga->crtcreg = val;
   return;
@@ -448,10 +459,10 @@ static uint8_t rivatnt_pci_read(int func, int addr, void *p)
   pclog("RIVA TNT PCI read %02X %04X:%08X\n", addr, CS, pc);
   switch (addr)
   {
-    case 0x00: ret = 0xde; break; /*'nVidia'*/
-    case 0x01: ret = 0x10; break;
+    case 0x00: ret = 0xd2; break; /*'nVidia'*/
+    case 0x01: ret = 0x12; break;
 
-    case 0x02: ret = 0x20; break; /*'RIVA TNT'*/
+    case 0x02: ret = 0x18; break; /*'RIVA TNT'*/
     case 0x03: ret = 0x00; break;
 
     case 0x04: ret = rivatnt->pci_regs[0x04] & 0x37; break;
@@ -603,7 +614,7 @@ static void *rivatnt_init()
   rivatnt_in, rivatnt_out,
   NULL, NULL);
 
-  rom_init(&rivatnt->bios_rom, "roms/rivatnt.bin", 0xc0000, 0x10000, 0xffff, 0, MEM_MAPPING_EXTERNAL);
+  rom_init(&rivatnt->bios_rom, "roms/riva128.bin", 0xc0000, 0x10000, 0xffff, 0, MEM_MAPPING_EXTERNAL);
   if (PCI)
     mem_mapping_disable(&rivatnt->bios_rom.mapping);
 
@@ -635,10 +646,10 @@ static void *rivatnt_init()
   rivatnt->pci_regs[6] = 0;
   rivatnt->pci_regs[7] = 2;
   
-  rivatnt->pci_regs[0x2c] = 0x02;
-  rivatnt->pci_regs[0x2d] = 0x11;
-  rivatnt->pci_regs[0x2e] = 0x15;
-  rivatnt->pci_regs[0x2f] = 0x10;
+  rivatnt->pci_regs[0x2c] = 0xb4;
+  rivatnt->pci_regs[0x2d] = 0x10;
+  rivatnt->pci_regs[0x2e] = 0x1b;
+  rivatnt->pci_regs[0x2f] = 0x1b;
 
   pci_add(rivatnt_pci_read, rivatnt_pci_write, rivatnt);
 
@@ -659,7 +670,7 @@ static void rivatnt_close(void *p)
 
 static int rivatnt_available()
 {
-  return rom_present("roms/rivatnt.bin");
+  return rom_present("roms/riva128.bin");
 }
 
 static void rivatnt_speed_changed(void *p)
