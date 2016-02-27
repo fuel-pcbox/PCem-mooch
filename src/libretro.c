@@ -155,19 +155,18 @@ void hline(BITMAP *b, int x1, int y, int x2, uint32_t col)
            memset(&((uint32_t *)b->line[y])[x1], col, (x2 - x1) * 4);
 }
 
-BITMAP *create_bitmap(int w,int h)
+BITMAP *create_bitmap(int x,int y)
 {
-   BITMAP *buff = malloc(sizeof(BITMAP));
-
-   if (!buff)
-      return NULL;
-
-   buff->dat   = (unsigned char*)malloc(1*w*h);
-
-   buff->w     = w;
-   buff->h     = h;
-
-   return buff;
+   BITMAP *b = malloc(sizeof(BITMAP) + (y * sizeof(uint8_t *)));
+   int c;
+   b->dat = malloc(x * y * 4);
+   for (c = 0; c < y; c++)
+   {
+      b->line[c] = b->dat + (c * x * 4);
+   }
+   b->w = x;
+   b->h = y;
+   return b;
 }
 
 int destroy_bitmap(BITMAP *buff)
@@ -279,7 +278,7 @@ static void libretro_blit_memtoscreen(int x, int y, int y1, int y2, int w, int h
    }
    else
 #endif
-      video_cb(buffer32, w, h, w);
+      video_cb(buffer32->dat, buffer32->w, buffer32->h, buffer32->w);
 }
 
 void rectfill(BITMAP *b, int x1, int y1, int x2, int y2, uint32_t col)
@@ -312,7 +311,7 @@ static void libretro_blit_memtoscreen_8(int x, int y, int w, int h)
       readflash = 0;
    }
 
-   video_cb(buffer32, w, h, w);
+   video_cb(buffer32->dat, buffer32->w, buffer32->h, buffer32->w);
 }
 
 
@@ -450,6 +449,8 @@ void retro_run(void)
    if (quited)
       return;
 
+   ticks+=50000;
+
    if (ticks)
    {
       ticks--;
@@ -470,6 +471,8 @@ void retro_run(void)
    if (ticks > 10)
       ticks = 0;
    /* missing: audio_cb / video_cb */
+
+   video_cb(buffer32->dat, buffer32->w, buffer32->h, buffer32->w);
 }
 
 static void keyboard_cb(bool down, unsigned keycode,
