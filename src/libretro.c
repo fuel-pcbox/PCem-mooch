@@ -481,10 +481,8 @@ void retro_run(void)
          savenvr();
       }
    }
-#if 0
    else
-      rest(1);
-#endif
+      usleep(1);
 
    if (ticks > 10)
       ticks = 0;
