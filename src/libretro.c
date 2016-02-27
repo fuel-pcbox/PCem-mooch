@@ -40,6 +40,15 @@ int gfx_present[GFX_MAX];
 
 static BITMAP *buffer32_vscale;
 
+/* forward declarations */
+void closepc(void);
+void saveconfig(void);
+void savenvr(void);
+int loadbios(void);
+void initpc(int argc, char *argv[]);
+void runpc(void);
+void resetpchard(void);
+
 void set_window_title(char *s)
 {
 }
@@ -536,7 +545,7 @@ bool retro_load_game(const struct retro_game_info *info)
    check_variables();
 
    midi_init();
-   initpc(NULL, NULL);
+   initpc(0, NULL);
 
    d = romset;
    for (c = 0; c < ROM_MAX; c++)
