@@ -604,7 +604,6 @@ bool retro_load_game(const struct retro_game_info *info)
          {
             gfxcard = c;
             saveconfig();
-            resetpchard();
             break;
          }
       }
