@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <math.h>
+#include <unistd.h>
 
 #include "libretro.h"
 
@@ -375,7 +376,10 @@ void retro_init(void)
    char slash = '/';
 #endif
    unsigned i;
+   unsigned color_mode = RETRO_PIXEL_FORMAT_XRGB8888;
    const char *system_dir = NULL;
+
+   environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &color_mode);
 
    system_dir = retro_get_system_directory();
 
