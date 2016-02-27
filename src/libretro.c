@@ -38,6 +38,8 @@ int rawinputkey[272];
 int romspresent[ROM_MAX];
 int gfx_present[GFX_MAX];
 
+static retro_video_refresh_t video_cb;
+
 static BITMAP *buffer32_vscale;
 
 /* forward declarations */
@@ -219,6 +221,11 @@ void endblit()
 {
 }
 
+void blit(BITMAP *src, int x1, int y1, int x2, int y2, int xs, int ys)
+{
+   video_cb(src->dat, src->w, src->h, src->w);
+}
+
 static int ticks = 0;
 static void timer_rout()
 {
@@ -264,12 +271,12 @@ static PALETTE cgapal=
 };
 
 static uint32_t pal_lookup[256];
+int winsizex=640;
+int winsizey=480;
 
-static retro_video_refresh_t video_cb;
 
 static void libretro_blit_memtoscreen(int x, int y, int y1, int y2, int w, int h)
 {
-#if 0
    if (h < winsizey)
    {
       int yy;
@@ -283,11 +290,10 @@ static void libretro_blit_memtoscreen(int x, int y, int y1, int y2, int w, int h
          }
       }
 
-      video_cb(buffer32_vscale, w, h, w);
+      blit(buffer32_vscale, x, (y+y1)*2, 0, y1, w, (y2-y1)*2);
    }
    else
-#endif
-      video_cb(buffer32->dat, buffer32->w, buffer32->h, buffer32->w);
+      blit(buffer32, x, y+y1, 0, y1, w, y2-y1);
 }
 
 void rectfill(BITMAP *b, int x1, int y1, int x2, int y2, uint32_t col)
@@ -320,12 +326,13 @@ static void libretro_blit_memtoscreen_8(int x, int y, int w, int h)
       readflash = 0;
    }
 
-   video_cb(buffer32->dat, buffer32->w, buffer32->h, buffer32->w);
+   blit(buffer32, x, y*2, 0, 0, w, h*2);
 }
 
 
 void retro_deinit(void)
 {
+	destroy_bitmap(buffer32_vscale);
 }
 
 unsigned retro_api_version(void)
@@ -367,19 +374,21 @@ void retro_init(void)
 #else
    char slash = '/';
 #endif
-   unsigned c;
+   unsigned i;
    const char *system_dir = NULL;
-
-   video_blit_memtoscreen   = libretro_blit_memtoscreen;
-   video_blit_memtoscreen_8 = libretro_blit_memtoscreen_8;
-
-   /* video initialization */
-   for (c = 0; c < 256; c++)
-      pal_lookup[c] = makecol(cgapal[c].r << 2, cgapal[c].g << 2, cgapal[c].b << 2);
 
    system_dir = retro_get_system_directory();
 
    sprintf(pcempath, "%s%c%s%c", system_dir, slash, "pcem", slash);
+
+   /* video initialization */
+   video_blit_memtoscreen   = libretro_blit_memtoscreen;
+   video_blit_memtoscreen_8 = libretro_blit_memtoscreen_8;
+
+   for (i = 0; i < 256; i++)
+      pal_lookup[i] = makecol(cgapal[i].r << 2, cgapal[i].g << 2, cgapal[i].b << 2);
+
+	buffer32_vscale = create_bitmap(2048, 2048);
 }
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
@@ -481,7 +490,6 @@ void retro_run(void)
       ticks = 0;
    /* missing: audio_cb / video_cb */
 
-   video_cb(buffer32->dat, buffer32->w, buffer32->h, buffer32->w);
 }
 
 static void keyboard_cb(bool down, unsigned keycode,
