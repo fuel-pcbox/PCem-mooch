@@ -41,8 +41,6 @@ int gfx_present[GFX_MAX];
 
 static retro_video_refresh_t video_cb;
 
-static BITMAP *buffer32_vscale;
-
 /* forward declarations */
 void closepc(void);
 void saveconfig(void);
@@ -272,68 +270,81 @@ static PALETTE cgapal=
 };
 
 static uint32_t pal_lookup[256];
+static uint32_t video_buffer[2048 * 2048 * 4];
 int winsizex=640;
 int winsizey=480;
 
-
 static void libretro_blit_memtoscreen(int x, int y, int y1, int y2, int w, int h)
 {
-   if (h < winsizey)
-   {
-      int yy;
+   int xx, yy;
+   uint32_t *p;
 
-      for (yy = y+y1; yy < y+y2; yy++)
+   for (yy = y1; yy < y2; yy++)
+   {
+      if ((y + yy) >= 0 && (y + yy) < buffer->h)
+         memcpy(video_buffer + (yy * sizeof(uint32_t)), &(((uint32_t *)buffer32->line[y + yy])[x]), w * 4);
+   }
+
+   if (readflash)
+   {
+      readflash = 0;
+      if (enable_flash)
       {
-         if (yy >= 0)
+         for (yy = 8; yy < 14; yy++)
          {
-            memcpy(&((uint32_t *)buffer32_vscale->line[yy*2])[x], &((uint32_t *)buffer32->line[yy])[x], w*4);
-            memcpy(&((uint32_t *)buffer32_vscale->line[(yy*2)+1])[x], &((uint32_t *)buffer32->line[yy])[x], w*4);
+            p = (uint32_t *)(video_buffer + (yy * sizeof(uint32_t)));                        
+            for (xx = (w - 40); xx < (w - 8); xx++)
+               p[xx] = 0xffffffff;
          }
       }
-
-      blit(buffer32_vscale, x, (y+y1)*2, 0, y1, w, (y2-y1)*2);
    }
-   else
-      blit(buffer32, x, y+y1, 0, y1, w, y2-y1);
+
+   video_cb(video_buffer, w, h, w);
+}
+
+static void libretro_blit_memtoscreen_8(int x, int y, int w, int h)
+{
+   int xx, yy;
+   uint32_t *p;
+
+   for (yy = 0; yy < h; yy++)
+   {
+      if ((y + yy) >= 0 && (y + yy) < buffer->h)
+      {
+         p = (uint32_t *)(video_buffer + (yy * sizeof(uint32_t)));
+         for (xx = 0; xx < w; xx++)
+         {
+            p[xx] = pal_lookup[buffer->line[y + yy][x + xx]];
+            /* If brown circuity is disabled, double the green component. */
+            if ((buffer->line[y + yy][x + xx] == 0x16) && !cga_brown)  p[xx] += (p[xx] & 0xff00);
+         }
+      }
+   }
+
+   if (readflash)
+   {
+      readflash = 0;
+      if (enable_flash)
+      {
+         for (yy = 8; yy < 14; yy++)
+         {
+            p = (uint32_t *)(video_buffer + (yy * sizeof(uint32_t)));                        
+            for (xx = (w - 40); xx < (w - 8); xx++)
+               p[xx] = 0xffffffff;
+         }
+      }
+   }
+
+   video_cb(video_buffer, w, h, w);
 }
 
 void rectfill(BITMAP *b, int x1, int y1, int x2, int y2, uint32_t col)
 {
 }
 
-static void libretro_blit_memtoscreen_8(int x, int y, int w, int h)
-{
-   int xx, yy;
-
-   if (y < 0)
-   {
-      h += y;
-      y = 0;
-   }
-
-   for (yy = y; yy < y+h; yy++)
-   {
-      int dy = yy*2;
-      for (xx = x; xx < x+w; xx++)
-      {
-         ((uint32_t *)buffer32->line[dy])[xx] =
-            ((uint32_t *)buffer32->line[dy + 1])[xx] = pal_lookup[buffer->line[yy][xx]];
-      }
-   }
-
-   if (readflash)
-   {
-      rectfill(buffer32, x+SCREEN_W-40, y*2+8, SCREEN_W-8, y*2+14, makecol(255, 255, 255));
-      readflash = 0;
-   }
-
-   blit(buffer32, x, y*2, 0, 0, w, h*2);
-}
-
 
 void retro_deinit(void)
 {
-	destroy_bitmap(buffer32_vscale);
 }
 
 unsigned retro_api_version(void)
@@ -392,7 +403,6 @@ void retro_init(void)
    for (i = 0; i < 256; i++)
       pal_lookup[i] = makecol(cgapal[i].r << 2, cgapal[i].g << 2, cgapal[i].b << 2);
 
-	buffer32_vscale = create_bitmap(2048, 2048);
 }
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
