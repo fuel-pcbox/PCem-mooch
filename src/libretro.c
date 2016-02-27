@@ -279,6 +279,8 @@ static void libretro_blit_memtoscreen(int x, int y, int y1, int y2, int w, int h
    int xx, yy;
    uint32_t *p;
 
+   memset(&video_buffer, 0, 2048 * 2048 * sizeof(uint32_t));
+
    for (yy = y1; yy < y2; yy++)
    {
       if ((y + yy) >= 0 && (y + yy) < buffer->h)
@@ -299,13 +301,15 @@ static void libretro_blit_memtoscreen(int x, int y, int y1, int y2, int w, int h
       }
    }
 
-   video_cb(video_buffer, w, h, w);
+   video_cb(video_buffer, w, h, w * 4);
 }
 
 static void libretro_blit_memtoscreen_8(int x, int y, int w, int h)
 {
    int xx, yy;
    uint32_t *p;
+
+   memset(&video_buffer, 0, 2048 * 2048 * sizeof(uint32_t));
 
    for (yy = 0; yy < h; yy++)
    {
@@ -335,7 +339,7 @@ static void libretro_blit_memtoscreen_8(int x, int y, int w, int h)
       }
    }
 
-   video_cb(video_buffer, w, h, w);
+   video_cb(video_buffer, w, h, w * 4);
 }
 
 void rectfill(BITMAP *b, int x1, int y1, int x2, int y2, uint32_t col)
