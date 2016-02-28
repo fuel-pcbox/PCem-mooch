@@ -22,9 +22,6 @@ typedef struct
    unsigned char b;
 }APALETTE;
 
-#define SCREEN_W 320
-#define SCREEN_H 240
-
 static struct retro_log_callback logging;
 static retro_log_printf_t log_cb;
 static bool use_audio_cb;
