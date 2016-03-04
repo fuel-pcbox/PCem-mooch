@@ -308,6 +308,8 @@ static void d3d_fs_blit_memtoscreen(int x, int y, int y1, int y2, int w, int h)
         int yy;
         double l, t, r, b;
 
+        if(y1 == y2) return;
+        
         d3d_verts[0].tu = d3d_verts[2].tu = d3d_verts[3].tu = 0;
         d3d_verts[0].tv = d3d_verts[3].tv = d3d_verts[4].tv = 0;
         d3d_verts[1].tu = d3d_verts[4].tu = d3d_verts[5].tu = (float)w / 2080.0;
@@ -397,6 +399,8 @@ static void d3d_fs_blit_memtoscreen_8(int x, int y, int w, int h)
         uint32_t *p, *src;
         int xx, yy;
         double l, t, r, b;
+        
+        if(!h) return;
 
         d3d_verts[0].tu = d3d_verts[2].tu = d3d_verts[3].tu = 0;
         d3d_verts[0].tv = d3d_verts[3].tv = d3d_verts[4].tv = 0;
