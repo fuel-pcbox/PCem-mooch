@@ -40,6 +40,12 @@ static int null_ready(void)
         return 0;
 }
 
+/* Always return 0, the contents of a null CD-ROM drive never change. */
+static int null_medium_changed(void)
+{
+        return 0;
+}
+
 static uint8_t null_getcurrentsubchannel(uint8_t *b, int msf)
 {
         return 0x13;
@@ -81,6 +87,11 @@ static uint32_t null_size()
         return 0;
 }
 
+static int null_status()
+{
+	return CD_STATUS_EMPTY;
+}
+
 void cdrom_null_reset()
 {
 }
@@ -99,21 +110,29 @@ static void null_exit(void)
 {
 }
 
+static int null_is_track_audio(uint32_t pos, int ismsf)
+{
+	return 0;
+}
+
 static ATAPI null_atapi =
 {
         null_ready,
+	null_medium_changed,
         null_readtoc,
         null_readtoc_session,
-		null_readtoc_raw,
+	null_readtoc_raw,
         null_getcurrentsubchannel,
         null_readsector,
-		null_readsector_raw,
+	null_readsector_raw,
         null_playaudio,
         null_seek,
         null_load,
         null_eject,
         null_pause,
         null_resume,
+	null_status,
+	null_is_track_audio,
         null_size,
         null_stop,
         null_exit

@@ -238,7 +238,7 @@ static int ioctl_ready(void)
         if (!temp)
                 return 0;
 		pclog("ioctl_ready(): Drive opened successfully\n");
-		if ((cdrom_drive != old_cdrom_drive))  pclog("Drive has changed\n");
+	//if ((cdrom_drive != old_cdrom_drive))  pclog("Drive has changed\n");
         if ((ltoc.TrackData[ltoc.LastTrack].Address[1] != toc.TrackData[toc.LastTrack].Address[1]) ||
             (ltoc.TrackData[ltoc.LastTrack].Address[2] != toc.TrackData[toc.LastTrack].Address[2]) ||
             (ltoc.TrackData[ltoc.LastTrack].Address[3] != toc.TrackData[toc.LastTrack].Address[3]) ||
@@ -261,6 +261,35 @@ static int ioctl_ready(void)
 		pclog("ioctl_ready(): All is good\n");
         return 1;
 //        return (temp)?1:0;
+}
+
+static int ioctl_medium_changed(void)
+{
+        long size;
+        int temp;
+        CDROM_TOC ltoc;
+        if (!cdrom_drive) return 0;		/* This will be handled by the not ready handler instead. */
+        ioctl_open(0);
+        temp=DeviceIoControl(hIOCTL,IOCTL_CDROM_READ_TOC, NULL,0,&ltoc,sizeof(ltoc),&size,NULL);
+        ioctl_close();
+        if (!temp) return 0;				/* Drive empty, a not ready handler matter, not disc change. */
+	if (!tocvalid || (cdrom_drive != old_cdrom_drive))
+	{
+		ioctl_cd_state = CD_STOPPED;
+		toc = ltoc;
+		tocvalid = 1;
+		if (cdrom_drive != old_cdrom_drive)  old_cdrom_drive = cdrom_drive;
+		return 0;
+	}
+	if ((ltoc.TrackData[ltoc.LastTrack].Address[1] != toc.TrackData[toc.LastTrack].Address[1]) ||
+            (ltoc.TrackData[ltoc.LastTrack].Address[2] != toc.TrackData[toc.LastTrack].Address[2]) ||
+            (ltoc.TrackData[ltoc.LastTrack].Address[3] != toc.TrackData[toc.LastTrack].Address[3]))
+	{
+		ioctl_cd_state = CD_STOPPED;
+		toc = ltoc;
+		return 1;				/* TOC mismatches. */
+	}
+        return 0;						/* Noen of the above, return 0. */
 }
 
 static uint8_t ioctl_getcurrentsubchannel(uint8_t *b, int msf)
@@ -386,16 +415,6 @@ static void ioctl_readsector(uint8_t *b, int sector)
         ioctl_close();
 }
 
-#if 0
-static void lba_to_msf(uint8_t *buf, int lba)
-{
-	lba += 150;
-	buf[0] = (lba / 75) / 60;
-	buf[1] = (lba / 75) % 60;
-	buf[2] = lba % 75;
-}
-#endif
-
 static void lba_to_msf(uint8_t *buf, int lba)
 {
 	double dlba = (double) lba + 150;
@@ -404,6 +423,38 @@ static void lba_to_msf(uint8_t *buf, int lba)
 	buf[1] = (uint8_t) (((uint32_t) dlba) % 60);
 	dlba /= 60;
 	buf[0] = (uint8_t) dlba;
+}
+
+static int is_track_audio(uint32_t pos)
+{
+        int c;
+        int control = 0;
+        
+        if (!tocvalid)
+                return 0;
+
+        for (c = toc.FirstTrack; c < toc.LastTrack; c++)
+       {
+                uint32_t track_address = toc.TrackData[c].Address[3] +
+                                         (toc.TrackData[c].Address[2] * 75) +
+                                         (toc.TrackData[c].Address[1] * 75 * 60);
+
+                if (track_address <= pos)
+                        control = toc.TrackData[c].Control;
+        }
+        return (control & 4) ? 0 : 1;
+}
+
+static int ioctl_is_track_audio(uint32_t pos, int ismsf)
+{
+	if (ismsf)
+	{
+		int m = (pos >> 16) & 0xff;
+		int s = (pos >> 8) & 0xff;
+		int f = pos & 0xff;
+		pos = MSFtoLBA(m, s, f);
+	}
+	return is_track_audio(pos);
 }
 
 static void ioctl_readsector_raw(uint8_t *b, int sector)
@@ -522,27 +573,27 @@ static int ioctl_readtoc_session(unsigned char *b, int msf, int maxlen)
 //        pclog("Read TOC session - %i %02X %02X %i %i %02X %02X %02X\n",size,toc.Length[0],toc.Length[1],toc.FirstCompleteSession,toc.LastCompleteSession,toc.TrackData[0].Adr,toc.TrackData[0].Control,toc.TrackData[0].TrackNumber);
         b[2]=toc.FirstCompleteSession;
         b[3]=toc.LastCompleteSession;
-                b[len++]=0; /*Reserved*/
-                b[len++]=(toc.TrackData[0].Adr<<4)|toc.TrackData[0].Control;
-                b[len++]=toc.TrackData[0].TrackNumber;
-                b[len++]=0; /*Reserved*/
-                if (msf)
-                {
-                        b[len++]=toc.TrackData[0].Address[0];
-                        b[len++]=toc.TrackData[0].Address[1];
-                        b[len++]=toc.TrackData[0].Address[2];
-                        b[len++]=toc.TrackData[0].Address[3];
-                }
-                else
-                {
-                        temp=MSFtoLBA(toc.TrackData[0].Address[1],toc.TrackData[0].Address[2],toc.TrackData[0].Address[3]);
-                        b[len++]=temp>>24;
-                        b[len++]=temp>>16;
-                        b[len++]=temp>>8;
-                        b[len++]=temp;
-                }
+        b[len++]=0; /*Reserved*/
+        b[len++]=(toc.TrackData[0].Adr<<4)|toc.TrackData[0].Control;
+        b[len++]=toc.TrackData[0].TrackNumber;
+        b[len++]=0; /*Reserved*/
+        if (msf)
+        {
+                b[len++]=toc.TrackData[0].Address[0];
+                b[len++]=toc.TrackData[0].Address[1];
+                b[len++]=toc.TrackData[0].Address[2];
+                b[len++]=toc.TrackData[0].Address[3];
+        }
+        else
+        {
+                temp=MSFtoLBA(toc.TrackData[0].Address[1],toc.TrackData[0].Address[2],toc.TrackData[0].Address[3]);
+                b[len++]=temp>>24;
+                b[len++]=temp>>16;
+                b[len++]=temp>>8;
+                b[len++]=temp;
+        }
 
-				return len;
+	return len;
 }
 
 static int ioctl_readtoc_raw(unsigned char *b, int maxlen)
@@ -596,6 +647,21 @@ static uint32_t ioctl_size()
         atapi->readtoc(b, 0, 0, 4096, 0);
         
         return last_block;
+}
+
+static int ioctl_status()
+{
+	if (!(ioctl_ready) && (cdrom_drive <= 0))  return CD_STATUS_EMPTY;
+
+	switch(ioctl_cd_state)
+	{
+		case CD_PLAYING:
+			return CD_STATUS_PLAYING;
+		case CD_PAUSED:
+			return CD_STATUS_PAUSED;
+		case CD_STOPPED:
+			return CD_STATUS_STOPPED;
+	}
 }
 
 void ioctl_reset()
@@ -657,12 +723,13 @@ static void ioctl_exit(void)
 static ATAPI ioctl_atapi=
 {
         ioctl_ready,
+	ioctl_medium_changed,
         ioctl_readtoc,
         ioctl_readtoc_session,
-		ioctl_readtoc_raw,
+	ioctl_readtoc_raw,
         ioctl_getcurrentsubchannel,
         ioctl_readsector,
-		ioctl_readsector_raw,
+	ioctl_readsector_raw,
         ioctl_playaudio,
         ioctl_seek,
         ioctl_load,
@@ -670,6 +737,8 @@ static ATAPI ioctl_atapi=
         ioctl_pause,
         ioctl_resume,
         ioctl_size,
+	ioctl_status,
+	ioctl_is_track_audio,
         ioctl_stop,
         ioctl_exit
 };
