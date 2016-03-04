@@ -402,6 +402,8 @@ static void rivatnt_user_write(uint32_t addr, uint32_t val, void *p)
   svga_t *svga = &rivatnt->svga;
   pclog("RIVA TNT USER write %08X %08X %04X:%08X\n", addr, val, CS, pc);
   
+  addr -= 0x800000;
+  
   int chanid = (addr >> 16) & 0xf;
   int subchanid = (addr >> 13) & 0x7;
   int offset = addr & 0x1fff;
