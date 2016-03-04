@@ -560,7 +560,7 @@ static int ioctl_readtoc_session(unsigned char *b, int msf, int maxlen)
         uint32_t temp;
         CDROM_READ_TOC_EX toc_ex;
         CDROM_TOC_SESSION_DATA toc;
-        if (!cdrom_drive) return;
+        if (!cdrom_drive) return 0;
         ioctl_cd_state = CD_STOPPED;        
         memset(&toc_ex,0,sizeof(toc_ex));
         memset(&toc,0,sizeof(toc));

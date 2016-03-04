@@ -263,7 +263,7 @@ static void callnonreadcd(IDE *ide);
 static void callreadcd(IDE *ide);
 static void atapicommand(int ide_board);
 
-int idecallback[2] = {0, 0};
+int idecallback[3] = {0, 0, 0};
 
 int cur_ide[2];
 
@@ -472,7 +472,7 @@ static uint32_t ide_atapi_mode_sense(IDE *ide, uint32_t pos, uint8_t type)
         	buf[pos++] = GPMODE_CDROM_AUDIO_PAGE;
         	if (page_flags[GPMODE_CDROM_AUDIO_PAGE] && PAGE_CHANGED)
 		{
-			for (i = 0; i < 14; i++)
+			for (int i = 0; i < 14; i++)
 			{
 				buf[pos++] = mode_pages_in[GPMODE_CDROM_AUDIO_PAGE][i];
 			}
@@ -1967,15 +1967,15 @@ static void atapicommand(int ide_board)
 		}
 		
 		prev_status = cd_status;
-+		cd_status = atapi->status();
-+		if (((prev_status == CD_STATUS_PLAYING) || (prev_status == CD_STATUS_PAUSED)) && ((cd_status != CD_STATUS_PLAYING) && (cd_status != CD_STATUS_PAUSED)))
-+		{
-+			completed = 1;
-+		}
-+		else
-+		{
-+			completed = 0;
-+		}
+		cd_status = atapi->status();
+		if (((prev_status == CD_STATUS_PLAYING) || (prev_status == CD_STATUS_PAUSED)) && ((cd_status != CD_STATUS_PLAYING) && (cd_status != CD_STATUS_PAUSED)))
+		{
+			completed = 1;
+		}
+		else
+		{
+			completed = 0;
+		}
 
 		// pclog("ata%i-%i: ATAPI command %02x continuing\n",ide_board,cur_ide[ide_board]&1,idebufferb[0]);
 
@@ -2446,7 +2446,7 @@ static void atapicommand(int ide_board)
 				else
 					audio_temp = (atapi->is_track_audio(pos, 1) << 1) | 1;
 
-				if ((cdrom_drive < 1) || (cdrom_drive == CDROM_ISO) || (cd_status <= CD_STATUS_DATA_ONLY) || !(audio_temp & 2))
+				if ((cdrom_drive < 1) || (cdrom_drive == 200) || (cd_status <= CD_STATUS_DATA_ONLY) || !(audio_temp & 2))
                 {
                         ide->atastat = READY_STAT | ERR_STAT;    /*CHECK CONDITION*/
                         ide->error = (SENSE_ILLEGAL_REQUEST << 4) | ABRT_ERR;
