@@ -87,6 +87,17 @@ typedef struct rivatnt_t
 
   struct
   {
+    uint32_t nvpll;
+    uint32_t nv_m,nv_n,nv_p;
+    
+    uint32_t mpll;
+    uint32_t m_m,m_n,m_p;
+  
+    uint32_t vpll;
+    uint32_t v_m,v_n,v_p;
+  
+    uint32_t pll_ctrl;
+  
     uint32_t gen_ctrl;
   } pramdac;
   
@@ -373,6 +384,22 @@ static uint8_t rivatnt_pramdac_read(uint32_t addr, void *p)
 
   switch(addr)
   {
+  case 0x680500: ret = rivatnt->pramdac.nvpll & 0xff; break;
+  case 0x680501: ret = (rivatnt->pramdac.nvpll >> 8) & 0xff; break;
+  case 0x680502: ret = (rivatnt->pramdac.nvpll >> 16) & 0xff; break;
+  case 0x680503: ret = (rivatnt->pramdac.nvpll >> 24) & 0xff; break;
+  case 0x680504: ret = rivatnt->pramdac.mpll & 0xff; break;
+  case 0x680505: ret = (rivatnt->pramdac.mpll >> 8) & 0xff; break;
+  case 0x680506: ret = (rivatnt->pramdac.mpll >> 16) & 0xff; break;
+  case 0x680507: ret = (rivatnt->pramdac.mpll >> 24) & 0xff; break;
+  case 0x680508: ret = rivatnt->pramdac.vpll & 0xff; break;
+  case 0x680509: ret = (rivatnt->pramdac.vpll >> 8) & 0xff; break;
+  case 0x68050a: ret = (rivatnt->pramdac.vpll >> 16) & 0xff; break;
+  case 0x68050b: ret = (rivatnt->pramdac.vpll >> 24) & 0xff; break;
+  case 0x68050c: ret = rivatnt->pramdac.pll_ctrl & 0xff; break;
+  case 0x68050d: ret = (rivatnt->pramdac.pll_ctrl >> 8) & 0xff; break;
+  case 0x68050e: ret = (rivatnt->pramdac.pll_ctrl >> 16) & 0xff; break;
+  case 0x68050f: ret = (rivatnt->pramdac.pll_ctrl >> 24) & 0xff; break;
   case 0x680600: ret = rivatnt->pramdac.gen_ctrl & 0xff; break;
   case 0x680601: ret = (rivatnt->pramdac.gen_ctrl >> 8) & 0xff; break;
   case 0x680602: ret = (rivatnt->pramdac.gen_ctrl >> 16) & 0xff; break;
@@ -390,6 +417,28 @@ static void rivatnt_pramdac_write(uint32_t addr, uint32_t val, void *p)
 
   switch(addr)
   {
+  case 0x680500:
+  rivatnt->pramdac.nvpll = val;
+  rivatnt->pramdac.nv_m = val & 0xff;
+  rivatnt->pramdac.nv_n = (val >> 8) & 0xff;
+  rivatnt->pramdac.nv_p = (val >> 16) & 3;
+  break;
+  case 0x680504:
+  rivatnt->pramdac.mpll = val;
+  rivatnt->pramdac.m_m = val & 0xff;
+  rivatnt->pramdac.m_n = (val >> 8) & 0xff;
+  rivatnt->pramdac.m_p = (val >> 16) & 3;
+  break;
+  case 0x680508:
+  rivatnt->pramdac.vpll = val;
+  rivatnt->pramdac.v_m = val & 0xff;
+  rivatnt->pramdac.v_n = (val >> 8) & 0xff;
+  rivatnt->pramdac.v_p = (val >> 16) & 3;
+  svga_recalctimings(svga);
+  break;
+  case 0x68050c:
+  rivatnt->pramdac.pll_ctrl = val;
+  break;
   case 0x680600:
   rivatnt->pramdac.gen_ctrl = val;
   break;
@@ -697,10 +746,10 @@ static uint8_t rivatnt_pci_read(int func, int addr, void *p)
   pclog("RIVA TNT PCI read %02X %04X:%08X\n", addr, CS, pc);
   switch (addr)
   {
-    case 0x00: ret = 0xd2; break; /*'nVidia'*/
-    case 0x01: ret = 0x12; break;
+    case 0x00: ret = 0xde; break; /*'nVidia'*/
+    case 0x01: ret = 0x10; break;
 
-    case 0x02: ret = 0x18; break; /*'RIVA TNT'*/
+    case 0x02: ret = 0x20; break; /*'RIVA TNT'*/
     case 0x03: ret = 0x00; break;
 
     case 0x04: ret = rivatnt->pci_regs[0x04] & 0x37; break;
@@ -812,6 +861,8 @@ static void rivatnt_pci_write(int func, int addr, uint8_t val, void *p)
 
 static void rivatnt_recalctimings(svga_t *svga)
 {
+  rivatnt_t *rivatnt = (rivatnt_t *)svga->p;
+
   svga->ma_latch |= (svga->crtc[0x19] & 0x1f) << 16;
   svga->rowoffset |= (svga->crtc[0x19] & 0xe0) << 3;
   if (svga->crtc[0x25] & 0x01) svga->vtotal      |= 0x400;
@@ -838,6 +889,20 @@ static void rivatnt_recalctimings(svga_t *svga)
     svga->render = svga_render_32bpp_highres;
     break;
   }
+  
+  if (((svga->miscout >> 2) & 3) == 3)
+  {
+	double freq = 13500000.0;
+
+	if(rivatnt->pramdac.v_m == 0) freq = 0;
+	else
+	{
+		freq = (freq * rivatnt->pramdac.v_n) / (1 << rivatnt->pramdac.v_p) / rivatnt->pramdac.v_m;
+		pclog("RIVA TNT Pixel clock is %f Hz\n", freq);
+	}
+	
+        svga->clock = cpuclock / freq;
+  }
 }
 
 static void *rivatnt_init()
@@ -852,7 +917,7 @@ static void *rivatnt_init()
   rivatnt_in, rivatnt_out,
   NULL, NULL);
 
-  rom_init(&rivatnt->bios_rom, "roms/rivatnt.bin", 0xc0000, 0x10000, 0xffff, 0, MEM_MAPPING_EXTERNAL);
+  rom_init(&rivatnt->bios_rom, "roms/riva128.bin", 0xc0000, 0x10000, 0xffff, 0, MEM_MAPPING_EXTERNAL);
   if (PCI)
     mem_mapping_disable(&rivatnt->bios_rom.mapping);
 
@@ -908,7 +973,7 @@ static void rivatnt_close(void *p)
 
 static int rivatnt_available()
 {
-  return rom_present("roms/rivatnt.bin");
+  return rom_present("roms/riva128.bin");
 }
 
 static void rivatnt_speed_changed(void *p)
