@@ -63,7 +63,7 @@ static VIDEO_CARD video_cards[] =
         {"Hercules",                               &hercules_device,            GFX_HERCULES},
 	{"Hercules InColor",                       &incolor_device,             GFX_INCOLOR},
         {"MDA",                                    &mda_device,                 GFX_MDA},
-	{"nVidia RIVA TNT",                        &rivatnt_device,             GFX_RIVATNT},
+	{"nVidia RIVA TNT (Experimental)",         &rivatnt_device,             GFX_RIVATNT},
         {"Number Nine 9FX (S3 Trio64)",            &s3_9fx_device,              GFX_N9_9FX},
         {"OAK OTI-067",                            &oti067_device,              GFX_OTI067},
         {"Paradise Bahamas 64 (S3 Vision864)",     &s3_bahamas64_device,        GFX_BAHAMAS64},

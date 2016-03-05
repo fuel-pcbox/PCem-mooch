@@ -4489,7 +4489,7 @@ static device_config_t voodoo_config[] =
 								.value = VOODOO1
 						},
 						{
-								.description = "Voodoo 2",
+								.description = "Voodoo 2 (Experimental)",
 								.value = VOODOO2
 						},
 						{
