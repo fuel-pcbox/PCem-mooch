@@ -68,6 +68,11 @@ typedef struct rivatnt_t
 	uint16_t chan_mode;
 	uint16_t chan_dma;
 	uint16_t chan_size; //0 = 1024, 1 = 512
+	
+	struct
+	{
+		int chanid;
+	} caches[2];
   } pfifo;
   
   struct
@@ -85,6 +90,12 @@ typedef struct rivatnt_t
     uint32_t config_0;
   } pfb;
 
+  struct
+  {
+	uint32_t obj_handle[16];
+	uint8_t obj_class[16];
+  } pgraph;
+  
   struct
   {
     uint32_t nvpll;
@@ -319,6 +330,9 @@ static void rivatnt_pfifo_write(uint32_t addr, uint32_t val, void *p)
   case 0x00250c:
   rivatnt->pfifo.chan_size = val;
   break;
+  case 0x003204:
+  rivatnt->pfifo.caches[1].chanid = val;
+  break;
   }
 }
 
@@ -445,6 +459,70 @@ static void rivatnt_pramdac_write(uint32_t addr, uint32_t val, void *p)
   }
 }
 
+static uint8_t rivatnt_ramht_lookup(uint32_t handle, void *p)
+{
+  rivatnt_t *rivatnt = (rivatnt_t *)p;
+  svga_t *svga = &rivatnt->svga;
+  pclog("RIVA TNT RAMHT lookup with handle %08X %04X:%08X\n", handle, CS, pc);
+  
+  uint8_t objclass;
+  
+  uint32_t ramht_base = rivatnt->pfifo.ramht_addr;
+  
+  uint32_t tmp = handle;
+  uint32_t hash = 0;
+  
+  int bits;
+  
+  switch(rivatnt->pfifo.ramht_size)
+  {
+	case 4096: bits = 12;
+	case 8192: bits = 13;
+	case 16384: bits = 14;
+	case 32768: bits = 15;
+  }
+  
+  while(tmp)
+  {
+	hash ^= (handle & (rivatnt->pfifo.ramht_size - 1));
+	handle >>= bits;
+  }
+  
+  hash ^= rivatnt->pfifo.caches[1].chanid << (bits - 4);
+  
+  objclass = svga_readl_linear((svga->vram_limit - (1 * 1024 * 1024)) + ramht_base + (hash * 8), svga);
+  objclass &= 0xff;
+  return objclass;
+}
+
+static void rivatnt_pgraph_exec_method(int chanid, int offset, uint32_t val, void *p)
+{
+  rivatnt_t *rivatnt = (rivatnt_t *)p;
+  svga_t *svga = &rivatnt->svga;
+  pclog("RIVA TNT PGRAPH executing method %04X on channel %01X %04X:%08X\n", offset, chanid, val, CS, pc);
+}
+
+static void rivatnt_puller_exec_method(int chanid, int subchanid, int offset, uint32_t val, void *p)
+{
+  rivatnt_t *rivatnt = (rivatnt_t *)p;
+  svga_t *svga = &rivatnt->svga;
+  pclog("RIVA TNT Puller executing method %04X on channel %01X[%01X] %04X:%08X\n", offset, chanid, subchanid, val, CS, pc);
+  
+  if(offset < 0x100)
+  {
+	//These methods are executed by the puller itself.
+	if(offset == 0)
+	{
+		rivatnt->pgraph.obj_handle[chanid] = val;
+		rivatnt->pgraph.obj_class[chanid] = rivatnt_ramht_lookup(val, rivatnt);
+	}
+  }
+  else
+  {
+	rivatnt_pgraph_exec_command(chanid, offset, val, rivatnt);
+  }
+}
+
 static void rivatnt_user_write(uint32_t addr, uint32_t val, void *p)
 {
   rivatnt_t *rivatnt = (rivatnt_t *)p;
@@ -458,6 +536,8 @@ static void rivatnt_user_write(uint32_t addr, uint32_t val, void *p)
   int offset = addr & 0x1fff;
   
   rivatnt->channels[chanid][subchanid][offset] = val;
+  //TODO: make this async
+  rivatnt_puller_exec_method(chanid, subchanid, offset, val, rivatnt);
 }
 
 static uint8_t rivatnt_mmio_read(uint32_t addr, void *p)
@@ -477,6 +557,9 @@ static uint8_t rivatnt_mmio_read(uint32_t addr, void *p)
   break;
   case 0x001000 ... 0x001fff:
   ret = rivatnt_pbus_read(addr, rivatnt);
+  break;
+  case 0x002000 ... 0x002fff:
+  ret = rivatnt_pfifo_read(addr, rivatnt);
   break;
   case 0x100000 ... 0x100fff:
   ret = rivatnt_pfb_read(addr, rivatnt);
@@ -527,11 +610,17 @@ static void rivatnt_mmio_write_l(uint32_t addr, uint32_t val, void *p)
   case 0x001000 ... 0x001fff:
   rivatnt_pbus_write(addr, val, rivatnt);
   break;
+  case 0x002000 ... 0x002fff:
+  rivatnt_pfifo_write(addr, val, rivatnt);
+  break;
   case 0x100000 ... 0x100fff:
   rivatnt_pfb_write(addr, val, rivatnt);
   break;
   case 0x680000 ... 0x680fff:
   rivatnt_pramdac_write(addr, val, rivatnt);
+  break;
+  case 0x800000 ... 0xffffff:
+  rivatnt_user_write(addr, val, rivatnt);
   break;
   }
 }
