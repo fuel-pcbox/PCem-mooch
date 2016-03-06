@@ -116,7 +116,8 @@ int fetchcycles=0,memcycs,fetchclocks;
 uint8_t prefetchqueue[6];
 uint16_t prefetchpc;
 int prefetchw=0;
-inline uint8_t FETCH()
+
+static inline uint8_t FETCH(void)
 {
         uint8_t temp;
 /*        temp=prefetchqueue[0];
@@ -170,7 +171,7 @@ inline uint8_t FETCH()
         return temp;
 }
 
-inline void FETCHADD(int c)
+static inline void FETCHADD(int c)
 {
         int d;
 //        if (output) printf("FETCHADD %i\n",c);
@@ -225,7 +226,7 @@ void FETCHCOMPLETE()
                 fetchcycles+=(4-(fetchcycles&3));
 }
 
-inline void FETCHCLEAR()
+static inline void FETCHCLEAR(void)
 {
 /*        int c;
         fetchcycles=0;
@@ -390,14 +391,14 @@ static void fetcheal()
         }
 }
 
-static inline uint8_t geteab()
+static inline uint8_t geteab(void)
 {
         if (mod==3)
            return (rm&4)?regs[rm&3].b.h:regs[rm&3].b.l;
         return readmemb(easeg+eaaddr);
 }
 
-static inline uint16_t geteaw()
+static inline uint16_t geteaw(void)
 {
         if (mod==3)
            return regs[rm].w;
@@ -405,7 +406,7 @@ static inline uint16_t geteaw()
         return readmemw(easeg,eaaddr);
 }
 
-static inline uint16_t geteaw2()
+static inline uint16_t geteaw2(void)
 {
         if (mod==3)
            return regs[rm].w;
