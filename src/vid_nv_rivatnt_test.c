@@ -92,8 +92,8 @@ typedef struct rivatnt_t
 
   struct
   {
-	uint32_t obj_handle[16];
-	uint8_t obj_class[16];
+	uint32_t obj_handle[16][8];
+	uint8_t obj_class[16][8];
   } pgraph;
   
   struct
@@ -495,7 +495,7 @@ static uint8_t rivatnt_ramht_lookup(uint32_t handle, void *p)
   return objclass;
 }
 
-static void rivatnt_pgraph_exec_method(int chanid, int offset, uint32_t val, void *p)
+static void rivatnt_pgraph_exec_method(int chanid, int subchanid, int offset, uint32_t val, void *p)
 {
   rivatnt_t *rivatnt = (rivatnt_t *)p;
   svga_t *svga = &rivatnt->svga;
@@ -513,13 +513,13 @@ static void rivatnt_puller_exec_method(int chanid, int subchanid, int offset, ui
 	//These methods are executed by the puller itself.
 	if(offset == 0)
 	{
-		rivatnt->pgraph.obj_handle[chanid] = val;
-		rivatnt->pgraph.obj_class[chanid] = rivatnt_ramht_lookup(val, rivatnt);
+		rivatnt->pgraph.obj_handle[chanid][subchanid] = val;
+		rivatnt->pgraph.obj_class[chanid][subchanid] = rivatnt_ramht_lookup(val, rivatnt);
 	}
   }
   else
   {
-	rivatnt_pgraph_exec_command(chanid, offset, val, rivatnt);
+	rivatnt_pgraph_exec_command(chanid, subchanid, offset, val, rivatnt);
   }
 }
 
@@ -703,14 +703,14 @@ static uint8_t rivatnt_in(uint16_t addr, void *p)
   svga_t *svga = &rivatnt->svga;
   uint8_t ret = 0;
 
-  /*switch (addr)
+  switch (addr)
   {
   case 0x3D0 ... 0x3D3:
   pclog("RIVA TNT RMA BAR Register read %04X %04X:%08X\n", addr, CS, pc);
-  if(!(rivatnt->rma.mode & 1)) break;
+  if(!(rivatnt->rma.mode & 1)) return ret;
   ret = rivatnt_rma_in(rivatnt->rma_addr + ((rivatnt->rma.mode & 0xe) << 1) + (addr & 3), rivatnt);
-  break;
-  }*/
+  return ret;
+  }
   
   if (((addr & 0xfff0) == 0x3d0 || (addr & 0xfff0) == 0x3b0) && !(svga->miscout & 1))
     addr ^= 0x60;
@@ -718,11 +718,6 @@ static uint8_t rivatnt_in(uint16_t addr, void *p)
     //        if (addr != 0x3da) pclog("S3 in %04X %04X:%08X  ", addr, CS, pc);
   switch (addr)
   {
-  case 0x3D0 ... 0x3D3:
-  pclog("RIVA TNT RMA BAR Register read %04X %04X:%08X\n", addr, CS, pc);
-  if(!(rivatnt->rma.mode & 1)) break;
-  ret = rivatnt_rma_in(rivatnt->rma_addr + ((rivatnt->rma.mode & 0xe) << 1) + (addr & 3), rivatnt);
-  break;
   case 0x3D4:
   ret = svga->crtcreg;
   break;
@@ -746,19 +741,6 @@ static void rivatnt_out(uint16_t addr, uint8_t val, void *p)
 
   uint8_t old;
   
-  /*switch(addr)
-  {
-  case 0x3D0 ... 0x3D3:
-  pclog("RIVA TNT RMA BAR Register write %04X %02x %04X:%08X\n", addr, val, CS, pc);
-  rivatnt->rma.access_reg[addr & 3] = val;
-  if(!(rivatnt->rma.mode & 1)) return;
-  rivatnt_rma_out(rivatnt->rma_addr + ((rivatnt->rma.mode & 0xe) << 1) + (addr & 3), rivatnt->rma.access_reg[addr & 3], rivatnt);
-  return;
-  }*/
-
-  if (((addr & 0xfff0) == 0x3d0 || (addr & 0xfff0) == 0x3b0) && !(svga->miscout & 1))
-    addr ^= 0x60;
-
   switch(addr)
   {
   case 0x3D0 ... 0x3D3:
@@ -767,6 +749,13 @@ static void rivatnt_out(uint16_t addr, uint8_t val, void *p)
   if(!(rivatnt->rma.mode & 1)) return;
   rivatnt_rma_out(rivatnt->rma_addr + ((rivatnt->rma.mode & 0xe) << 1) + (addr & 3), rivatnt->rma.access_reg[addr & 3], rivatnt);
   return;
+  }
+
+  if (((addr & 0xfff0) == 0x3d0 || (addr & 0xfff0) == 0x3b0) && !(svga->miscout & 1))
+    addr ^= 0x60;
+
+  switch(addr)
+  {
   case 0x3D4:
   svga->crtcreg = val;
   return;

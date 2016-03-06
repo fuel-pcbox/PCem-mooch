@@ -133,7 +133,7 @@ SOURCES_C := $(CORE_DIR)/libretro.c \
 				 $(CORE_DIR)/vid_ics2595.c \
 				 $(CORE_DIR)/vid_incolor.c \
 				 $(CORE_DIR)/vid_mda.c \
-				 $(CORE_DIR)/vid_nv_rivatnt.c \
+				 $(CORE_DIR)/vid_nv_rivatnt_test.c \
 				 $(CORE_DIR)/vid_olivetti_m24.c \
 				 $(CORE_DIR)/vid_oti067.c \
 				 $(CORE_DIR)/vid_paradise.c \

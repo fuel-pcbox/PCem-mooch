@@ -129,7 +129,7 @@ OBJ = 386.o \
 	vid_ics2595.o \
 	vid_incolor.o \
 	vid_mda.o \
-	vid_nv_rivatnt.o\
+	vid_nv_rivatnt_test.o\
 	vid_olivetti_m24.o \
 	vid_oti067.o \
 	vid_paradise.o \
