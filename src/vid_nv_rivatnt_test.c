@@ -144,9 +144,9 @@ static uint8_t rivatnt_pmc_read(uint32_t addr, void *p)
   switch(addr)
   {
   case 0x000000: ret = 0x00; break;
-  case 0x000001: ret = 0x40; break;
+  case 0x000001: ret = 0x00; break;
   case 0x000002: ret = 0x00; break;
-  case 0x000003: ret = 0x00; break;
+  case 0x000003: ret = 0x04; break;
   case 0x000100: ret = rivatnt->pmc.intr & 0xff; break;
   case 0x000101: ret = (rivatnt->pmc.intr >> 8) & 0xff; break;
   case 0x000102: ret = (rivatnt->pmc.intr >> 16) & 0xff; break;
@@ -771,17 +771,17 @@ static void rivatnt_out(uint16_t addr, uint8_t val, void *p)
   case 0x1a:
   //if(val & 2) svga->dac8bit = 1;
   //else svga->dac8bit = 0;
-  if(!(val & 4)) svga_recalctimings(svga);
+  svga_recalctimings(svga);
   break;
   case 0x1e:
-  rivatnt->read_bank = val >> 1;
-  if (svga->chain4) svga->read_bank = rivatnt->read_bank << 16;
-  else              svga->read_bank = rivatnt->read_bank << 14;
+  rivatnt->read_bank = val;
+  if (svga->chain4) svga->read_bank = rivatnt->read_bank << 15;
+  else              svga->read_bank = rivatnt->read_bank << 13;
   break;
   case 0x1d:
-  rivatnt->write_bank = val >> 1;
-  if (svga->chain4) svga->write_bank = rivatnt->write_bank << 16;
-  else              svga->write_bank = rivatnt->write_bank << 14;
+  rivatnt->write_bank = val;
+  if (svga->chain4) svga->write_bank = rivatnt->write_bank << 15;
+  else              svga->write_bank = rivatnt->write_bank << 13;
   break;
   case 0x26:
   if (!svga->attrff)
@@ -941,14 +941,14 @@ static void rivatnt_recalctimings(svga_t *svga)
 {
   rivatnt_t *rivatnt = (rivatnt_t *)svga->p;
 
-  svga->ma_latch |= (svga->crtc[0x19] & 0x1f) << 16;
-  svga->rowoffset |= (svga->crtc[0x19] & 0xe0) << 3;
-  if (svga->crtc[0x25] & 0x01) svga->vtotal      |= 0x400;
-  if (svga->crtc[0x25] & 0x02) svga->dispend     |= 0x400;
-  if (svga->crtc[0x25] & 0x04) svga->vblankstart |= 0x400;
-  if (svga->crtc[0x25] & 0x08) svga->vsyncstart  |= 0x400;
-  if (svga->crtc[0x25] & 0x10) svga->htotal      |= 0x100;
-  if (svga->crtc[0x2d] & 0x01) svga->hdisp       |= 0x100;
+  svga->ma_latch += (svga->crtc[0x19] & 0x1f) << 16;
+  svga->rowoffset += (svga->crtc[0x19] & 0xe0) << 3;
+  if (svga->crtc[0x25] & 0x01) svga->vtotal      += 0x400;
+  if (svga->crtc[0x25] & 0x02) svga->dispend     += 0x400;
+  if (svga->crtc[0x25] & 0x04) svga->vblankstart += 0x400;
+  if (svga->crtc[0x25] & 0x08) svga->vsyncstart  += 0x400;
+  if (svga->crtc[0x25] & 0x10) svga->htotal      += 0x100;
+  if (svga->crtc[0x2d] & 0x01) svga->hdisp       += 0x100;
   //The effects of the large screen bit seem to just be doubling the row offset.
   //However, these large modes still don't work. Possibly core SVGA bug? It does report 640x2 res after all.
   if (!(svga->crtc[0x1a]) & 0x04) svga->rowoffset <<= 1;
@@ -956,19 +956,22 @@ static void rivatnt_recalctimings(svga_t *svga)
   {
     case 1:
     svga->bpp = 8;
+    svga->lowres = 0;
     svga->render = svga_render_8bpp_highres;
     break;
     case 2:
     svga->bpp = 16;
+    svga->lowres = 0;
     svga->render = svga_render_16bpp_highres;
     break;
     case 3:
     svga->bpp = 32;
+    svga->lowres = 0;
     svga->render = svga_render_32bpp_highres;
     break;
   }
   
-  if (((svga->miscout >> 2) & 3) == 3)
+  if (((svga->miscout >> 2) & 2) == 2)
   {
 	double freq = 13500000.0;
 
