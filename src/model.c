@@ -134,10 +134,10 @@ MODEL models[] =
         {"Intel Premiere/PCI II",ROM_PLATO,      { "Intel", cpus_PentiumS5, "",  NULL,         "",      NULL},         0, 1,   1, 128, 1,       at_plato_init},
         {"Intel Advanced/EV",   ROM_ENDEAVOR,    { "Intel", cpus_PentiumS5,"IDT", cpus_WinChip, "",      NULL},         0, 1,   1, 128, 1,   at_endeavor_init},
         {"PC Partner MB500N",   ROM_MB500N,      { "Intel", cpus_PentiumS5,"IDT", cpus_WinChip, "",      NULL},         0, 1,   1, 128, 1,     at_mb500n_init},
-        {"Acer M3a",            ROM_ACERM3A,     { "Intel", cpus_Pentium, "IDT", cpus_WinChip, "AMD",      cpus_K6},         0, 1,   1, 512, 1,     at_acerm3a_init},
-        {"Acer V35N",           ROM_ACERV35N,    { "Intel", cpus_Pentium, "IDT", cpus_WinChip, "AMD",      cpus_K6},         0, 1,   1, 512, 1,    at_acerv35n_init},
-        {"ASUS P/I-P55T2P4",    ROM_P55T2P4,     { "Intel", cpus_Pentium, "IDT", cpus_WinChip, "AMD",      cpus_K6},         0, 1,   1, 512, 1,     at_p55t2p4_init},
-        {"Award 430VX PCI",     ROM_430VX,       { "Intel", cpus_Pentium, "IDT", cpus_WinChip, "AMD",      cpus_K6},         0, 1,   1, 256, 1,      at_i430vx_init},
+        {"Acer M3a",            ROM_ACERM3A,     { "Intel", cpus_Pentium, "IDT", cpus_WinChip, "AMD",   cpus_K6},         0, 1,   1, 512, 1,     at_acerm3a_init},
+        {"Acer V35N",           ROM_ACERV35N,    { "Intel", cpus_Pentium, "IDT", cpus_WinChip, "AMD",   cpus_K6},         0, 1,   1, 512, 1,    at_acerv35n_init},
+        {"ASUS P/I-P55T2P4",    ROM_P55T2P4,     { "Intel", cpus_Pentium, "IDT", cpus_WinChip, "AMD",   cpus_K6},         0, 1,   1, 512, 1,     at_p55t2p4_init},
+        {"Award 430VX PCI",     ROM_430VX,       { "Intel", cpus_Pentium, "IDT", cpus_WinChip, "AMD",   cpus_K6},         0, 1,   1, 256, 1,      at_i430vx_init},
         {"Epox P55-VA",         ROM_P55VA,       { "Intel", cpus_Pentium, "IDT", cpus_WinChip, "AMD",   cpus_K6},         0, 1,   1, 256, 1,       at_p55va_init},
         {"", -1, {"", 0, "", 0, "", 0}, 0,0,0, 0}
 };
