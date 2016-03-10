@@ -167,15 +167,15 @@ void m24_poll(void *p)
                         {
                                 if ((m24->cgamode & 0x12) == 0x12)
                                 {
-                                        buffer->line[m24->displine][c] = 0;
-                                        if (m24->cgamode & 1) buffer->line[m24->displine][c + (m24->crtc[1] << 3) + 8] = 0;
-                                        else                  buffer->line[m24->displine][c + (m24->crtc[1] << 4) + 8] = 0;
+                                        buffer8->line[m24->displine][c] = 0;
+                                        if (m24->cgamode & 1) buffer8->line[m24->displine][c + (m24->crtc[1] << 3) + 8] = 0;
+                                        else                  buffer8->line[m24->displine][c + (m24->crtc[1] << 4) + 8] = 0;
                                 }
                                 else
                                 {
-                                        buffer->line[m24->displine][c] = (m24->cgacol & 15) + 16;
-                                        if (m24->cgamode & 1) buffer->line[m24->displine][c + (m24->crtc[1] << 3) + 8] = (m24->cgacol & 15) + 16;
-                                        else                  buffer->line[m24->displine][c + (m24->crtc[1] << 4) + 8] = (m24->cgacol & 15) + 16;
+                                        buffer8->line[m24->displine][c] = (m24->cgacol & 15) + 16;
+                                        if (m24->cgamode & 1) buffer8->line[m24->displine][c + (m24->crtc[1] << 3) + 8] = (m24->cgacol & 15) + 16;
+                                        else                  buffer8->line[m24->displine][c + (m24->crtc[1] << 4) + 8] = (m24->cgacol & 15) + 16;
                                 }
                         }
                         if (m24->cgamode & 1)
@@ -200,12 +200,12 @@ void m24_poll(void *p)
                                         if (drawcursor)
                                         {
                                                 for (c = 0; c < 8; c++)
-                                                    buffer->line[m24->displine][(x << 3) + c + 8] = cols[(fontdatm[chr][((m24->sc & 7) << 1) | m24->lineff] & (1 << (c ^ 7))) ? 1 : 0] ^ 15;
+                                                    buffer8->line[m24->displine][(x << 3) + c + 8] = cols[(fontdatm[chr][((m24->sc & 7) << 1) | m24->lineff] & (1 << (c ^ 7))) ? 1 : 0] ^ 15;
                                         }
                                         else
                                         {
                                                 for (c = 0; c < 8; c++)
-                                                    buffer->line[m24->displine][(x << 3) + c + 8] = cols[(fontdatm[chr][((m24->sc & 7) << 1) | m24->lineff] & (1 << (c ^ 7))) ? 1 : 0];
+                                                    buffer8->line[m24->displine][(x << 3) + c + 8] = cols[(fontdatm[chr][((m24->sc & 7) << 1) | m24->lineff] & (1 << (c ^ 7))) ? 1 : 0];
                                         }
                                         m24->ma++;
                                 }
@@ -233,14 +233,14 @@ void m24_poll(void *p)
                                         if (drawcursor)
                                         {
                                                 for (c = 0; c < 8; c++)
-                                                    buffer->line[m24->displine][(x << 4) + (c << 1) + 8] = 
-                                                    buffer->line[m24->displine][(x << 4) + (c << 1) + 1 + 8] = cols[(fontdatm[chr][((m24->sc & 7) << 1) | m24->lineff] & (1 << (c ^ 7))) ? 1 : 0] ^ 15;
+                                                    buffer8->line[m24->displine][(x << 4) + (c << 1) + 8] = 
+                                                    buffer8->line[m24->displine][(x << 4) + (c << 1) + 1 + 8] = cols[(fontdatm[chr][((m24->sc & 7) << 1) | m24->lineff] & (1 << (c ^ 7))) ? 1 : 0] ^ 15;
                                         }
                                         else
                                         {
                                                 for (c = 0; c < 8; c++)
-                                                    buffer->line[m24->displine][(x << 4) + (c << 1) + 8] = 
-                                                    buffer->line[m24->displine][(x << 4) + (c << 1) + 1 + 8] = cols[(fontdatm[chr][((m24->sc & 7) << 1) | m24->lineff] & (1 << (c ^ 7))) ? 1 : 0];
+                                                    buffer8->line[m24->displine][(x << 4) + (c << 1) + 8] = 
+                                                    buffer8->line[m24->displine][(x << 4) + (c << 1) + 1 + 8] = cols[(fontdatm[chr][((m24->sc & 7) << 1) | m24->lineff] & (1 << (c ^ 7))) ? 1 : 0];
                                         }
                                 }
                         }
@@ -273,8 +273,8 @@ void m24_poll(void *p)
                                         m24->ma++;
                                         for (c = 0; c < 8; c++)
                                         {
-                                                buffer->line[m24->displine][(x << 4) + (c << 1) + 8] =
-                                                buffer->line[m24->displine][(x << 4) + (c << 1) + 1 + 8] = cols[dat >> 14];
+                                                buffer8->line[m24->displine][(x << 4) + (c << 1) + 8] =
+                                                buffer8->line[m24->displine][(x << 4) + (c << 1) + 1 + 8] = cols[dat >> 14];
                                                 dat <<= 2;
                                         }
                                 }
@@ -297,7 +297,7 @@ void m24_poll(void *p)
                                         m24->ma++;
                                         for (c = 0; c < 16; c++)
                                         {
-                                                buffer->line[m24->displine][(x << 4) + c + 8] = cols[dat >> 15];
+                                                buffer8->line[m24->displine][(x << 4) + c + 8] = cols[dat >> 15];
                                                 dat <<= 1;
                                         }
                                 }
@@ -306,8 +306,8 @@ void m24_poll(void *p)
                 else
                 {
                         cols[0] = ((m24->cgamode & 0x12) == 0x12) ? 0 : (m24->cgacol & 15) + 16;
-                        if (m24->cgamode & 1) hline(buffer, 0, m24->displine, (m24->crtc[1] << 3) + 16, cols[0]);
-                        else                  hline(buffer, 0, m24->displine, (m24->crtc[1] << 4) + 16, cols[0]);
+                        if (m24->cgamode & 1) hline(buffer8, 0, m24->displine, (m24->crtc[1] << 3) + 16, cols[0]);
+                        else                  hline(buffer8, 0, m24->displine, (m24->crtc[1] << 4) + 16, cols[0]);
                 }
 
                 if (m24->cgamode & 1) x = (m24->crtc[1] << 3) + 16;

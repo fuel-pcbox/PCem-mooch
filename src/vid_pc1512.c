@@ -185,15 +185,15 @@ static void pc1512_poll(void *p)
                         {
                                 if ((pc1512->cgamode & 0x12) == 0x12)
                                 {
-                                        buffer->line[pc1512->displine][c] = (pc1512->border & 15) + 16;
-                                        if (pc1512->cgamode & 1) buffer->line[pc1512->displine][c + (pc1512->crtc[1] << 3) + 8] = 0;
-                                        else                     buffer->line[pc1512->displine][c + (pc1512->crtc[1] << 4) + 8] = 0;
+                                        buffer8->line[pc1512->displine][c] = (pc1512->border & 15) + 16;
+                                        if (pc1512->cgamode & 1) buffer8->line[pc1512->displine][c + (pc1512->crtc[1] << 3) + 8] = 0;
+                                        else                     buffer8->line[pc1512->displine][c + (pc1512->crtc[1] << 4) + 8] = 0;
                                 }
                                 else
                                 {
-                                        buffer->line[pc1512->displine][c] = (pc1512->cgacol & 15) + 16;
-                                        if (pc1512->cgamode & 1) buffer->line[pc1512->displine][c + (pc1512->crtc[1] << 3) + 8] = (pc1512->cgacol & 15) + 16;
-                                        else                     buffer->line[pc1512->displine][c + (pc1512->crtc[1] << 4) + 8] = (pc1512->cgacol & 15) + 16;
+                                        buffer8->line[pc1512->displine][c] = (pc1512->cgacol & 15) + 16;
+                                        if (pc1512->cgamode & 1) buffer8->line[pc1512->displine][c + (pc1512->crtc[1] << 3) + 8] = (pc1512->cgacol & 15) + 16;
+                                        else                     buffer8->line[pc1512->displine][c + (pc1512->crtc[1] << 4) + 8] = (pc1512->cgacol & 15) + 16;
                                 }
                         }
                         if (pc1512->cgamode & 1)
@@ -218,12 +218,12 @@ static void pc1512_poll(void *p)
                                         if (drawcursor)
                                         {
                                                 for (c = 0; c < 8; c++)
-                                                    buffer->line[pc1512->displine][(x << 3) + c + 8] = cols[(fontdat[chr][pc1512->sc & 7] & (1 << (c ^ 7))) ? 1 : 0] ^ 15;
+                                                    buffer8->line[pc1512->displine][(x << 3) + c + 8] = cols[(fontdat[chr][pc1512->sc & 7] & (1 << (c ^ 7))) ? 1 : 0] ^ 15;
                                         }
                                         else
                                         {
                                                 for (c = 0; c < 8; c++)
-                                                    buffer->line[pc1512->displine][(x << 3) + c + 8] = cols[(fontdat[chr][pc1512->sc & 7] & (1 << (c ^ 7))) ? 1 : 0];
+                                                    buffer8->line[pc1512->displine][(x << 3) + c + 8] = cols[(fontdat[chr][pc1512->sc & 7] & (1 << (c ^ 7))) ? 1 : 0];
                                         }
                                         pc1512->ma++;
                                 }
@@ -251,14 +251,14 @@ static void pc1512_poll(void *p)
                                         if (drawcursor)
                                         {
                                                 for (c = 0; c < 8; c++)
-                                                    buffer->line[pc1512->displine][(x << 4) + (c << 1) + 8] = 
-                                                    buffer->line[pc1512->displine][(x << 4) + (c << 1) + 1 + 8] = cols[(fontdat[chr][pc1512->sc & 7] & (1 << (c ^ 7))) ? 1 : 0] ^ 15;
+                                                    buffer8->line[pc1512->displine][(x << 4) + (c << 1) + 8] = 
+                                                    buffer8->line[pc1512->displine][(x << 4) + (c << 1) + 1 + 8] = cols[(fontdat[chr][pc1512->sc & 7] & (1 << (c ^ 7))) ? 1 : 0] ^ 15;
                                         }
                                         else
                                         {
                                                 for (c = 0; c < 8; c++)
-                                                    buffer->line[pc1512->displine][(x << 4) + (c << 1) + 8] = 
-                                                    buffer->line[pc1512->displine][(x << 4) + (c << 1) + 1 + 8] = cols[(fontdat[chr][pc1512->sc & 7] & (1 << (c ^ 7))) ? 1 : 0];
+                                                    buffer8->line[pc1512->displine][(x << 4) + (c << 1) + 8] = 
+                                                    buffer8->line[pc1512->displine][(x << 4) + (c << 1) + 1 + 8] = cols[(fontdat[chr][pc1512->sc & 7] & (1 << (c ^ 7))) ? 1 : 0];
                                         }
                                 }
                         }
@@ -290,8 +290,8 @@ static void pc1512_poll(void *p)
                                         pc1512->ma++;
                                         for (c = 0; c < 8; c++)
                                         {
-                                                buffer->line[pc1512->displine][(x << 4) + (c << 1) + 8] =
-                                                buffer->line[pc1512->displine][(x << 4) + (c << 1) + 1 + 8] = cols[dat >> 14];
+                                                buffer8->line[pc1512->displine][(x << 4) + (c << 1) + 8] =
+                                                buffer8->line[pc1512->displine][(x << 4) + (c << 1) + 1 + 8] = cols[dat >> 14];
                                                 dat <<= 2;
                                         }
                                 }
@@ -309,7 +309,7 @@ static void pc1512_poll(void *p)
                                         pc1512->ma++;
                                         for (c = 0; c < 16; c++)
                                         {
-                                                buffer->line[pc1512->displine][(x << 4) + c + 8] = (((dat >> 15) | ((dat2 >> 15) << 1) | ((dat3 >> 15) << 2) | ((dat4 >> 15) << 3)) & (pc1512->cgacol & 15)) + 16;
+                                                buffer8->line[pc1512->displine][(x << 4) + c + 8] = (((dat >> 15) | ((dat2 >> 15) << 1) | ((dat3 >> 15) << 2) | ((dat4 >> 15) << 3)) & (pc1512->cgacol & 15)) + 16;
                                                 dat  <<= 1;
                                                 dat2 <<= 1;
                                                 dat3 <<= 1;
@@ -321,8 +321,8 @@ static void pc1512_poll(void *p)
                 else
                 {
                         cols[0] = ((pc1512->cgamode & 0x12) == 0x12) ? 0 : (pc1512->cgacol & 15) + 16;
-                        if (pc1512->cgamode & 1) hline(buffer, 0, pc1512->displine, (pc1512->crtc[1] << 3) + 16, cols[0]);
-                        else                     hline(buffer, 0, pc1512->displine, (pc1512->crtc[1] << 4) + 16, cols[0]);
+                        if (pc1512->cgamode & 1) hline(buffer8, 0, pc1512->displine, (pc1512->crtc[1] << 3) + 16, cols[0]);
+                        else                     hline(buffer8, 0, pc1512->displine, (pc1512->crtc[1] << 4) + 16, cols[0]);
                 }
 
                 pc1512->sc = oldsc;

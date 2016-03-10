@@ -95,7 +95,7 @@ static void allegro_blit_memtoscreen_8(int x, int y, int w, int h)
 		for (xx = x; xx < x+w; xx++)
 		{
 			((uint32_t *)buffer32->line[dy])[xx] =
-			((uint32_t *)buffer32->line[dy + 1])[xx] = pal_lookup[buffer->line[yy][xx]];
+			((uint32_t *)buffer32->line[dy + 1])[xx] = pal_lookup[buffer8->line[yy][xx]];
 		}
 	}
 
