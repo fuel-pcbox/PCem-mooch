@@ -23,6 +23,7 @@
 #include "vid_hercules.h"
 #include "vid_incolor.h"
 #include "vid_mda.h"
+#include "vid_nv_riva128.h"
 #include "vid_nv_rivatnt.h"
 #include "vid_olivetti_m24.h"
 #include "vid_oti067.h"
@@ -63,7 +64,8 @@ static VIDEO_CARD video_cards[] =
         {"Hercules",                               &hercules_device,            GFX_HERCULES},
 	{"Hercules InColor",                       &incolor_device,             GFX_INCOLOR},
         {"MDA",                                    &mda_device,                 GFX_MDA},
-	{"nVidia RIVA TNT",                        &rivatnt_device,             GFX_RIVATNT},
+	{"nVidia RIVA 128 (Experimental)",         &riva128_device,             GFX_RIVA128},
+	{"nVidia RIVA TNT (Experimental)",         &rivatnt_device,             GFX_RIVATNT},
         {"Number Nine 9FX (S3 Trio64)",            &s3_9fx_device,              GFX_N9_9FX},
         {"OAK OTI-067",                            &oti067_device,              GFX_OTI067},
         {"Paradise Bahamas 64 (S3 Vision864)",     &s3_bahamas64_device,        GFX_BAHAMAS64},

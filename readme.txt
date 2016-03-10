@@ -1,16 +1,18 @@
-PCem v10.1
+PCem-mooch v11
 
-PCem is licensed under the GPL, see COPYING for more details.
+PCem-mooch is licensed under the GPL, see COPYING for more details.
 
-Changes since v10:
+Changes since PCem v10.1:
 
-- Fixed buffer overruns in PIIX and ET4000/W32p emulation
-- Add command line options to start in fullscreen and to specify config file
-- Emulator doesn't die when the CPU jumps to an unexecutable address
-- Removed Voodoo memory dump on exit
+- Many fixes to CD-ROM emulation, especially pertaining to disc changes.
+- Experimental RIVA TNT and Voodoo 2 emulation.
+- MMX instructions are now recompiled.
+- There is now a Voodoo recompiler for 32-bit systems that gets 2 to 4 times the speed.
+- Fixed some crashes
+- Fixed numerous other bugs
 
 
-PCem emulates the following machines:
+PCem-mooch emulates the following machines:
 
 IBM 5150 PC (1981) 
 The original PC. This shipped in 1981 with a 4.77mhz 8088, 64k of RAM, and a cassette port.
@@ -352,7 +354,7 @@ ROM files needed:
 
 
 
-PCem emulates the following graphics adapters :
+PCem-mooch emulates the following graphics adapters :
 
 MDA
 The original PC adapter. This displays 80x25 text in monochrome.
@@ -464,7 +466,7 @@ oti067/bios.bin
 Diamond Stealth 3D 2000
 An S3 ViRGE/325 based board.
 
-PCem emulates the ViRGE S3D engine in software. This works with most games I tried, but
+PCem-mooch emulates the ViRGE S3D engine in software. This works with most games I tried, but
 there may be some issues. The Direct3D drivers for the /325 are fairly poor (often showing
 as missing triangles), so use of the /DX instead is recommended.
 
@@ -488,12 +490,12 @@ ROM files needed:
 3DFX Voodoo Graphics
 3D accelerator. Widely supported in late 90s games.
 
-PCem emulates this in software. The emulation isn't quite as fast as the real thing, but in
+PCem-mooch emulates this in software. The emulation isn't quite as fast as the real thing, but in
 most games the emulated CPU is the bottleneck rather than the 3DFX, unless you insist on
-running in 800x600. PCem can split rendering over two threads - this doesn't double performance,
+running in 800x600. PCem-mooch can split rendering over two threads - this doesn't double performance,
 but can give a noticeable improvement.
 
-PCem can emulate 6 and 8 MB configurations, but defaults to 4 MB for compatibility. It can also
+PCem-mooch can emulate 6 and 8 MB configurations, but defaults to 4 MB for compatibility. It can also
 emulate the screen filter present on the original card, though this does at present have a
 noticeable performance hit.
 
@@ -535,7 +537,7 @@ Oak OTI-067. Another 512kb SVGA clone.
 
 
 
-PCem emulates the following sound devices :
+PCem-mooch emulates the following sound devices :
 
 PC speaker
 The standard beeper on all PCs. Supports samples/RealSound.
@@ -550,7 +552,7 @@ introduced in 1987. Has two Philips SAA1099, giving 12 voices of square waves pl
 voices. In stereo!
 
 Adlib
-Has a Yamaha YM3812, giving 9 voices of 2 op FM, or 6 voices plus a rhythm section. PCem
+Has a Yamaha YM3812, giving 9 voices of 2 op FM, or 6 voices plus a rhythm section. PCem-mooch
 uses the DOSBox dbopl emulator.
 
 Adlib Gold

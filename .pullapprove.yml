@@ -1,0 +1,12 @@
+approve_by_comment: true
+approve_regex: ^Approved
+reject_regex: ^Rejected
+reset_on_push: true
+author_approval: ignored
+reviewers:
+  members:
+  - MoochMcGee
+	- OBattler
+	- Twinaphex
+  name: default
+  required: 1

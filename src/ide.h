@@ -20,6 +20,7 @@ extern void ide_set_bus_master(int (*read_sector)(int channel, uint8_t *data), i
 typedef struct ATAPI
 {
         int (*ready)(void);
+        int (*medium_changed)(void);
         int (*readtoc)(uint8_t *b, uint8_t starttrack, int msf, int maxlen, int single);
         int (*readtoc_session)(uint8_t *b, int msf, int maxlen);
         int (*readtoc_raw)(uint8_t *b, int maxlen);
@@ -33,6 +34,8 @@ typedef struct ATAPI
         void (*pause)(void);
         void (*resume)(void);
         uint32_t (*size)(void);
+        int (*status)(void);
+		int (*is_track_audio)(uint32_t pos, int ismsf);
         void (*stop)(void);
         void (*exit)(void);
 } ATAPI;
@@ -45,7 +48,7 @@ void atapi_insert_cdrom();
 
 extern int ideboard;
 
-extern int idecallback[2];
+extern int idecallback[3];
 
 extern char ide_fn[4][512];
 

@@ -119,6 +119,36 @@ static int get_track_nr(uint32_t pos)
         return track;
 }
 
+static int is_track_audio(uint32_t pos)
+{
+	int c;
+	int control = 0;
+	
+	if(!tocvalid) return 0;
+	
+	for(c = first_track; c < last_track; c++)
+	{
+		uint32_t track_address = toc[c].cdte_addr.msf.frame +
+                                         (toc[c].cdte_addr.msf.second * 75) +
+                                         (toc[c].cdte_addr.msf.minute * 75 * 60);
+		if(track_address <= pos) control = toc[c].cdte_ctrl;
+	}
+	
+	return (control & 4) ? 0 : 1;
+}
+
+static int ioctl_is_track_audio(uint32_t pos, int ismsf)
+{
+	if(ismsf)
+	{
+		int m = (pos >> 16) & 0xff;
+		int s = (pos >> 8) & 0xff;
+		int f = pos & 0xff;
+		pos = MSFtoLBA(m, s, f);
+	}
+	return is_track_audio(pos);
+}
+
 static void ioctl_playaudio(uint32_t pos, uint32_t len, int ismsf)
 {
 //        pclog("Play audio - %08X %08X %i\n", pos, len, ismsf);
@@ -228,12 +258,60 @@ static int ioctl_ready(void)
 			int track;
 			ioctl_cd_state = CD_STOPPED;
 
-			tocvalid = read_toc(fd);
-			close(fd);
+			//tocvalid = read_toc(fd);
+			//close(fd);
 			return 1;
         }
 	close(fd);
         return 1;
+}
+
+static int ioctl_medium_changed()
+{
+	long size;
+	int temp;
+	struct cdrom_tochdr toc_hdr;
+	struct cdrom_tocentry toc_entry;
+	int err;
+	int fd = open("/dev/cdrom", O_RDONLY|O_NONBLOCK);
+	
+	if(fd <= 0) return 0;
+	
+	err = ioctl(fd, CDROMREADTOCHDR, &toc_hdr);
+	if(err == -1)
+	{
+		close(fd);
+		return 0;
+	}
+	
+	toc_entry.cdte_track = toc_hdr.cdth_trk1;
+	toc_entry.cdte_format = CDROM_MSF;
+	
+	err = ioctl(fd, CDROMREADTOCENTRY, &toc_entry);
+	if(err == -1)
+	{
+		close(fd);
+		return 0;
+	}
+	
+	if (!tocvalid || (cdrom_drive != old_cdrom_drive))
+	{
+		ioctl_cd_state = CD_STOPPED;
+		toc = ltoc;
+		tocvalid = 1;
+		if (cdrom_drive != old_cdrom_drive)  old_cdrom_drive = cdrom_drive;
+		return 0;
+	}
+	
+        if ((toc_entry.cdte_addr.msf.minute != toc[toc_hdr.cdth_trk1].cdte_addr.msf.minute) ||
+            (toc_entry.cdte_addr.msf.second != toc[toc_hdr.cdth_trk1].cdte_addr.msf.second) ||
+            (toc_entry.cdte_addr.msf.frame  != toc[toc_hdr.cdth_trk1].cdte_addr.msf.frame ))
+	{
+		ioctl_cd_state = CD_STOPPED;
+		toc = ltoc;
+		return 1;
+	}
+	return 0;
 }
 
 static uint8_t ioctl_getcurrentsubchannel(uint8_t *b, int msf)
@@ -476,7 +554,7 @@ static int ioctl_readtoc_session(unsigned char *b, int msf, int maxlen)
                 b[len++] = temp;
         }
 
-		return len;
+	return len;
 }
 
 static int ioctl_readtoc_raw(unsigned char *b, int maxlen)
@@ -545,6 +623,21 @@ static uint32_t ioctl_size()
         
         return last_block;
 }
+a
+static int ioctl_status()
+{
+	if (!(ioctl_ready) && (cdrom_drive <= 0))  return CD_STATUS_EMPTY;
+
+	switch(ioctl_cd_state)
+	{
+		case CD_PLAYING:
+			return CD_STATUS_PLAYING;
+		case CD_PAUSED:
+			return CD_STATUS_PAUSED;
+		case CD_STOPPED:
+			return CD_STATUS_STOPPED;
+	}
+}
 
 void ioctl_reset(void)
 {
@@ -580,12 +673,13 @@ static void ioctl_exit(void)
 static ATAPI ioctl_atapi=
 {
         ioctl_ready,
+	ioctl_medium_changed,
         ioctl_readtoc,
         ioctl_readtoc_session,
-		ioctl_readtoc_raw,
+	ioctl_readtoc_raw,
         ioctl_getcurrentsubchannel,
         ioctl_readsector,
-		ioctl_readsector_raw,
+	ioctl_readsector_raw,
         ioctl_playaudio,
         ioctl_seek,
         ioctl_load,
@@ -593,6 +687,8 @@ static ATAPI ioctl_atapi=
         ioctl_pause,
         ioctl_resume,
         ioctl_size,
+	ioctl_status,
+	ioctl_is_track_audio,
         ioctl_stop,
         ioctl_exit
 };

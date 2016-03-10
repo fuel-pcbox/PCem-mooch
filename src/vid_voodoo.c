@@ -183,7 +183,7 @@ typedef struct voodoo_t
         
         voodoo_params_t params;
         
-        uint32_t fbiInit0, fbiInit1, fbiInit2, fbiInit3, fbiInit4;
+        uint32_t fbiInit0, fbiInit1, fbiInit2, fbiInit3, fbiInit4, fbiInit5, fbiInit6, fbiInit7;
         
         uint8_t initEnable;
         
@@ -450,6 +450,10 @@ enum
         SST_vSync = 0x224,
         SST_clutData = 0x228,
         SST_dacData = 0x22c,
+	
+	SST_fbiInit5 = 0x244,
+	SST_fbiInit6 = 0x248,
+	SST_fbiInit7 = 0x24c,
 
         SST_textureMode = 0x300,
         SST_tLOD = 0x304,
@@ -3719,6 +3723,15 @@ static uint32_t voodoo_readl(uint32_t addr, void *p)
                 temp = voodoo->fbiPixelsOut & 0xffffff;
                 break;
 
+		case SST_fbiInit5:
+		if(voodoo->voodoo_type == VOODOO2) temp = voodoo->fbiInit5;
+		break;
+		case SST_fbiInit6:
+		if(voodoo->voodoo_type == VOODOO2) temp = voodoo->fbiInit6;
+		break;
+		case SST_fbiInit7:
+		if(voodoo->voodoo_type == VOODOO2) temp = voodoo->fbiInit7;
+		break;
                 case SST_fbiInit4:
                 temp = voodoo->fbiInit4;
                 break;
@@ -3874,6 +3887,21 @@ static void voodoo_writel(uint32_t addr, uint32_t val, void *p)
                 case SST_fbiInit3:
                 if (voodoo->initEnable & 0x01)
                         voodoo->fbiInit3 = val;
+                break;
+		
+		case SST_fbiInit5:
+                if (voodoo->initEnable & 0x01)
+                        voodoo->fbiInit5 = val;
+                break;
+		
+		case SST_fbiInit6:
+                if (voodoo->initEnable & 0x01)
+                        voodoo->fbiInit6 = val;
+                break;
+		
+		case SST_fbiInit7:
+                if (voodoo->initEnable & 0x01)
+                        voodoo->fbiInit7 = val;
                 break;
 
                 case SST_hSync:
@@ -4463,7 +4491,7 @@ static device_config_t voodoo_config[] =
 								.value = VOODOO1
 						},
 						{
-								.description = "Voodoo 2",
+								.description = "Voodoo 2 (Experimental)",
 								.value = VOODOO2
 						},
 						{
