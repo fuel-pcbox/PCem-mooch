@@ -299,7 +299,6 @@ PALETTE cgapal;
 
 void loadfont(char *s, int format)
 {
-#ifndef __LIBRETRO__
         FILE *f=romfopen(s,"rb");
         int c,d;
         if (!f)
@@ -367,7 +366,6 @@ void loadfont(char *s, int format)
                 }
         }
         fclose(f);
-#endif
 }
 
 
