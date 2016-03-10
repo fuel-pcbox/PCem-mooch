@@ -144,8 +144,10 @@ void mem_write_ramb_page(uint32_t addr, uint8_t val, page_t *p);
 void mem_write_ramw_page(uint32_t addr, uint16_t val, page_t *p);
 void mem_write_raml_page(uint32_t addr, uint32_t val, page_t *p);
 
-void mem_reset_page_blocks();
+void mem_reset_page_blocks(void);
 
 void flushmmucache(void);
+
+void writememwl(uint32_t seg, uint32_t addr, uint16_t val);
 
 extern mem_mapping_t ram_low_mapping;
