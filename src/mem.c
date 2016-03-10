@@ -697,7 +697,7 @@ void resetreadlookup()
 int mmuflush=0;
 int mmu_perm=4;
 
-void flushmmucache()
+void flushmmucache(void)
 {
         int c;
 //        /*if (output) */pclog("flushmmucache\n");

@@ -443,7 +443,7 @@ static int ioctl_readtoc_session(unsigned char *b, int msf, int maxlen)
 	int fd = open("/dev/cdrom", O_RDONLY|O_NONBLOCK);
 
 	if (fd <= 0)
-		return;
+		return 0;
 
 	session.addr_format = CDROM_MSF;
 	err = ioctl(fd, CDROMMULTISESSION, &session);
@@ -451,7 +451,7 @@ static int ioctl_readtoc_session(unsigned char *b, int msf, int maxlen)
 	if (err == -1)
 	{
 		close(fd);
-		return;
+		return 0;
 	}
 
         b[2] = 0;
@@ -488,7 +488,7 @@ static int ioctl_readtoc_raw(unsigned char *b, int maxlen)
 	int fd = open("/dev/cdrom", O_RDONLY|O_NONBLOCK);
 
 	if (fd <= 0)
-		return;
+		return 0;
 	
 //pclog("read_toc\n");
 	err = ioctl(fd, CDROMREADTOCHDR, &toc_hdr);
@@ -546,7 +546,7 @@ static uint32_t ioctl_size()
         return last_block;
 }
 
-void ioctl_reset()
+void ioctl_reset(void)
 {
 	int fd = open("/dev/cdrom", O_RDONLY|O_NONBLOCK);
 //pclog("ioctl_reset: fd=%i\n", fd);
