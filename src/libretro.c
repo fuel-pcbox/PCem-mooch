@@ -153,10 +153,10 @@ void updatewindowsize(int x, int y) { }
 
 void hline(BITMAP *b, int x1, int y, int x2, uint32_t col)
 {
-        if (y < 0 || y >= buffer->h)
+        if (y < 0 || y >= buffer8->h)
            return;
 
-        if (b == buffer)
+        if (b == buffer8)
            memset(&b->line[y][x1], col, x2 - x1);
         else
            memset(&((uint32_t *)b->line[y])[x1], col, (x2 - x1) * 4);
@@ -283,7 +283,7 @@ static void libretro_blit_memtoscreen(int x, int y, int y1, int y2, int w, int h
 
    for (yy = y1; yy < y2; yy++)
    {
-      if ((y + yy) >= 0 && (y + yy) < buffer->h)
+      if ((y + yy) >= 0 && (y + yy) < buffer8->h)
          memcpy(video_buffer + yy * 2048, &(((uint32_t *)buffer32->line[y + yy])[x]), w * 4);
    }
 
@@ -316,14 +316,14 @@ static void libretro_blit_memtoscreen_8(int x, int y, int w, int h)
 
    for (yy = 0; yy < h; yy++)
    {
-      if ((y + yy) >= 0 && (y + yy) < buffer->h)
+      if ((y + yy) >= 0 && (y + yy) < buffer8->h)
       {
          p = video_buffer + yy * 2048;
          for (xx = 0; xx < w; xx++)
          {
-            p[xx] = pal_lookup[buffer->line[y + yy][x + xx]];
+            p[xx] = pal_lookup[buffer8->line[y + yy][x + xx]];
             /* If brown circuity is disabled, double the green component. */
-            if ((buffer->line[y + yy][x + xx] == 0x16) && !cga_brown)  p[xx] += (p[xx] & 0xff00);
+            if ((buffer8->line[y + yy][x + xx] == 0x16) && !cga_brown)  p[xx] += (p[xx] & 0xff00);
          }
       }
    }

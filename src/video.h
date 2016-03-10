@@ -27,7 +27,7 @@ typedef RGB PALETTE[256];
 
 #endif
 
-extern BITMAP *buffer, *buffer32;
+extern BITMAP *buffer8, *buffer32;
 
 int video_card_available(int card);
 char *video_card_getname(int card);

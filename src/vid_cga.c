@@ -171,15 +171,15 @@ void cga_poll(void *p)
                         {
                                 if ((cga->cgamode & 0x12) == 0x12)
                                 {
-                                        buffer->line[cga->displine][c] = 0;
-                                        if (cga->cgamode & 1) buffer->line[cga->displine][c + (cga->crtc[1] << 3) + 8] = 0;
-                                        else                  buffer->line[cga->displine][c + (cga->crtc[1] << 4) + 8] = 0;
+                                        buffer8->line[cga->displine][c] = 0;
+                                        if (cga->cgamode & 1) buffer8->line[cga->displine][c + (cga->crtc[1] << 3) + 8] = 0;
+                                        else                  buffer8->line[cga->displine][c + (cga->crtc[1] << 4) + 8] = 0;
                                 }
                                 else
                                 {
-                                        buffer->line[cga->displine][c] = (cga->cgacol & 15) + 16;
-                                        if (cga->cgamode & 1) buffer->line[cga->displine][c + (cga->crtc[1] << 3) + 8] = (cga->cgacol & 15) + 16;
-                                        else                  buffer->line[cga->displine][c + (cga->crtc[1] << 4) + 8] = (cga->cgacol & 15) + 16;
+                                        buffer8->line[cga->displine][c] = (cga->cgacol & 15) + 16;
+                                        if (cga->cgamode & 1) buffer8->line[cga->displine][c + (cga->crtc[1] << 3) + 8] = (cga->cgacol & 15) + 16;
+                                        else                  buffer8->line[cga->displine][c + (cga->crtc[1] << 4) + 8] = (cga->cgacol & 15) + 16;
                                 }
                         }
                         if (cga->cgamode & 1)
@@ -204,12 +204,12 @@ void cga_poll(void *p)
                                         if (drawcursor)
                                         {
                                                 for (c = 0; c < 8; c++)
-                                                    buffer->line[cga->displine][(x << 3) + c + 8] = cols[(fontdat[chr][cga->sc & 7] & (1 << (c ^ 7))) ? 1 : 0] ^ 15;
+                                                    buffer8->line[cga->displine][(x << 3) + c + 8] = cols[(fontdat[chr][cga->sc & 7] & (1 << (c ^ 7))) ? 1 : 0] ^ 15;
                                         }
                                         else
                                         {
                                                 for (c = 0; c < 8; c++)
-                                                    buffer->line[cga->displine][(x << 3) + c + 8] = cols[(fontdat[chr][cga->sc & 7] & (1 << (c ^ 7))) ? 1 : 0];
+                                                    buffer8->line[cga->displine][(x << 3) + c + 8] = cols[(fontdat[chr][cga->sc & 7] & (1 << (c ^ 7))) ? 1 : 0];
                                         }
                                         cga->ma++;
                                 }
@@ -236,12 +236,12 @@ void cga_poll(void *p)
                                         if (drawcursor)
                                         {
                                                 for (c = 0; c < 8; c++)
-                                                    buffer->line[cga->displine][(x << 4)+(c << 1) + 8] = buffer->line[cga->displine][(x << 4) + (c << 1) + 1 + 8] = cols[(fontdat[chr][cga->sc & 7] & (1 << (c ^ 7))) ? 1 : 0] ^ 15;
+                                                    buffer8->line[cga->displine][(x << 4)+(c << 1) + 8] = buffer8->line[cga->displine][(x << 4) + (c << 1) + 1 + 8] = cols[(fontdat[chr][cga->sc & 7] & (1 << (c ^ 7))) ? 1 : 0] ^ 15;
                                         }
                                         else
                                         {
                                                 for (c = 0; c < 8; c++)
-                                                    buffer->line[cga->displine][(x << 4) + (c << 1) + 8] = buffer->line[cga->displine][(x << 4) + (c << 1) + 1 + 8] = cols[(fontdat[chr][cga->sc & 7] & (1 << (c ^ 7))) ? 1 : 0];
+                                                    buffer8->line[cga->displine][(x << 4) + (c << 1) + 8] = buffer8->line[cga->displine][(x << 4) + (c << 1) + 1 + 8] = cols[(fontdat[chr][cga->sc & 7] & (1 << (c ^ 7))) ? 1 : 0];
                                         }
                                 }
                         }
@@ -273,8 +273,8 @@ void cga_poll(void *p)
                                         cga->ma++;
                                         for (c = 0; c < 8; c++)
                                         {
-                                                buffer->line[cga->displine][(x << 4) + (c << 1) + 8] =
-                                                  buffer->line[cga->displine][(x << 4) + (c << 1) + 1 + 8] = cols[dat >> 14];
+                                                buffer8->line[cga->displine][(x << 4) + (c << 1) + 8] =
+                                                  buffer8->line[cga->displine][(x << 4) + (c << 1) + 1 + 8] = cols[dat >> 14];
                                                 dat <<= 2;
                                         }
                                 }
@@ -288,7 +288,7 @@ void cga_poll(void *p)
                                         cga->ma++;
                                         for (c = 0; c < 16; c++)
                                         {
-                                                buffer->line[cga->displine][(x << 4) + c + 8] = cols[dat >> 15];
+                                                buffer8->line[cga->displine][(x << 4) + c + 8] = cols[dat >> 15];
                                                 dat <<= 1;
                                         }
                                 }
@@ -297,8 +297,8 @@ void cga_poll(void *p)
                 else
                 {
                         cols[0] = ((cga->cgamode & 0x12) == 0x12) ? 0 : (cga->cgacol & 15) + 16;
-                        if (cga->cgamode & 1) hline(buffer, 0, cga->displine, (cga->crtc[1] << 3) + 16, cols[0]);
-                        else                  hline(buffer, 0, cga->displine, (cga->crtc[1] << 4) + 16, cols[0]);
+                        if (cga->cgamode & 1) hline(buffer8, 0, cga->displine, (cga->crtc[1] << 3) + 16, cols[0]);
+                        else                  hline(buffer8, 0, cga->displine, (cga->crtc[1] << 4) + 16, cols[0]);
                 }
 
                 if (cga->cgamode & 1) x = (cga->crtc[1] << 3) + 16;
@@ -310,7 +310,7 @@ void cga_poll(void *p)
 
 					for (c = 0; c < x; c++)
 					{
-						tarray[c] = buffer->line[cga->displine][c] & 0xf;
+						tarray[c] = buffer8->line[cga->displine][c] & 0xf;
 					}
 
 					Composite_Process(cga, 0, x >> 2, tarray);

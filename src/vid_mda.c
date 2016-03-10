@@ -137,20 +137,20 @@ void mda_poll(void *p)
                                 if (mda->sc == 12 && ((attr & 7) == 1))
                                 {
                                         for (c = 0; c < 9; c++)
-                                            buffer->line[mda->displine][(x * 9) + c] = mdacols[attr][blink][1];
+                                            buffer8->line[mda->displine][(x * 9) + c] = mdacols[attr][blink][1];
                                 }
                                 else
                                 {
                                         for (c = 0; c < 8; c++)
-                                            buffer->line[mda->displine][(x * 9) + c] = mdacols[attr][blink][(fontdatm[chr][mda->sc] & (1 << (c ^ 7))) ? 1 : 0];
-                                        if ((chr & ~0x1f) == 0xc0) buffer->line[mda->displine][(x * 9) + 8] = mdacols[attr][blink][fontdatm[chr][mda->sc] & 1];
-                                        else                       buffer->line[mda->displine][(x * 9) + 8] = mdacols[attr][blink][0];
+                                            buffer8->line[mda->displine][(x * 9) + c] = mdacols[attr][blink][(fontdatm[chr][mda->sc] & (1 << (c ^ 7))) ? 1 : 0];
+                                        if ((chr & ~0x1f) == 0xc0) buffer8->line[mda->displine][(x * 9) + 8] = mdacols[attr][blink][fontdatm[chr][mda->sc] & 1];
+                                        else                       buffer8->line[mda->displine][(x * 9) + 8] = mdacols[attr][blink][0];
                                 }
                                 mda->ma++;
                                 if (drawcursor)
                                 {
                                         for (c = 0; c < 9; c++)
-                                            buffer->line[mda->displine][(x * 9) + c] ^= mdacols[attr][0][1];
+                                            buffer8->line[mda->displine][(x * 9) + c] ^= mdacols[attr][0][1];
                                 }
                         }
                 }
