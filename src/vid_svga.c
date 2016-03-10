@@ -342,7 +342,6 @@ void svga_recalctimings(svga_t *svga)
         
         svga->ma_latch = (svga->crtc[0xc] << 8) | svga->crtc[0xd];
 
-        svga->hdisp_time = svga->hdisp;
         svga->render = svga_render_blank;
         if (!svga->scrblank && svga->attr_palette_enable)
         {
@@ -425,6 +424,8 @@ void svga_recalctimings(svga_t *svga)
         if (svga->recalctimings_ex) 
                 svga->recalctimings_ex(svga);
 
+	svga->hdisp_time = svga->hdisp;
+		
         if (svga->vblankstart < svga->dispend)
                 svga->dispend = svga->vblankstart;
 

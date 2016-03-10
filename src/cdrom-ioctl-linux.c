@@ -297,7 +297,7 @@ static int ioctl_medium_changed()
 	if (!tocvalid || (cdrom_drive != old_cdrom_drive))
 	{
 		ioctl_cd_state = CD_STOPPED;
-		toc = ltoc;
+		//toc = ltoc;
 		tocvalid = 1;
 		if (cdrom_drive != old_cdrom_drive)  old_cdrom_drive = cdrom_drive;
 		return 0;
@@ -308,7 +308,7 @@ static int ioctl_medium_changed()
             (toc_entry.cdte_addr.msf.frame  != toc[toc_hdr.cdth_trk1].cdte_addr.msf.frame ))
 	{
 		ioctl_cd_state = CD_STOPPED;
-		toc = ltoc;
+		//toc = ltoc;
 		return 1;
 	}
 	return 0;
@@ -521,7 +521,7 @@ static int ioctl_readtoc_session(unsigned char *b, int msf, int maxlen)
 	int fd = open("/dev/cdrom", O_RDONLY|O_NONBLOCK);
 
 	if (fd <= 0)
-		return;
+		return 0;
 
 	session.addr_format = CDROM_MSF;
 	err = ioctl(fd, CDROMMULTISESSION, &session);
@@ -529,7 +529,7 @@ static int ioctl_readtoc_session(unsigned char *b, int msf, int maxlen)
 	if (err == -1)
 	{
 		close(fd);
-		return;
+		return 0;
 	}
 
         b[2] = 0;
@@ -566,7 +566,7 @@ static int ioctl_readtoc_raw(unsigned char *b, int maxlen)
 	int fd = open("/dev/cdrom", O_RDONLY|O_NONBLOCK);
 
 	if (fd <= 0)
-		return;
+		return 0;
 	
 //pclog("read_toc\n");
 	err = ioctl(fd, CDROMREADTOCHDR, &toc_hdr);
@@ -639,7 +639,7 @@ static int ioctl_status()
 	}
 }
 
-void ioctl_reset()
+void ioctl_reset(void)
 {
 	int fd = open("/dev/cdrom", O_RDONLY|O_NONBLOCK);
 //pclog("ioctl_reset: fd=%i\n", fd);

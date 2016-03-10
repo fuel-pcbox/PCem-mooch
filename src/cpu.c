@@ -365,6 +365,22 @@ CPU cpus_Pentium[] =
         {"",             -1,        0, 0, 0}
 };
 
+CPU cpus_K6[] =
+{
+        /*AMD K6*/
+        {"K6 166",  CPU_K6, 19, 166666666, 3, 66666666, 0x560, 0x560, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
+        {"K6 200",  CPU_K6, 21, 200000000, 3, 66666666, 0x570, 0x570, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
+        {"K6 233",  CPU_K6, 24, 233333333, 4, 66666666, 0x570, 0x570, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
+        {"K6 266",  CPU_K6, 26, 266666666, 4, 66666666, 0x570, 0x570, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
+        {"K6 300",  CPU_K6, 28, 300000000, 5, 66666666, 0x570, 0x570, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
+	{"K6-2 300",  CPU_K6_2, 28, 300000000, 3, 100000000, 0x58c, 0x58c, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
+        {"K6-2 400",  CPU_K6_2, 28, 400000000, 4, 100000000, 0x58c, 0x58c, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
+        {"K6-2 500",  CPU_K6_2, 28, 500000000, 5, 100000000, 0x58c, 0x58c, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
+	{"K6-3 400",  CPU_K6_3, 28, 400000000, 4, 100000000, 0x5d0, 0x5d0, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
+        {"K6-3 500",  CPU_K6_3, 28, 500000000, 5, 100000000, 0x5d0, 0x5d0, 0, CPU_SUPPORTS_DYNAREC | CPU_REQUIRES_DYNAREC},
+        {"",             -1,        0, 0, 0}
+};
+
 void cpu_set_edx()
 {
         EDX = models[model].cpu[cpu_manufacturer].cpus[cpu].edx_reset;
@@ -908,6 +924,48 @@ void cpu_set()
                 cpu_CR4_mask = CR4_TSD | CR4_DE | CR4_MCE | CR4_PCE;
                 codegen_timing_set(&codegen_timing_pentium);
                 break;
+		
+		case CPU_K6:
+		case CPU_K6_2:
+		case CPU_K6_3:
+                x86_setopcodes(ops_386, ops_pentiummmx_0f, dynarec_ops_386, dynarec_ops_pentiummmx_0f);
+		//Fake timings.
+                timing_rr  = 1; /*register dest - register src*/
+                timing_rm  = 1; /*register dest - memory src*/
+                timing_mr  = 2; /*memory dest   - register src*/
+                timing_mm  = 2;
+                timing_rml = 1; /*register dest - memory src long*/
+                timing_mrl = 2; /*memory dest   - register src long*/
+                timing_mml = 2;
+                timing_bt  = 0; /*branch taken*/
+                timing_bnt = 1; /*branch not taken*/
+                timing_int = 3;
+                timing_int_rm       = 7;
+                timing_int_v86      = 40;
+                timing_int_pm       = 20;
+                timing_int_pm_outer = 37;
+                timing_iret_rm       = 4;
+                timing_iret_v86      = 22; /*unknown*/
+                timing_iret_pm       = 7;
+                timing_iret_pm_outer = 22;
+                timing_call_rm = 2;
+                timing_call_pm = 2;
+                timing_call_pm_gate = 17;
+                timing_call_pm_gate_inner = 39;
+                timing_retf_rm       = 2;
+                timing_retf_pm       = 2;
+                timing_retf_pm_outer = 18;
+                timing_jmp_rm      = 2;
+                timing_jmp_pm      = 2;
+                timing_jmp_pm_gate = 13;
+                cpu_hasrdtsc = 1;
+                msr.fcr = (1 << 8) | (1 << 9) | (1 << 12) |  (1 << 16) | (1 << 19) | (1 << 21);
+                cpu_hasMMX = 1;
+                cpu_hasMSR = 1;
+                cpu_hasCR4 = 1;
+                cpu_CR4_mask = CR4_TSD | CR4_DE | CR4_MCE | CR4_PCE;
+                codegen_timing_set(&codegen_timing_pentium);
+                break;
 
                 default:
                 fatal("cpu_set : unknown CPU type %i\n", cpu_s->cpu_type);
@@ -1035,6 +1093,26 @@ void cpu_CPUID()
                 else
                         EAX = 0;
                 break;
+		
+		case CPU_K6:
+		case CPU_K6_2:
+		case CPU_K6_3:
+                if (!EAX)
+                {
+                        EAX = 1;
+                        EBX = 0x68747541;
+                        ECX = 0x444D4163;
+                        EDX = 0x69746E65;
+                }
+                else if (EAX == 1)
+                {
+                        EAX = CPUID;
+                        EBX = ECX = 0;
+                        EDX = CPUID_FPU | CPUID_TSC | CPUID_MSR | CPUID_CMPXCHG8B | CPUID_MMX;
+                }
+                else
+                   EAX = 0;
+                break;
         }
 }
 
@@ -1074,6 +1152,9 @@ void cpu_RDMSR()
 
                 case CPU_PENTIUM:
                 case CPU_PENTIUMMMX:
+		case CPU_K6:
+		case CPU_K6_2:
+		case CPU_K6_3:
                 EAX = EDX = 0;
                 switch (ECX)
                 {
@@ -1124,6 +1205,7 @@ void cpu_WRMSR()
 
                 case CPU_PENTIUM:
                 case CPU_PENTIUMMMX:
+		case CPU_K6:
                 switch (ECX)
                 {
                         case 0x10:
