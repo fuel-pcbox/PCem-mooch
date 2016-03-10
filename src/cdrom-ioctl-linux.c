@@ -297,7 +297,7 @@ static int ioctl_medium_changed()
 	if (!tocvalid || (cdrom_drive != old_cdrom_drive))
 	{
 		ioctl_cd_state = CD_STOPPED;
-		toc = ltoc;
+		//toc = ltoc;
 		tocvalid = 1;
 		if (cdrom_drive != old_cdrom_drive)  old_cdrom_drive = cdrom_drive;
 		return 0;
@@ -308,7 +308,7 @@ static int ioctl_medium_changed()
             (toc_entry.cdte_addr.msf.frame  != toc[toc_hdr.cdth_trk1].cdte_addr.msf.frame ))
 	{
 		ioctl_cd_state = CD_STOPPED;
-		toc = ltoc;
+		//toc = ltoc;
 		return 1;
 	}
 	return 0;
@@ -623,7 +623,7 @@ static uint32_t ioctl_size()
         
         return last_block;
 }
-a
+
 static int ioctl_status()
 {
 	if (!(ioctl_ready) && (cdrom_drive <= 0))  return CD_STATUS_EMPTY;
