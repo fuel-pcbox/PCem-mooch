@@ -77,7 +77,7 @@ void joystick_poll()
    poll_joystick();
 
    for (c = 0; c < MIN(num_joysticks, 2); c++)
-   {                
+   {
       joystick_state[c].x = joy[c].stick[0].axis[0].pos * 256;
       joystick_state[c].y = joy[c].stick[0].axis[1].pos * 256;
       joystick_state[c].b[0] = joy[c].button[0].b;
@@ -135,13 +135,13 @@ void keyboard_close()
 void keyboard_poll_host()
 {
         int c;
-        
+
         for (c = 0; c < 128; c++)
         {
                 int key_idx = key_convert[c];
                 if (key_idx == -1)
                         continue;
-                
+
 #if 0
                 if (key[c] != pcem_key[key_idx])
                         pcem_key[key_idx] = key[c];
@@ -155,7 +155,7 @@ void hline(BITMAP *b, int x1, int y, int x2, uint32_t col)
 {
         if (y < 0 || y >= buffer->h)
            return;
-           
+
         if (b == buffer)
            memset(&b->line[y][x1], col, x2 - x1);
         else
@@ -259,7 +259,7 @@ static PALETTE cgapal=
         {42,0,21},{21,10,21},{42,0,42},{42,0,63},
         {21,21,21},{21,63,21},{42,21,42},{21,63,63},
         {63,0,0},{42,42,0},{63,21,42},{41,41,41},
-        
+
         {0,0,0},{0,42,42},{42,0,0},{42,42,42},
         {0,0,0},{0,42,42},{42,0,0},{42,42,42},
         {0,0,0},{0,63,63},{63,0,0},{63,63,63},
@@ -267,7 +267,7 @@ static PALETTE cgapal=
 };
 
 static uint32_t pal_lookup[256];
-static uint32_t video_buffer[2048 * 2048 * 4];
+static uint32_t video_buffer[2048 * 2048];
 int winsizex=640;
 int winsizey=480;
 
@@ -276,12 +276,15 @@ static void libretro_blit_memtoscreen(int x, int y, int y1, int y2, int w, int h
    int xx, yy;
    uint32_t *p;
 
-   memset(&video_buffer, 0, 2048 * 2048 * sizeof(uint32_t));
+   if((w < 0) || (w > 2048) || (h < 0) || (h > 2048))
+      return;
+
+   memset(video_buffer, 0, 2048 * 2048 * sizeof(uint32_t));
 
    for (yy = y1; yy < y2; yy++)
    {
       if ((y + yy) >= 0 && (y + yy) < buffer->h)
-         memcpy(video_buffer + (yy * sizeof(uint32_t)), &(((uint32_t *)buffer32->line[y + yy])[x]), w * 4);
+         memcpy(video_buffer + yy * 2048, &(((uint32_t *)buffer32->line[y + yy])[x]), w * 4);
    }
 
    if (readflash)
@@ -291,14 +294,14 @@ static void libretro_blit_memtoscreen(int x, int y, int y1, int y2, int w, int h
       {
          for (yy = 8; yy < 14; yy++)
          {
-            p = (uint32_t *)(video_buffer + (yy * sizeof(uint32_t)));                        
+            p = video_buffer + yy * 2048;
             for (xx = (w - 40); xx < (w - 8); xx++)
                p[xx] = 0xffffffff;
          }
       }
    }
 
-   video_cb(video_buffer, w, h, w * 4);
+   video_cb(video_buffer, w, h, 2048 * 4);
 }
 
 static void libretro_blit_memtoscreen_8(int x, int y, int w, int h)
@@ -306,13 +309,16 @@ static void libretro_blit_memtoscreen_8(int x, int y, int w, int h)
    int xx, yy;
    uint32_t *p;
 
-   memset(&video_buffer, 0, 2048 * 2048 * sizeof(uint32_t));
+   if((w < 0) || (w > 2048) || (h < 0) || (h > 2048))
+      return;
+
+   memset(video_buffer, 0, 2048 * 2048 * sizeof(uint32_t));
 
    for (yy = 0; yy < h; yy++)
    {
       if ((y + yy) >= 0 && (y + yy) < buffer->h)
       {
-         p = (uint32_t *)(video_buffer + (yy * sizeof(uint32_t)));
+         p = video_buffer + yy * 2048;
          for (xx = 0; xx < w; xx++)
          {
             p[xx] = pal_lookup[buffer->line[y + yy][x + xx]];
@@ -329,14 +335,14 @@ static void libretro_blit_memtoscreen_8(int x, int y, int w, int h)
       {
          for (yy = 8; yy < 14; yy++)
          {
-            p = (uint32_t *)(video_buffer + (yy * sizeof(uint32_t)));                        
+            p = (uint32_t *)(video_buffer + (yy * sizeof(uint32_t)));
             for (xx = (w - 40); xx < (w - 8); xx++)
                p[xx] = 0xffffffff;
          }
       }
    }
 
-   video_cb(video_buffer, w, h, w * 4);
+   video_cb(video_buffer, w, h, 2048 * 4);
 }
 
 void rectfill(BITMAP *b, int x1, int y1, int x2, int y2, uint32_t col)
@@ -411,8 +417,8 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    info->timing.sample_rate    = 44100;
    info->geometry.base_width   = 320;
    info->geometry.base_height  = 240;
-   info->geometry.max_width    = 320;
-   info->geometry.max_height   = 240;
+   info->geometry.max_width    = 2048;
+   info->geometry.max_height   = 2048;
    info->geometry.aspect_ratio = (float)4/3;
 }
 
@@ -536,11 +542,11 @@ void midi_write(uint8_t val)
         }
 
         if (midi_len && midi_cmd_pos < 3)
-        {                
+        {
                 midi_command[midi_cmd_pos] = val;
-                
+
                 midi_cmd_pos++;
-                
+
 #if 0
 #ifdef USE_ALLEGRO_MIDI
                 if (midi_cmd_pos == midi_len)
