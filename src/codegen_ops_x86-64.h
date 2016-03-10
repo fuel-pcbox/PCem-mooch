@@ -2,6 +2,8 @@
         R8-R15 - emulated registers
 */
 
+#include <math.h>
+
 #define HOST_REG_XMM_START 0
 #define HOST_REG_XMM_END 7
 static inline int find_host_xmm_reg()

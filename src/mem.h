@@ -120,20 +120,20 @@ extern page_t **page_lookup;
 
 uint32_t mmutranslate_noabrt(uint32_t addr, int rw);
 
-static inline get_phys(uint32_t addr)
+static inline uint32_t get_phys(uint32_t addr)
 {
-        if (!(cr0 >> 31))
-                return addr & rammask;
-        
-        return mmutranslatereal(addr, 0) & rammask;
+   if (!(cr0 >> 31))
+      return addr & rammask;
+
+   return mmutranslatereal(addr, 0) & rammask;
 }
 
-static inline get_phys_noabrt(uint32_t addr)
+static inline uint32_t get_phys_noabrt(uint32_t addr)
 {
-        if (!(cr0 >> 31))
-                return addr & rammask;
-        
-        return mmutranslate_noabrt(addr, 0) & rammask;
+   if (!(cr0 >> 31))
+      return addr & rammask;
+
+   return mmutranslate_noabrt(addr, 0) & rammask;
 }
 
 void mem_invalidate_range(uint32_t start_addr, uint32_t end_addr);
