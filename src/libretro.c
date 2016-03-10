@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <math.h>
+#include <unistd.h>
 
 #include "libretro.h"
 
@@ -21,9 +22,6 @@ typedef struct
    unsigned char b;
 }APALETTE;
 
-#define SCREEN_W 320
-#define SCREEN_H 240
-
 static struct retro_log_callback logging;
 static retro_log_printf_t log_cb;
 static bool use_audio_cb;
@@ -38,7 +36,16 @@ int rawinputkey[272];
 int romspresent[ROM_MAX];
 int gfx_present[GFX_MAX];
 
-static BITMAP *buffer32_vscale;
+static retro_video_refresh_t video_cb;
+
+/* forward declarations */
+void closepc(void);
+void saveconfig(void);
+void savenvr(void);
+int loadbios(void);
+void initpc(int argc, char *argv[]);
+void runpc(void);
+void resetpchard(void);
 
 void set_window_title(char *s)
 {
@@ -70,7 +77,7 @@ void joystick_poll()
    poll_joystick();
 
    for (c = 0; c < MIN(num_joysticks, 2); c++)
-   {                
+   {
       joystick_state[c].x = joy[c].stick[0].axis[0].pos * 256;
       joystick_state[c].y = joy[c].stick[0].axis[1].pos * 256;
       joystick_state[c].b[0] = joy[c].button[0].b;
@@ -128,13 +135,13 @@ void keyboard_close()
 void keyboard_poll_host()
 {
         int c;
-        
+
         for (c = 0; c < 128; c++)
         {
                 int key_idx = key_convert[c];
                 if (key_idx == -1)
                         continue;
-                
+
 #if 0
                 if (key[c] != pcem_key[key_idx])
                         pcem_key[key_idx] = key[c];
@@ -148,7 +155,7 @@ void hline(BITMAP *b, int x1, int y, int x2, uint32_t col)
 {
         if (y < 0 || y >= buffer->h)
            return;
-           
+
         if (b == buffer)
            memset(&b->line[y][x1], col, x2 - x1);
         else
@@ -210,6 +217,11 @@ void endblit()
 {
 }
 
+void blit(BITMAP *src, int x1, int y1, int x2, int y2, int xs, int ys)
+{
+   video_cb(src->dat, src->w, src->h, src->w);
+}
+
 static int ticks = 0;
 static void timer_rout()
 {
@@ -247,7 +259,7 @@ static PALETTE cgapal=
         {42,0,21},{21,10,21},{42,0,42},{42,0,63},
         {21,21,21},{21,63,21},{42,21,42},{21,63,63},
         {63,0,0},{42,42,0},{63,21,42},{41,41,41},
-        
+
         {0,0,0},{0,42,42},{42,0,0},{42,42,42},
         {0,0,0},{0,42,42},{42,0,0},{42,42,42},
         {0,0,0},{0,63,63},{63,0,0},{63,63,63},
@@ -255,63 +267,86 @@ static PALETTE cgapal=
 };
 
 static uint32_t pal_lookup[256];
-
-static retro_video_refresh_t video_cb;
+static uint32_t video_buffer[2048 * 2048];
+int winsizex=640;
+int winsizey=480;
 
 static void libretro_blit_memtoscreen(int x, int y, int y1, int y2, int w, int h)
 {
-#if 0
-   if (h < winsizey)
-   {
-      int yy;
+   int xx, yy;
+   uint32_t *p;
 
-      for (yy = y+y1; yy < y+y2; yy++)
+   if((w < 0) || (w > 2048) || (h < 0) || (h > 2048))
+      return;
+
+   memset(video_buffer, 0, 2048 * 2048 * sizeof(uint32_t));
+
+   for (yy = y1; yy < y2; yy++)
+   {
+      if ((y + yy) >= 0 && (y + yy) < buffer->h)
+         memcpy(video_buffer + yy * 2048, &(((uint32_t *)buffer32->line[y + yy])[x]), w * 4);
+   }
+
+   if (readflash)
+   {
+      readflash = 0;
+      if (enable_flash)
       {
-         if (yy >= 0)
+         for (yy = 8; yy < 14; yy++)
          {
-            memcpy(&((uint32_t *)buffer32_vscale->line[yy*2])[x], &((uint32_t *)buffer32->line[yy])[x], w*4);
-            memcpy(&((uint32_t *)buffer32_vscale->line[(yy*2)+1])[x], &((uint32_t *)buffer32->line[yy])[x], w*4);
+            p = video_buffer + yy * 2048;
+            for (xx = (w - 40); xx < (w - 8); xx++)
+               p[xx] = 0xffffffff;
          }
       }
-
-      video_cb(buffer32_vscale, w, h, w);
    }
-   else
-#endif
-      video_cb(buffer32->dat, buffer32->w, buffer32->h, buffer32->w);
-}
 
-void rectfill(BITMAP *b, int x1, int y1, int x2, int y2, uint32_t col)
-{
+   video_cb(video_buffer, w, h, 2048 * 4);
 }
 
 static void libretro_blit_memtoscreen_8(int x, int y, int w, int h)
 {
    int xx, yy;
+   uint32_t *p;
 
-   if (y < 0)
-   {
-      h += y;
-      y = 0;
-   }
+   if((w < 0) || (w > 2048) || (h < 0) || (h > 2048))
+      return;
 
-   for (yy = y; yy < y+h; yy++)
+   memset(video_buffer, 0, 2048 * 2048 * sizeof(uint32_t));
+
+   for (yy = 0; yy < h; yy++)
    {
-      int dy = yy*2;
-      for (xx = x; xx < x+w; xx++)
+      if ((y + yy) >= 0 && (y + yy) < buffer->h)
       {
-         ((uint32_t *)buffer32->line[dy])[xx] =
-            ((uint32_t *)buffer32->line[dy + 1])[xx] = pal_lookup[buffer->line[yy][xx]];
+         p = video_buffer + yy * 2048;
+         for (xx = 0; xx < w; xx++)
+         {
+            p[xx] = pal_lookup[buffer->line[y + yy][x + xx]];
+            /* If brown circuity is disabled, double the green component. */
+            if ((buffer->line[y + yy][x + xx] == 0x16) && !cga_brown)  p[xx] += (p[xx] & 0xff00);
+         }
       }
    }
 
    if (readflash)
    {
-      rectfill(buffer32, x+SCREEN_W-40, y*2+8, SCREEN_W-8, y*2+14, makecol(255, 255, 255));
       readflash = 0;
+      if (enable_flash)
+      {
+         for (yy = 8; yy < 14; yy++)
+         {
+            p = (uint32_t *)(video_buffer + (yy * sizeof(uint32_t)));
+            for (xx = (w - 40); xx < (w - 8); xx++)
+               p[xx] = 0xffffffff;
+         }
+      }
    }
 
-   video_cb(buffer32->dat, buffer32->w, buffer32->h, buffer32->w);
+   video_cb(video_buffer, w, h, 2048 * 4);
+}
+
+void rectfill(BITMAP *b, int x1, int y1, int x2, int y2, uint32_t col)
+{
 }
 
 
@@ -358,19 +393,23 @@ void retro_init(void)
 #else
    char slash = '/';
 #endif
-   unsigned c;
+   unsigned i;
+   unsigned color_mode = RETRO_PIXEL_FORMAT_XRGB8888;
    const char *system_dir = NULL;
 
-   video_blit_memtoscreen   = libretro_blit_memtoscreen;
-   video_blit_memtoscreen_8 = libretro_blit_memtoscreen_8;
-
-   /* video initialization */
-   for (c = 0; c < 256; c++)
-      pal_lookup[c] = makecol(cgapal[c].r << 2, cgapal[c].g << 2, cgapal[c].b << 2);
+   environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &color_mode);
 
    system_dir = retro_get_system_directory();
 
    sprintf(pcempath, "%s%c%s%c", system_dir, slash, "pcem", slash);
+
+   /* video initialization */
+   video_blit_memtoscreen   = libretro_blit_memtoscreen;
+   video_blit_memtoscreen_8 = libretro_blit_memtoscreen_8;
+
+   for (i = 0; i < 256; i++)
+      pal_lookup[i] = makecol(cgapal[i].r << 2, cgapal[i].g << 2, cgapal[i].b << 2);
+
 }
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
@@ -378,8 +417,8 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    info->timing.sample_rate    = 44100;
    info->geometry.base_width   = 320;
    info->geometry.base_height  = 240;
-   info->geometry.max_width    = 320;
-   info->geometry.max_height   = 240;
+   info->geometry.max_width    = 2048;
+   info->geometry.max_height   = 2048;
    info->geometry.aspect_ratio = (float)4/3;
 }
 
@@ -463,16 +502,13 @@ void retro_run(void)
          savenvr();
       }
    }
-#if 0
    else
-      rest(1);
-#endif
+      usleep(1);
 
    if (ticks > 10)
       ticks = 0;
    /* missing: audio_cb / video_cb */
 
-   video_cb(buffer32->dat, buffer32->w, buffer32->h, buffer32->w);
 }
 
 static void keyboard_cb(bool down, unsigned keycode,
@@ -506,11 +542,11 @@ void midi_write(uint8_t val)
         }
 
         if (midi_len && midi_cmd_pos < 3)
-        {                
+        {
                 midi_command[midi_cmd_pos] = val;
-                
+
                 midi_cmd_pos++;
-                
+
 #if 0
 #ifdef USE_ALLEGRO_MIDI
                 if (midi_cmd_pos == midi_len)
@@ -536,7 +572,7 @@ bool retro_load_game(const struct retro_game_info *info)
    check_variables();
 
    midi_init();
-   initpc(NULL, NULL);
+   initpc(0, NULL);
 
    d = romset;
    for (c = 0; c < ROM_MAX; c++)
@@ -589,7 +625,6 @@ bool retro_load_game(const struct retro_game_info *info)
          {
             gfxcard = c;
             saveconfig();
-            resetpchard();
             break;
          }
       }

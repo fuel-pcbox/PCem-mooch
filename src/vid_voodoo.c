@@ -1,5 +1,7 @@
 #include <stdlib.h>
 #include <stddef.h>
+#include <math.h>
+
 #include "ibm.h"
 #include "device.h"
 #include "mem.h"
