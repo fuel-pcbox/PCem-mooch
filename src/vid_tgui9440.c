@@ -3,6 +3,7 @@
 #include "ibm.h"
 #include "device.h"
 #include "io.h"
+#include "pci.h"
 #include "mem.h"
 #include "rom.h"
 #include "video.h"
