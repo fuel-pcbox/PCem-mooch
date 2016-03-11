@@ -3,6 +3,7 @@
 #include "mem.h"
 #include "mouse.h"
 #include "pic.h"
+#include "pit.h"
 #include "sound.h"
 #include "sound_speaker.h"
 #include "timer.h"

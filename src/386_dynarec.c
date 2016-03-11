@@ -9,6 +9,7 @@
 #include "codegen.h"
 #include "cpu.h"
 #include "fdc.h"
+#include "pic.h"
 #include "timer.h"
 
 #include "386_common.h"

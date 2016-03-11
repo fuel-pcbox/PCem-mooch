@@ -2,6 +2,8 @@
 
   AD1848 CODEC emulation (Windows Sound System compatible)*/
 
+#include <math.h>
+
 #include "ibm.h"
 #include "sound.h"
 #include "sound_ad1848.h"

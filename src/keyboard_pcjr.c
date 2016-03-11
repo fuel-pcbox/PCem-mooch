@@ -4,6 +4,7 @@
 #include "mem.h"
 #include "nmi.h"
 #include "pic.h"
+#include "pit.h"
 #include "sound.h"
 #include "sound_sn76489.h"
 #include "sound_speaker.h"

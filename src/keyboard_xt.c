@@ -2,6 +2,7 @@
 #include "io.h"
 #include "mem.h"
 #include "pic.h"
+#include "pit.h"
 #include "sound.h"
 #include "sound_speaker.h"
 #include "timer.h"
