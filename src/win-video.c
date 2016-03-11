@@ -7,10 +7,10 @@ BITMAP *screen;
 
 void hline(BITMAP *b, int x1, int y, int x2, uint32_t col)
 {
-        if (y < 0 || y >= buffer->h)
+        if (y < 0 || y >= buffer8->h)
            return;
            
-        if (b == buffer)
+        if (b == buffer8)
            memset(&b->line[y][x1], col, x2 - x1);
         else
            memset(&((uint32_t *)b->line[y])[x1], col, (x2 - x1) * 4);

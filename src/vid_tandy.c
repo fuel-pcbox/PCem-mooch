@@ -244,21 +244,21 @@ void tandy_poll(void *p)
                         {
                                 if (tandy->array[3] & 4)
                                 {
-                                        buffer->line[tandy->displine][c] = cols[0];
-                                        if (tandy->mode & 1) buffer->line[tandy->displine][c + (tandy->crtc[1] << 3) + 8] = cols[0];
-                                        else                 buffer->line[tandy->displine][c + (tandy->crtc[1] << 4) + 8] = cols[0];
+                                        buffer8->line[tandy->displine][c] = cols[0];
+                                        if (tandy->mode & 1) buffer8->line[tandy->displine][c + (tandy->crtc[1] << 3) + 8] = cols[0];
+                                        else                 buffer8->line[tandy->displine][c + (tandy->crtc[1] << 4) + 8] = cols[0];
                                 }
                                 else if ((tandy->mode & 0x12) == 0x12)
                                 {
-                                        buffer->line[tandy->displine][c] = 0;
-                                        if (tandy->mode & 1) buffer->line[tandy->displine][c + (tandy->crtc[1] << 3) + 8] = 0;
-                                        else                 buffer->line[tandy->displine][c + (tandy->crtc[1] << 4) + 8] = 0;
+                                        buffer8->line[tandy->displine][c] = 0;
+                                        if (tandy->mode & 1) buffer8->line[tandy->displine][c + (tandy->crtc[1] << 3) + 8] = 0;
+                                        else                 buffer8->line[tandy->displine][c + (tandy->crtc[1] << 4) + 8] = 0;
                                 }
                                 else
                                 {
-                                        buffer->line[tandy->displine][c] = (tandy->col & 15) + 16;
-                                        if (tandy->mode & 1) buffer->line[tandy->displine][c + (tandy->crtc[1] << 3) + 8] = (tandy->col & 15) + 16;
-                                        else                 buffer->line[tandy->displine][c + (tandy->crtc[1] << 4) + 8] = (tandy->col & 15) + 16;
+                                        buffer8->line[tandy->displine][c] = (tandy->col & 15) + 16;
+                                        if (tandy->mode & 1) buffer8->line[tandy->displine][c + (tandy->crtc[1] << 3) + 8] = (tandy->col & 15) + 16;
+                                        else                 buffer8->line[tandy->displine][c + (tandy->crtc[1] << 4) + 8] = (tandy->col & 15) + 16;
                                 }
                         }
 //                        printf("X %i %i\n",c+(crtc[1]<<4)+8,c+(crtc[1]<<3)+8);
@@ -270,14 +270,14 @@ void tandy_poll(void *p)
                                         dat = (tandy->vram[((tandy->ma << 1) & 0x1fff) + ((tandy->sc & 3) * 0x2000)] << 8) | 
                                                tandy->vram[((tandy->ma << 1) & 0x1fff) + ((tandy->sc & 3) * 0x2000) + 1];
                                         tandy->ma++;
-                                        buffer->line[tandy->displine][(x << 3) + 8]  = 
-                                        buffer->line[tandy->displine][(x << 3) + 9]  = tandy->array[((dat >> 12) & tandy->array[1]) + 16] + 16;
-                                        buffer->line[tandy->displine][(x << 3) + 10] = 
-                                        buffer->line[tandy->displine][(x << 3) + 11] = tandy->array[((dat >>  8) & tandy->array[1]) + 16] + 16;
-                                        buffer->line[tandy->displine][(x << 3) + 12] = 
-                                        buffer->line[tandy->displine][(x << 3) + 13] = tandy->array[((dat >>  4) & tandy->array[1]) + 16] + 16;
-                                        buffer->line[tandy->displine][(x << 3) + 14] = 
-                                        buffer->line[tandy->displine][(x << 3) + 15] = tandy->array[(dat         & tandy->array[1]) + 16] + 16;
+                                        buffer8->line[tandy->displine][(x << 3) + 8]  = 
+                                        buffer8->line[tandy->displine][(x << 3) + 9]  = tandy->array[((dat >> 12) & tandy->array[1]) + 16] + 16;
+                                        buffer8->line[tandy->displine][(x << 3) + 10] = 
+                                        buffer8->line[tandy->displine][(x << 3) + 11] = tandy->array[((dat >>  8) & tandy->array[1]) + 16] + 16;
+                                        buffer8->line[tandy->displine][(x << 3) + 12] = 
+                                        buffer8->line[tandy->displine][(x << 3) + 13] = tandy->array[((dat >>  4) & tandy->array[1]) + 16] + 16;
+                                        buffer8->line[tandy->displine][(x << 3) + 14] = 
+                                        buffer8->line[tandy->displine][(x << 3) + 15] = tandy->array[(dat         & tandy->array[1]) + 16] + 16;
                                 }
                         }
                         else if (tandy->array[3] & 0x10) /*160x200x16*/
@@ -287,22 +287,22 @@ void tandy_poll(void *p)
                                         dat = (tandy->vram[((tandy->ma << 1) & 0x1fff) + ((tandy->sc & 3) * 0x2000)] << 8) | 
                                                tandy->vram[((tandy->ma << 1) & 0x1fff) + ((tandy->sc & 3) * 0x2000) + 1];
                                         tandy->ma++;
-                                        buffer->line[tandy->displine][(x << 4) + 8]  = 
-                                        buffer->line[tandy->displine][(x << 4) + 9]  = 
-                                        buffer->line[tandy->displine][(x << 4) + 10] =
-                                        buffer->line[tandy->displine][(x << 4) + 11] = tandy->array[((dat >> 12) & tandy->array[1]) + 16] + 16;
-                                        buffer->line[tandy->displine][(x << 4) + 12] = 
-                                        buffer->line[tandy->displine][(x << 4) + 13] =
-                                        buffer->line[tandy->displine][(x << 4) + 14] =
-                                        buffer->line[tandy->displine][(x << 4) + 15] = tandy->array[((dat >>  8) & tandy->array[1]) + 16] + 16;
-                                        buffer->line[tandy->displine][(x << 4) + 16] = 
-                                        buffer->line[tandy->displine][(x << 4) + 17] =
-                                        buffer->line[tandy->displine][(x << 4) + 18] =
-                                        buffer->line[tandy->displine][(x << 4) + 19] = tandy->array[((dat >>  4) & tandy->array[1]) + 16] + 16;
-                                        buffer->line[tandy->displine][(x << 4) + 20] = 
-                                        buffer->line[tandy->displine][(x << 4) + 21] =
-                                        buffer->line[tandy->displine][(x << 4) + 22] =
-                                        buffer->line[tandy->displine][(x << 4) + 23] = tandy->array[(dat         & tandy->array[1]) + 16] + 16;
+                                        buffer8->line[tandy->displine][(x << 4) + 8]  = 
+                                        buffer8->line[tandy->displine][(x << 4) + 9]  = 
+                                        buffer8->line[tandy->displine][(x << 4) + 10] =
+                                        buffer8->line[tandy->displine][(x << 4) + 11] = tandy->array[((dat >> 12) & tandy->array[1]) + 16] + 16;
+                                        buffer8->line[tandy->displine][(x << 4) + 12] = 
+                                        buffer8->line[tandy->displine][(x << 4) + 13] =
+                                        buffer8->line[tandy->displine][(x << 4) + 14] =
+                                        buffer8->line[tandy->displine][(x << 4) + 15] = tandy->array[((dat >>  8) & tandy->array[1]) + 16] + 16;
+                                        buffer8->line[tandy->displine][(x << 4) + 16] = 
+                                        buffer8->line[tandy->displine][(x << 4) + 17] =
+                                        buffer8->line[tandy->displine][(x << 4) + 18] =
+                                        buffer8->line[tandy->displine][(x << 4) + 19] = tandy->array[((dat >>  4) & tandy->array[1]) + 16] + 16;
+                                        buffer8->line[tandy->displine][(x << 4) + 20] = 
+                                        buffer8->line[tandy->displine][(x << 4) + 21] =
+                                        buffer8->line[tandy->displine][(x << 4) + 22] =
+                                        buffer8->line[tandy->displine][(x << 4) + 23] = tandy->array[(dat         & tandy->array[1]) + 16] + 16;
                                 }
                         }
                         else if (tandy->array[3] & 0x08) /*640x200x4 - this implementation is a complete guess!*/
@@ -316,7 +316,7 @@ void tandy_poll(void *p)
                                         {
                                                 chr  =  (dat >>  7) & 1;
                                                 chr |= ((dat >> 14) & 2);
-                                                buffer->line[tandy->displine][(x << 3) + 8 + c] = tandy->array[(chr & tandy->array[1]) + 16] + 16;
+                                                buffer8->line[tandy->displine][(x << 3) + 8 + c] = tandy->array[(chr & tandy->array[1]) + 16] + 16;
                                                 dat <<= 1;
                                         }
                                 }
@@ -343,18 +343,18 @@ void tandy_poll(void *p)
                                         if (tandy->sc & 8)
                                         {
                                                 for (c = 0; c < 8; c++)
-                                                    buffer->line[tandy->displine][(x << 3) + c + 8] = cols[0];
+                                                    buffer8->line[tandy->displine][(x << 3) + c + 8] = cols[0];
                                         }
                                         else
                                         {
                                                 for (c = 0; c < 8; c++)
-                                                    buffer->line[tandy->displine][(x << 3) + c + 8] = cols[(fontdat[chr][tandy->sc & 7] & (1 << (c ^ 7))) ? 1 : 0];
+                                                    buffer8->line[tandy->displine][(x << 3) + c + 8] = cols[(fontdat[chr][tandy->sc & 7] & (1 << (c ^ 7))) ? 1 : 0];
                                         }
 //                                        if (!((ma^(crtc[15]|(crtc[14]<<8)))&0x3FFF)) printf("Cursor match! %04X\n",ma);
                                         if (drawcursor)
                                         {
                                                 for (c = 0; c < 8; c++)
-                                                    buffer->line[tandy->displine][(x << 3) + c + 8] ^= 15;
+                                                    buffer8->line[tandy->displine][(x << 3) + c + 8] ^= 15;
                                         }
                                         tandy->ma++;
                                 }
@@ -382,19 +382,19 @@ void tandy_poll(void *p)
                                         if (tandy->sc & 8)
                                         {
                                                 for (c = 0; c < 8; c++)
-                                                    buffer->line[tandy->displine][(x << 4) + (c << 1) + 8] = 
-                                                    buffer->line[tandy->displine][(x << 4) + (c << 1) + 1 + 8] = cols[0];
+                                                    buffer8->line[tandy->displine][(x << 4) + (c << 1) + 8] = 
+                                                    buffer8->line[tandy->displine][(x << 4) + (c << 1) + 1 + 8] = cols[0];
                                         }
                                         else
                                         {
                                                 for (c = 0; c < 8; c++)
-                                                    buffer->line[tandy->displine][(x << 4) + (c << 1) + 8] = 
-                                                    buffer->line[tandy->displine][(x << 4) + (c << 1) + 1 + 8] = cols[(fontdat[chr][tandy->sc & 7] & (1 << (c ^ 7))) ? 1 : 0];
+                                                    buffer8->line[tandy->displine][(x << 4) + (c << 1) + 8] = 
+                                                    buffer8->line[tandy->displine][(x << 4) + (c << 1) + 1 + 8] = cols[(fontdat[chr][tandy->sc & 7] & (1 << (c ^ 7))) ? 1 : 0];
                                         }
                                         if (drawcursor)
                                         {
                                                 for (c = 0; c < 16; c++)
-                                                    buffer->line[tandy->displine][(x << 4) + c + 8] ^= 15;
+                                                    buffer8->line[tandy->displine][(x << 4) + c + 8] ^= 15;
                                         }
                                 }
                         }
@@ -427,8 +427,8 @@ void tandy_poll(void *p)
                                         tandy->ma++;
                                         for (c = 0; c < 8; c++)
                                         {
-                                                buffer->line[tandy->displine][(x << 4) + (c << 1) + 8] =
-                                                buffer->line[tandy->displine][(x << 4) + (c << 1) + 1 + 8] = cols[dat >> 14];
+                                                buffer8->line[tandy->displine][(x << 4) + (c << 1) + 8] =
+                                                buffer8->line[tandy->displine][(x << 4) + (c << 1) + 1 + 8] = cols[dat >> 14];
                                                 dat <<= 2;
                                         }
                                 }
@@ -444,7 +444,7 @@ void tandy_poll(void *p)
                                         tandy->ma++;
                                         for (c = 0; c < 16; c++)
                                         {
-                                                buffer->line[tandy->displine][(x << 4) + c + 8] = cols[dat >> 15];
+                                                buffer8->line[tandy->displine][(x << 4) + c + 8] = cols[dat >> 15];
                                                 dat <<= 1;
                                         }
                                 }
@@ -454,14 +454,14 @@ void tandy_poll(void *p)
                 {
                         if (tandy->array[3] & 4)
                         {
-                                if (tandy->mode & 1) hline(buffer, 0, tandy->displine, (tandy->crtc[1] << 3) + 16, (tandy->array[2] & 0xf) + 16);
-                                else                 hline(buffer, 0, tandy->displine, (tandy->crtc[1] << 4) + 16, (tandy->array[2] & 0xf) + 16);
+                                if (tandy->mode & 1) hline(buffer8, 0, tandy->displine, (tandy->crtc[1] << 3) + 16, (tandy->array[2] & 0xf) + 16);
+                                else                 hline(buffer8, 0, tandy->displine, (tandy->crtc[1] << 4) + 16, (tandy->array[2] & 0xf) + 16);
                         }
                         else
                         {
                                 cols[0] = ((tandy->mode & 0x12) == 0x12) ? 0 : (tandy->col & 0xf) + 16;
-                                if (tandy->mode & 1) hline(buffer, 0, tandy->displine, (tandy->crtc[1] << 3) + 16, cols[0]);
-                                else                 hline(buffer, 0, tandy->displine, (tandy->crtc[1] << 4) + 16, cols[0]);
+                                if (tandy->mode & 1) hline(buffer8, 0, tandy->displine, (tandy->crtc[1] << 3) + 16, cols[0]);
+                                else                 hline(buffer8, 0, tandy->displine, (tandy->crtc[1] << 4) + 16, cols[0]);
                         }
                 }
                 if (tandy->mode & 1) x = (tandy->crtc[1] << 3) + 16;
@@ -470,8 +470,8 @@ void tandy_poll(void *p)
                 {
                         for (c = 0; c < x; c++)
                         {
-                                y_buf[(c << 1) & 6] = ntsc_col[buffer->line[tandy->displine][c] & 7][(c << 1) & 6] ? 0x6000 : 0;
-                                y_buf[(c << 1) & 6] += (buffer->line[tandy->displine][c] & 8) ? 0x3000 : 0;
+                                y_buf[(c << 1) & 6] = ntsc_col[buffer8->line[tandy->displine][c] & 7][(c << 1) & 6] ? 0x6000 : 0;
+                                y_buf[(c << 1) & 6] += (buffer8->line[tandy->displine][c] & 8) ? 0x3000 : 0;
                                 i_buf[(c << 1) & 6] = y_buf[(c << 1) & 6] * i_filt[(c << 1) & 6];
                                 q_buf[(c << 1) & 6] = y_buf[(c << 1) & 6] * q_filt[(c << 1) & 6];
                                 y_tot = y_buf[0] + y_buf[1] + y_buf[2] + y_buf[3] + y_buf[4] + y_buf[5] + y_buf[6] + y_buf[7];
@@ -492,8 +492,8 @@ void tandy_poll(void *p)
                                 g = (y_val -  70*i_val - 166*q_val) >> 16;
                                 b = (y_val - 283*i_val + 436*q_val) >> 16;
 
-                                y_buf[((c << 1) & 6) + 1] = ntsc_col[buffer->line[tandy->displine][c] & 7][((c << 1) & 6) + 1] ? 0x6000 : 0;
-                                y_buf[((c << 1) & 6) + 1] += (buffer->line[tandy->displine][c] & 8) ? 0x3000 : 0;
+                                y_buf[((c << 1) & 6) + 1] = ntsc_col[buffer8->line[tandy->displine][c] & 7][((c << 1) & 6) + 1] ? 0x6000 : 0;
+                                y_buf[((c << 1) & 6) + 1] += (buffer8->line[tandy->displine][c] & 8) ? 0x3000 : 0;
                                 i_buf[((c << 1) & 6) + 1] = y_buf[((c << 1) & 6) + 1] * i_filt[((c << 1) & 6) + 1];
                                 q_buf[((c << 1) & 6) + 1] = y_buf[((c << 1) & 6) + 1] * q_filt[((c << 1) & 6) + 1];
                                 y_tot = y_buf[0] + y_buf[1] + y_buf[2] + y_buf[3] + y_buf[4] + y_buf[5] + y_buf[6] + y_buf[7];
