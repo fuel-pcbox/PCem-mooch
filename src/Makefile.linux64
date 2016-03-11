@@ -1,4 +1,4 @@
-VPATH = . dosbox resid-fp slirp
+VPATH = .
 CXX  = g++
 CC   = gcc
 WINDRES = windres
@@ -158,8 +158,24 @@ OBJ = 386.o \
 	x86seg.o \
 	x87.o \
 	xtide.o
-FMOBJ = dbopl.o
-SIDOBJ = convolve.o convolve-sse.o envelope.o extfilt.o filter.o pot.o sid.o voice.o wave6581__ST.o wave6581_P_T.o wave6581_PS_.o wave6581_PST.o wave8580__ST.o wave8580_P_T.o wave8580_PS_.o wave8580_PST.o wave.o
+FMOBJ = dosbox/dbopl.o
+SIDOBJ = resid-fp/convolve.o \
+	resid-fp/convolve-sse.o \
+	resid-fp/envelope.o \
+	resid-fp/extfilt.o \
+	resid-fp/filter.o \
+	resid-fp/pot.o \
+	resid-fp/sid.o \
+	resid-fp/voice.o \
+	resid-fp/wave6581__ST.o \
+	resid-fp/wave6581_P_T.o \
+	resid-fp/wave6581_PS_.o \
+	resid-fp/wave6581_PST.o \
+	resid-fp/wave8580__ST.o \
+	resid-fp/wave8580_P_T.o \
+	resid-fp/wave8580_PS_.o \
+	resid-fp/wave8580_PST.o \
+	resid-fp/wave.o \
 
 
 LIBS = -lopenal -lalut -flto -lgcov -lstdc++ -lm -lalleg -pthread
@@ -171,8 +187,7 @@ all : PCem64
 
 clean :
 	rm *.o
-	rm *.exe
-	rm *.res
+	rm PCem64
 
 %.o : %.c
 	$(CC) $(CFLAGS) -c $<

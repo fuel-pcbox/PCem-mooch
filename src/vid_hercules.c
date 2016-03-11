@@ -154,7 +154,7 @@ void hercules_poll(void *p)
                                         dat = (hercules->vram[((hercules->ma << 1) & 0x1fff) + ca] << 8) | hercules->vram[((hercules->ma << 1) & 0x1fff) + ca + 1];
                                         hercules->ma++;
                                         for (c = 0; c < 16; c++)
-                                            buffer->line[hercules->displine][(x << 4) + c] = (dat & (32768 >> c)) ? 7 : 0;
+                                            buffer8->line[hercules->displine][(x << 4) + c] = (dat & (32768 >> c)) ? 7 : 0;
                                 }
                         }
                         else
@@ -168,20 +168,20 @@ void hercules_poll(void *p)
                                         if (hercules->sc == 12 && ((attr & 7) == 1))
                                         {
                                                 for (c = 0; c < 9; c++)
-                                                    buffer->line[hercules->displine][(x * 9) + c] = mdacols[attr][blink][1];
+                                                    buffer8->line[hercules->displine][(x * 9) + c] = mdacols[attr][blink][1];
                                         }
                                         else
                                         {
                                                 for (c = 0; c < 8; c++)
-                                                    buffer->line[hercules->displine][(x * 9) + c] = mdacols[attr][blink][(fontdatm[chr][hercules->sc] & (1 << (c ^ 7))) ? 1 : 0];
-                                                if ((chr & ~0x1f) == 0xc0) buffer->line[hercules->displine][(x * 9) + 8] = mdacols[attr][blink][fontdatm[chr][hercules->sc] & 1];
-                                                else                       buffer->line[hercules->displine][(x * 9) + 8] = mdacols[attr][blink][0];
+                                                    buffer8->line[hercules->displine][(x * 9) + c] = mdacols[attr][blink][(fontdatm[chr][hercules->sc] & (1 << (c ^ 7))) ? 1 : 0];
+                                                if ((chr & ~0x1f) == 0xc0) buffer8->line[hercules->displine][(x * 9) + 8] = mdacols[attr][blink][fontdatm[chr][hercules->sc] & 1];
+                                                else                       buffer8->line[hercules->displine][(x * 9) + 8] = mdacols[attr][blink][0];
                                         }
                                         hercules->ma++;
                                         if (drawcursor)
                                         {
                                                 for (c = 0; c < 9; c++)
-                                                    buffer->line[hercules->displine][(x * 9) + c] ^= mdacols[attr][0][1];
+                                                    buffer8->line[hercules->displine][(x * 9) + c] ^= mdacols[attr][0][1];
                                         }
                                 }
                         }

@@ -445,10 +445,10 @@ static void d3d_fs_blit_memtoscreen_8(int x, int y, int w, int h)
                 for (yy = 0; yy < h; yy++)
                 {
                         uint32_t *p = (uint32_t *)(dr.pBits + (yy * dr.Pitch));
-                        if ((y + yy) >= 0 && (y + yy) < buffer->h)
+                        if ((y + yy) >= 0 && (y + yy) < buffer8->h)
                         {
                                 for (xx = 0; xx < w; xx++)
-                                        p[xx] = pal_lookup[buffer->line[y + yy][x + xx]];
+                                        p[xx] = pal_lookup[buffer8->line[y + yy][x + xx]];
                         }
                 }
 

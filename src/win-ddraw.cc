@@ -168,7 +168,7 @@ static void ddraw_blit_memtoscreen(int x, int y, int y1, int y2, int w, int h)
         if (!ddsd.lpSurface) return;
         for (yy = y1; yy < y2; yy++)
         {
-                if ((y + yy) >= 0 && (y + yy) < buffer->h)
+                if ((y + yy) >= 0 && (y + yy) < buffer8->h)
                         memcpy(ddsd.lpSurface + (yy * ddsd.lPitch), &(((uint32_t *)buffer32->line[y + yy])[x]), w * 4);
         }
         lpdds_back->Unlock(NULL);
@@ -246,14 +246,14 @@ static void ddraw_blit_memtoscreen_8(int x, int y, int w, int h)
         if (!ddsd.lpSurface) return;
         for (yy = 0; yy < h; yy++)
         {
-                if ((y + yy) >= 0 && (y + yy) < buffer->h)
+                if ((y + yy) >= 0 && (y + yy) < buffer8->h)
                 {
                         p = (uint32_t *)(ddsd.lpSurface + (yy * ddsd.lPitch));
                         for (xx = 0; xx < w; xx++)
 			{
-                            p[xx] = pal_lookup[buffer->line[y + yy][x + xx]];
+                            p[xx] = pal_lookup[buffer8->line[y + yy][x + xx]];
 			    /* If brown circuity is disabled, double the green component. */
-			    if ((buffer->line[y + yy][x + xx] == 0x16) && !cga_brown)  p[xx] += (p[xx] & 0xff00);
+			    if ((buffer8->line[y + yy][x + xx] == 0x16) && !cga_brown)  p[xx] += (p[xx] & 0xff00);
 			}
                 }
         }

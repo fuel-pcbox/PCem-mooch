@@ -288,7 +288,7 @@ void video_init()
 }
 
 
-BITMAP *buffer, *buffer32;
+BITMAP *buffer8, *buffer32;
 
 uint8_t fontdat[256][8];
 uint8_t fontdatm[256][16];
@@ -299,7 +299,6 @@ PALETTE cgapal;
 
 void loadfont(char *s, int format)
 {
-#ifndef __LIBRETRO__
         FILE *f=romfopen(s,"rb");
         int c,d;
         if (!f)
@@ -367,7 +366,6 @@ void loadfont(char *s, int format)
                 }
         }
         fclose(f);
-#endif
 }
 
 
@@ -378,7 +376,7 @@ void initvideo()
 	/* Account for overscan. */
         buffer32 = create_bitmap(2064, 2056);
 
-        buffer = create_bitmap(2064, 2056);
+        buffer8 = create_bitmap(2064, 2056);
 
         for (c = 0; c < 64; c++)
         {
@@ -431,7 +429,7 @@ void closevideo()
 {
         free(video_15to32);
         free(video_16to32);
-        destroy_bitmap(buffer);
+        destroy_bitmap(buffer8);
         destroy_bitmap(buffer32);
 }
 
