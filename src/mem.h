@@ -150,4 +150,6 @@ void flushmmucache(void);
 
 void writememwl(uint32_t seg, uint32_t addr, uint16_t val);
 
+void mmu_invalidate(uint32_t addr);
+
 extern mem_mapping_t ram_low_mapping;

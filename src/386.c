@@ -5,6 +5,7 @@
 #include "x86.h"
 #include "x87.h"
 #include "mem.h"
+#include "pic.h"
 #include "cpu.h"
 #include "fdc.h"
 #include "timer.h"
