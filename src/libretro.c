@@ -134,6 +134,7 @@ void keyboard_close()
 
 void keyboard_poll_host()
 {
+#if 0
         int c;
 
         for (c = 0; c < 128; c++)
@@ -147,6 +148,7 @@ void keyboard_poll_host()
                         pcem_key[key_idx] = key[c];
 #endif
         }
+#endif
 }
 
 void updatewindowsize(int x, int y) { }
@@ -514,8 +516,27 @@ void retro_run(void)
 static void keyboard_cb(bool down, unsigned keycode,
       uint32_t character, uint16_t mod)
 {
+   bool latch = down ? true : false;
+
+
    log_cb(RETRO_LOG_INFO, "Down: %s, Code: %d, Char: %u, Mod: %u.\n",
          down ? "yes" : "no", keycode, character, mod);
+
+
+   switch (keycode)
+   {
+      case RETROK_F8:
+         pcem_key[0x42] = latch;
+         break;
+      case RETROK_RETURN:
+         pcem_key[0x0e] = latch;
+         break;
+      case RETROK_a:
+         pcem_key[0x1e] = latch;
+         break;
+      case 0:
+         break;
+   }
 }
 
 static int midi_cmd_pos, midi_len;
