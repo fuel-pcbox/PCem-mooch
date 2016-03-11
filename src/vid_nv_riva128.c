@@ -118,6 +118,13 @@ typedef struct riva128_t
   } pramdac;
   
   uint32_t channels[16][8][0x2000];
+  
+  struct
+  {
+	int scl;
+	int sda;
+	uint8_t addr; //actually 7 bits
+  } i2c;
 
 } riva128_t;
 
@@ -646,10 +653,17 @@ static void riva128_mmio_write(uint32_t addr, uint8_t val, void *p)
 {
   addr &= 0xffffff;
   pclog("RIVA 128 MMIO write %08X %02X %04X:%08X\n", addr, val, CS, pc);
-  uint32_t tmp = riva128_mmio_read_l(addr,p);
-  tmp &= ~(0xff << ((addr & 3) << 3));
-  tmp |= val << ((addr & 3) << 3);
-  riva128_mmio_write_l(addr, tmp, p);
+  if(addr != 0x6013d4 && addr != 0x6013d5 && addr != 0x6013b4 && addr != 0x6013b5)
+  {
+    uint32_t tmp = riva128_mmio_read_l(addr,p);
+    tmp &= ~(0xff << ((addr & 3) << 3));
+    tmp |= val << ((addr & 3) << 3);
+    riva128_mmio_write_l(addr, tmp, p);
+  }
+  else
+  {
+    riva128_out(addr & 0xfff, val & 0xff, p);
+  }
 }
 
 static void riva128_mmio_write_w(uint32_t addr, uint16_t val, void *p)
@@ -684,9 +698,6 @@ static void riva128_mmio_write_l(uint32_t addr, uint32_t val, void *p)
   break;
   case 0x100000 ... 0x100fff:
   riva128_pfb_write(addr, val, riva128);
-  break;
-  case 0x6013b4 ... 0x6013b5: case 0x6013d4 ... 0x6013d5:
-  riva128_out(addr & 0xfff, val & 0xff, riva128);
   break;
   case 0x680000 ... 0x680fff:
   riva128_pramdac_write(addr, val, riva128);
@@ -794,7 +805,15 @@ static uint8_t riva128_in(uint16_t addr, void *p)
   ret = svga->crtcreg;
   break;
   case 0x3D5:
+  switch(svga->crtcreg)
+  {
+  case 0x3e:
+  ret = (riva128->i2c.sda << 3) | (riva128->i2c.scl << 2);
+  break;
+  default:
   ret = svga->crtc[svga->crtcreg];
+  break;
+  }
   if(svga->crtcreg > 0x18)
     pclog("RIVA 128 Extended CRTC read %02X %04X:%08X\n", svga->crtcreg, CS, pc);
   break;
@@ -867,6 +886,10 @@ static void riva128_out(uint16_t addr, uint8_t val, void *p)
   break;
   case 0x38:
   riva128->rma.mode = val & 0xf;
+  break;
+  case 0x3f:
+  riva128->i2c.scl = (val & 0x20) ? 1 : 0;
+  riva128->i2c.sda = (val & 0x10) ? 1 : 0;
   break;
   }
   if(svga->crtcreg > 0x18)
