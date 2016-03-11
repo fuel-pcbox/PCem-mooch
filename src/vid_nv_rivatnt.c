@@ -37,16 +37,44 @@ typedef struct rivatnt_t
 
   struct
   {
-    int width;
-    int bpp;
-    uint32_t config_0;
-  } pfb;
-
+	uint32_t intr;
+	uint32_t intr_en;
+	uint32_t intr_line;
+	uint32_t enable;
+  } pmc;
+  
   struct
   {
-    uint32_t gen_ctrl;
-  } pramdac;
-
+	uint32_t intr;
+	uint32_t intr_en;
+  } pbus;
+  
+  struct
+  {
+	uint32_t intr;
+	uint32_t intr_en;
+	
+	uint32_t ramht;
+	uint32_t ramht_addr;
+	uint32_t ramht_size;
+	
+	uint32_t ramfc;
+	uint32_t ramfc_addr;
+	
+	uint32_t ramro;
+	uint32_t ramro_addr;
+	uint32_t ramro_size;
+	
+	uint16_t chan_mode;
+	uint16_t chan_dma;
+	uint16_t chan_size; //0 = 1024, 1 = 512
+	
+	struct
+	{
+		int chanid;
+	} caches[2];
+  } pfifo;
+  
   struct
   {
     uint32_t addr;
@@ -54,10 +82,73 @@ typedef struct rivatnt_t
     uint8_t access_reg[4];
     uint8_t mode;
   } rma;
+  
+  struct
+  {
+	uint32_t time;
+  } ptimer;
+  
+  struct
+  {
+    int width;
+    int bpp;
+    uint32_t config_0;
+  } pfb;
+
+  struct
+  {
+	uint32_t obj_handle[16][8];
+	uint8_t obj_class[16][8];
+  } pgraph;
+  
+  struct
+  {
+    uint32_t nvpll;
+    uint32_t nv_m,nv_n,nv_p;
+    
+    uint32_t mpll;
+    uint32_t m_m,m_n,m_p;
+  
+    uint32_t vpll;
+    uint32_t v_m,v_n,v_p;
+  
+    uint32_t pll_ctrl;
+  
+    uint32_t gen_ctrl;
+  } pramdac;
+  
+  uint32_t channels[16][8][0x2000];
+  
+  struct
+  {
+	int scl;
+	int sda;
+	uint8_t addr; //actually 7 bits
+  } i2c;
 
 } rivatnt_t;
 
+const char* pmc_interrupts[32] =
+{
+	"","","","","PMEDIA","","","","PFIFO","","","","PGRAPH","","","","PRAMDAC.VIDEO","","","","PTIMER","","","","PCRTC","","","","PBUS","","",""
+};
+
+const char* pbus_interrupts[32] =
+{
+	"BUS_ERROR","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""	
+};
+
+const char* pfifo_interrupts[32] =
+{
+	"CACHE_ERROR","","","","RUNOUT","","","","RUNOUT_OVERFLOW","","","","DMA_PUSHER","","","","DMA_PTE","","","","","","","","","","","","","","",""	
+};
+
 static uint8_t rivatnt_pci_read(int func, int addr, void *p);
+
+static uint8_t rivatnt_in(uint16_t addr, void *p);
+static void rivatnt_out(uint16_t addr, uint8_t val, void *p);
+
+static void rivatnt_mmio_write_l(uint32_t addr, uint32_t val, void *p);
 
 static uint8_t rivatnt_pmc_read(uint32_t addr, void *p)
 {
@@ -73,9 +164,47 @@ static uint8_t rivatnt_pmc_read(uint32_t addr, void *p)
   case 0x000001: ret = 0x40; break;
   case 0x000002: ret = 0x00; break;
   case 0x000003: ret = 0x00; break;
+  case 0x000100: ret = rivatnt->pmc.intr & 0xff; break;
+  case 0x000101: ret = (rivatnt->pmc.intr >> 8) & 0xff; break;
+  case 0x000102: ret = (rivatnt->pmc.intr >> 16) & 0xff; break;
+  case 0x000103: ret = (rivatnt->pmc.intr >> 24) & 0xff; break;
+  case 0x000140: ret = rivatnt->pmc.intr & 0xff; break;
+  case 0x000141: ret = (rivatnt->pmc.intr_en  >> 8) & 0xff; break;
+  case 0x000142: ret = (rivatnt->pmc.intr_en >> 16) & 0xff; break;
+  case 0x000143: ret = (rivatnt->pmc.intr_en >> 24) & 0xff; break;
+  case 0x000160: ret = rivatnt->pmc.intr_line & 0xff; break;
+  case 0x000161: ret = (rivatnt->pmc.intr_line >> 8) & 0xff; break;
+  case 0x000162: ret = (rivatnt->pmc.intr_line >> 16) & 0xff; break;
+  case 0x000163: ret = (rivatnt->pmc.intr_line >> 24) & 0xff; break;
+  case 0x000200: ret = rivatnt->pmc.enable & 0xff; break;
+  case 0x000201: ret = (rivatnt->pmc.enable >> 8) & 0xff; break;
+  case 0x000202: ret = (rivatnt->pmc.enable >> 16) & 0xff; break;
+  case 0x000203: ret = (rivatnt->pmc.enable >> 24) & 0xff; break;
   }
 
   return ret;
+}
+
+static void rivatnt_pmc_write(uint32_t addr, uint32_t val, void *p)
+{
+  rivatnt_t *rivatnt = (rivatnt_t *)p;
+  svga_t *svga = &rivatnt->svga;
+  pclog("RIVA TNT PMC write %08X %08X %04X:%08X\n", addr, val, CS, pc);
+
+  switch(addr)
+  {
+  case 0x000100:
+  rivatnt->pmc.intr = val;
+  //if((val & 0x80000000) && (rivatnt->pmc.intr_en & 2)) pci_interrupt(0);
+  break;
+  case 0x000140:
+  rivatnt->pmc.intr_en = val & 3;
+  break;
+  case 0x000200:
+  rivatnt->pmc.enable = val;
+  //if(val & 0x80000000) pci_interrupt(0);
+  break;
+  }
 }
 
 static uint8_t rivatnt_pbus_read(uint32_t addr, void *p)
@@ -88,9 +217,161 @@ static uint8_t rivatnt_pbus_read(uint32_t addr, void *p)
 
   switch(addr)
   {
+  case 0x001100: ret = rivatnt->pbus.intr & 0xff; break;
+  case 0x001101: ret = (rivatnt->pbus.intr >> 8) & 0xff; break;
+  case 0x001102: ret = (rivatnt->pbus.intr >> 16) & 0xff; break;
+  case 0x001103: ret = (rivatnt->pbus.intr >> 24) & 0xff; break;
+  case 0x001140: ret = rivatnt->pbus.intr & 0xff; break;
+  case 0x001141: ret = (rivatnt->pbus.intr_en  >> 8) & 0xff; break;
+  case 0x001142: ret = (rivatnt->pbus.intr_en >> 16) & 0xff; break;
+  case 0x001143: ret = (rivatnt->pbus.intr_en >> 24) & 0xff; break;
   case 0x001800 ... 0x0018ff: ret = rivatnt_pci_read(0, addr - 0x1800, rivatnt); break;
   }
 
+  return ret;
+}
+
+static void rivatnt_pbus_write(uint32_t addr, uint32_t val, void *p)
+{
+  rivatnt_t *rivatnt = (rivatnt_t *)p;
+  svga_t *svga = &rivatnt->svga;
+  pclog("RIVA TNT PBUS write %08X %08X %04X:%08X\n", addr, val, CS, pc);
+
+  switch(addr)
+  {
+  case 0x001100:
+  rivatnt->pbus.intr = val;
+  break;
+  case 0x001140:
+  rivatnt->pbus.intr_en = val;
+  break;
+  }
+}
+
+static uint8_t rivatnt_pfifo_read(uint32_t addr, void *p)
+{
+  rivatnt_t *rivatnt = (rivatnt_t *)p;
+  svga_t *svga = &rivatnt->svga;
+  uint8_t ret = 0;
+
+  pclog("RIVA TNT PFIFO read %08X %04X:%08X\n", addr, CS, pc);
+
+  switch(addr)
+  {
+  case 0x002100: ret = rivatnt->pfifo.intr & 0xff; break;
+  case 0x002101: ret = (rivatnt->pfifo.intr >> 8) & 0xff; break;
+  case 0x002102: ret = (rivatnt->pfifo.intr >> 16) & 0xff; break;
+  case 0x002103: ret = (rivatnt->pfifo.intr >> 24) & 0xff; break;
+  case 0x002140: ret = rivatnt->pfifo.intr_en & 0xff; break;
+  case 0x002141: ret = (rivatnt->pfifo.intr_en >> 8) & 0xff; break;
+  case 0x002142: ret = (rivatnt->pfifo.intr_en >> 16) & 0xff; break;
+  case 0x002143: ret = (rivatnt->pfifo.intr_en >> 24) & 0xff; break;
+  case 0x002210: ret = rivatnt->pfifo.ramht & 0xff; break;
+  case 0x002211: ret = (rivatnt->pfifo.ramht >> 8) & 0xff; break;
+  case 0x002212: ret = (rivatnt->pfifo.ramht >> 16) & 0xff; break;
+  case 0x002213: ret = (rivatnt->pfifo.ramht >> 24) & 0xff; break;
+  case 0x002214: ret = rivatnt->pfifo.ramfc & 0xff; break;
+  case 0x002215: ret = (rivatnt->pfifo.ramfc >> 8) & 0xff; break;
+  case 0x002216: ret = (rivatnt->pfifo.ramfc >> 16) & 0xff; break;
+  case 0x002217: ret = (rivatnt->pfifo.ramfc >> 24) & 0xff; break;
+  case 0x002218: ret = rivatnt->pfifo.ramro & 0xff; break;
+  case 0x002219: ret = (rivatnt->pfifo.ramro >> 8) & 0xff; break;
+  case 0x00221a: ret = (rivatnt->pfifo.ramro >> 16) & 0xff; break;
+  case 0x00221b: ret = (rivatnt->pfifo.ramro >> 24) & 0xff; break;
+  case 0x002504: ret = rivatnt->pfifo.chan_mode & 0xff; break;
+  case 0x002505: ret = (rivatnt->pfifo.chan_mode >> 8) & 0xff; break;
+  case 0x002506: ret = (rivatnt->pfifo.chan_mode >> 16) & 0xff; break;
+  case 0x002507: ret = (rivatnt->pfifo.chan_mode >> 24) & 0xff; break;
+  case 0x002508: ret = rivatnt->pfifo.chan_dma & 0xff; break;
+  case 0x002509: ret = (rivatnt->pfifo.chan_dma >> 8) & 0xff; break;
+  case 0x00250a: ret = (rivatnt->pfifo.chan_dma >> 16) & 0xff; break;
+  case 0x00250b: ret = (rivatnt->pfifo.chan_dma >> 24) & 0xff; break;
+  case 0x00250c: ret = rivatnt->pfifo.chan_size & 0xff; break;
+  case 0x00250d: ret = (rivatnt->pfifo.chan_size >> 8) & 0xff; break;
+  case 0x00250e: ret = (rivatnt->pfifo.chan_size >> 16) & 0xff; break;
+  case 0x00250f: ret = (rivatnt->pfifo.chan_size >> 24) & 0xff; break;
+  }
+
+  return ret;
+}
+
+static void rivatnt_pfifo_write(uint32_t addr, uint32_t val, void *p)
+{
+  rivatnt_t *rivatnt = (rivatnt_t *)p;
+  svga_t *svga = &rivatnt->svga;
+  pclog("RIVA TNT PFIFO write %08X %08X %04X:%08X\n", addr, val, CS, pc);
+
+  switch(addr)
+  {
+  case 0x002100:
+  rivatnt->pfifo.intr = val;
+  break;
+  case 0x002140:
+  rivatnt->pfifo.intr_en = val;
+  break;
+  case 0x002210:
+  rivatnt->pfifo.ramht = val;
+  rivatnt->pfifo.ramht_addr = (val & 0xf0) << 12;
+  switch(val & 0x30000)
+  {
+	case 0x00000:
+	rivatnt->pfifo.ramht_size = 4 * 1024;
+	break;
+	case 0x10000:
+	rivatnt->pfifo.ramht_size = 8 * 1024;
+	break;
+	case 0x20000:
+	rivatnt->pfifo.ramht_size = 16 * 1024;
+	break;
+	case 0x30000:
+	rivatnt->pfifo.ramht_size = 32 * 1024;
+	break;
+  }
+  break;
+  case 0x002214:
+  rivatnt->pfifo.ramfc = val;
+  rivatnt->pfifo.ramfc_addr = (val & 0xfe) << 9;
+  break;
+  case 0x002218:
+  rivatnt->pfifo.ramro = val;
+  rivatnt->pfifo.ramro_addr = (val & 0xfe) << 9;
+  if(val & 0x10000) rivatnt->pfifo.ramro_size = 8192;
+  else rivatnt->pfifo.ramro_size = 512;
+  break;
+  case 0x002504:
+  rivatnt->pfifo.chan_mode = val;
+  break;
+  case 0x002508:
+  rivatnt->pfifo.chan_dma = val;
+  break;
+  case 0x00250c:
+  rivatnt->pfifo.chan_size = val;
+  break;
+  case 0x003204:
+  rivatnt->pfifo.caches[1].chanid = val;
+  break;
+  }
+}
+
+static uint8_t rivatnt_ptimer_read(uint32_t addr, void *p)
+{
+  rivatnt_t *rivatnt = (rivatnt_t *)p;
+  svga_t *svga = &rivatnt->svga;
+  uint8_t ret = 0;
+
+  pclog("RIVA TNT PTIMER read %08X %04X:%08X\n", addr, CS, pc);
+
+  switch(addr)
+  {
+  case 0x009400: ret = rivatnt->ptimer.time & 0xff; break;
+  case 0x009401: ret = (rivatnt->ptimer.time >> 8) & 0xff; break;
+  case 0x009402: ret = (rivatnt->ptimer.time >> 16) & 0xff; break;
+  case 0x009403: ret = (rivatnt->ptimer.time >> 24) & 0xff; break;
+  }
+
+  //TODO: gross hack to make NT4 happy for the time being.
+  rivatnt->ptimer.time += 0x10000;
+  
   return ret;
 }
 
@@ -146,6 +427,23 @@ static void rivatnt_pfb_write(uint32_t addr, uint32_t val, void *p)
   }
 }
 
+static uint8_t rivatnt_pextdev_read(uint32_t addr, void *p)
+{
+  rivatnt_t *rivatnt = (rivatnt_t *)p;
+  svga_t *svga = &rivatnt->svga;
+  uint8_t ret = 0;
+
+  pclog("RIVA TNT PEXTDEV read %08X %04X:%08X\n", addr, CS, pc);
+
+  switch(addr)
+  {
+  case 0x101000: ret = 0x9e; break;
+  case 0x101001: ret = 0x01; break;
+  }
+
+  return ret;
+}
+
 static uint8_t rivatnt_pramdac_read(uint32_t addr, void *p)
 {
   rivatnt_t *rivatnt = (rivatnt_t *)p;
@@ -156,6 +454,22 @@ static uint8_t rivatnt_pramdac_read(uint32_t addr, void *p)
 
   switch(addr)
   {
+  case 0x680500: ret = rivatnt->pramdac.nvpll & 0xff; break;
+  case 0x680501: ret = (rivatnt->pramdac.nvpll >> 8) & 0xff; break;
+  case 0x680502: ret = (rivatnt->pramdac.nvpll >> 16) & 0xff; break;
+  case 0x680503: ret = (rivatnt->pramdac.nvpll >> 24) & 0xff; break;
+  case 0x680504: ret = rivatnt->pramdac.mpll & 0xff; break;
+  case 0x680505: ret = (rivatnt->pramdac.mpll >> 8) & 0xff; break;
+  case 0x680506: ret = (rivatnt->pramdac.mpll >> 16) & 0xff; break;
+  case 0x680507: ret = (rivatnt->pramdac.mpll >> 24) & 0xff; break;
+  case 0x680508: ret = rivatnt->pramdac.vpll & 0xff; break;
+  case 0x680509: ret = (rivatnt->pramdac.vpll >> 8) & 0xff; break;
+  case 0x68050a: ret = (rivatnt->pramdac.vpll >> 16) & 0xff; break;
+  case 0x68050b: ret = (rivatnt->pramdac.vpll >> 24) & 0xff; break;
+  case 0x68050c: ret = rivatnt->pramdac.pll_ctrl & 0xff; break;
+  case 0x68050d: ret = (rivatnt->pramdac.pll_ctrl >> 8) & 0xff; break;
+  case 0x68050e: ret = (rivatnt->pramdac.pll_ctrl >> 16) & 0xff; break;
+  case 0x68050f: ret = (rivatnt->pramdac.pll_ctrl >> 24) & 0xff; break;
   case 0x680600: ret = rivatnt->pramdac.gen_ctrl & 0xff; break;
   case 0x680601: ret = (rivatnt->pramdac.gen_ctrl >> 8) & 0xff; break;
   case 0x680602: ret = (rivatnt->pramdac.gen_ctrl >> 16) & 0xff; break;
@@ -173,10 +487,113 @@ static void rivatnt_pramdac_write(uint32_t addr, uint32_t val, void *p)
 
   switch(addr)
   {
+  case 0x680500:
+  rivatnt->pramdac.nvpll = val;
+  rivatnt->pramdac.nv_m = val & 0xff;
+  rivatnt->pramdac.nv_n = (val >> 8) & 0xff;
+  rivatnt->pramdac.nv_p = (val >> 16) & 3;
+  break;
+  case 0x680504:
+  rivatnt->pramdac.mpll = val;
+  rivatnt->pramdac.m_m = val & 0xff;
+  rivatnt->pramdac.m_n = (val >> 8) & 0xff;
+  rivatnt->pramdac.m_p = (val >> 16) & 3;
+  break;
+  case 0x680508:
+  rivatnt->pramdac.vpll = val;
+  rivatnt->pramdac.v_m = val & 0xff;
+  rivatnt->pramdac.v_n = (val >> 8) & 0xff;
+  rivatnt->pramdac.v_p = (val >> 16) & 3;
+  svga_recalctimings(svga);
+  break;
+  case 0x68050c:
+  rivatnt->pramdac.pll_ctrl = val;
+  break;
   case 0x680600:
   rivatnt->pramdac.gen_ctrl = val;
   break;
   }
+}
+
+static uint8_t rivatnt_ramht_lookup(uint32_t handle, void *p)
+{
+  rivatnt_t *rivatnt = (rivatnt_t *)p;
+  svga_t *svga = &rivatnt->svga;
+  pclog("RIVA TNT RAMHT lookup with handle %08X %04X:%08X\n", handle, CS, pc);
+  
+  uint8_t objclass;
+  
+  uint32_t ramht_base = rivatnt->pfifo.ramht_addr;
+  
+  uint32_t tmp = handle;
+  uint32_t hash = 0;
+  
+  int bits;
+  
+  switch(rivatnt->pfifo.ramht_size)
+  {
+	case 4096: bits = 12;
+	case 8192: bits = 13;
+	case 16384: bits = 14;
+	case 32768: bits = 15;
+  }
+  
+  while(tmp)
+  {
+	hash ^= (handle & (rivatnt->pfifo.ramht_size - 1));
+	handle >>= bits;
+  }
+  
+  hash ^= rivatnt->pfifo.caches[1].chanid << (bits - 4);
+  
+  objclass = svga_readl_linear((svga->vram_limit - (1 * 1024 * 1024)) + ramht_base + (hash * 8), svga);
+  objclass &= 0xff;
+  return objclass;
+}
+
+static void rivatnt_pgraph_exec_method(int chanid, int subchanid, int offset, uint32_t val, void *p)
+{
+  rivatnt_t *rivatnt = (rivatnt_t *)p;
+  svga_t *svga = &rivatnt->svga;
+  pclog("RIVA TNT PGRAPH executing method %04X on channel %01X %04X:%08X\n", offset, chanid, val, CS, pc);
+}
+
+static void rivatnt_puller_exec_method(int chanid, int subchanid, int offset, uint32_t val, void *p)
+{
+  rivatnt_t *rivatnt = (rivatnt_t *)p;
+  svga_t *svga = &rivatnt->svga;
+  pclog("RIVA TNT Puller executing method %04X on channel %01X[%01X] %04X:%08X\n", offset, chanid, subchanid, val, CS, pc);
+  
+  if(offset < 0x100)
+  {
+	//These methods are executed by the puller itself.
+	if(offset == 0)
+	{
+		rivatnt->pgraph.obj_handle[chanid][subchanid] = val;
+		rivatnt->pgraph.obj_class[chanid][subchanid] = rivatnt_ramht_lookup(val, rivatnt);
+	}
+  }
+  else
+  {
+	rivatnt_pgraph_exec_method(chanid, subchanid, offset, val, rivatnt);
+  }
+}
+
+static void rivatnt_user_write(uint32_t addr, uint32_t val, void *p)
+{
+  rivatnt_t *rivatnt = (rivatnt_t *)p;
+  svga_t *svga = &rivatnt->svga;
+  pclog("RIVA TNT USER write %08X %08X %04X:%08X\n", addr, val, CS, pc);
+  
+  addr -= 0x800000;
+  
+  int chanid = (addr >> 16) & 0xf;
+  int subchanid = (addr >> 13) & 0x7;
+  int offset = addr & 0x1fff;
+  
+  rivatnt->channels[chanid][subchanid][offset] = val;
+  //TODO: make this async
+  rivatnt_puller_exec_method(chanid, subchanid, offset, val, rivatnt);
 }
 
 static uint8_t rivatnt_mmio_read(uint32_t addr, void *p)
@@ -197,8 +614,20 @@ static uint8_t rivatnt_mmio_read(uint32_t addr, void *p)
   case 0x001000 ... 0x001fff:
   ret = rivatnt_pbus_read(addr, rivatnt);
   break;
+  case 0x002000 ... 0x002fff:
+  ret = rivatnt_pfifo_read(addr, rivatnt);
+  break;
+  case 0x009000 ... 0x009fff:
+  ret = rivatnt_ptimer_read(addr, rivatnt);
+  break;
   case 0x100000 ... 0x100fff:
   ret = rivatnt_pfb_read(addr, rivatnt);
+  break;
+  case 0x101000 ... 0x101fff:
+  ret = rivatnt_pextdev_read(addr, rivatnt);
+  break;
+  case 0x6013b4 ... 0x6013b5: case 0x6013d4 ... 0x6013d5: case 0x0c03c2 ... 0x0c03c5: case 0x0c03cc ... 0x0c03cf:
+  ret = rivatnt_in(addr & 0xfff, rivatnt);
   break;
   case 0x680000 ... 0x680fff:
   ret = rivatnt_pramdac_read(addr, rivatnt);
@@ -209,24 +638,43 @@ static uint8_t rivatnt_mmio_read(uint32_t addr, void *p)
 
 static uint16_t rivatnt_mmio_read_w(uint32_t addr, void *p)
 {
+  addr &= 0xffffff;
   pclog("RIVA TNT MMIO read %08X %04X:%08X\n", addr, CS, pc);
-  return 0;
+  return (rivatnt_mmio_read(addr+0,p) << 0) | (rivatnt_mmio_read(addr+1,p) << 8);
 }
 
 static uint32_t rivatnt_mmio_read_l(uint32_t addr, void *p)
 {
+  addr &= 0xffffff;
   pclog("RIVA TNT MMIO read %08X %04X:%08X\n", addr, CS, pc);
-  return 0;
+  return (rivatnt_mmio_read(addr+0,p) << 0) | (rivatnt_mmio_read(addr+1,p) << 8) | (rivatnt_mmio_read(addr+2,p) << 16) | (rivatnt_mmio_read(addr+3,p) << 24);
 }
 
 static void rivatnt_mmio_write(uint32_t addr, uint8_t val, void *p)
 {
+  addr &= 0xffffff;
   pclog("RIVA TNT MMIO write %08X %02X %04X:%08X\n", addr, val, CS, pc);
+  if(addr != 0x6013d4 && addr != 0x6013d5 && addr != 0x6013b4 && addr != 0x6013b5)
+  {
+    uint32_t tmp = rivatnt_mmio_read_l(addr,p);
+    tmp &= ~(0xff << ((addr & 3) << 3));
+    tmp |= val << ((addr & 3) << 3);
+    rivatnt_mmio_write_l(addr, tmp, p);
+  }
+  else
+  {
+    rivatnt_out(addr & 0xfff, val & 0xff, p);
+  }
 }
 
 static void rivatnt_mmio_write_w(uint32_t addr, uint16_t val, void *p)
 {
+  addr &= 0xffffff;
   pclog("RIVA TNT MMIO write %08X %04X %04X:%08X\n", addr, val, CS, pc);
+  uint32_t tmp = rivatnt_mmio_read_l(addr,p);
+  tmp &= ~(0xffff << ((addr & 2) << 4));
+  tmp |= val << ((addr & 2) << 4);
+  rivatnt_mmio_write_l(addr, tmp, p);
 }
 
 static void rivatnt_mmio_write_l(uint32_t addr, uint32_t val, void *p)
@@ -240,11 +688,23 @@ static void rivatnt_mmio_write_l(uint32_t addr, uint32_t val, void *p)
 
   switch(addr)
   {
+  case 0x000000 ... 0x000fff:
+  rivatnt_pmc_write(addr, val, rivatnt);
+  break;
+  case 0x001000 ... 0x001fff:
+  rivatnt_pbus_write(addr, val, rivatnt);
+  break;
+  case 0x002000 ... 0x002fff:
+  rivatnt_pfifo_write(addr, val, rivatnt);
+  break;
   case 0x100000 ... 0x100fff:
   rivatnt_pfb_write(addr, val, rivatnt);
   break;
   case 0x680000 ... 0x680fff:
   rivatnt_pramdac_write(addr, val, rivatnt);
+  break;
+  case 0x800000 ... 0xffffff:
+  rivatnt_user_write(addr, val, rivatnt);
   break;
   }
 }
@@ -327,14 +787,14 @@ static uint8_t rivatnt_in(uint16_t addr, void *p)
   svga_t *svga = &rivatnt->svga;
   uint8_t ret = 0;
 
-  /*switch (addr)
+  switch (addr)
   {
   case 0x3D0 ... 0x3D3:
   pclog("RIVA TNT RMA BAR Register read %04X %04X:%08X\n", addr, CS, pc);
-  if(!(rivatnt->rma.mode & 1)) break;
+  if(!(rivatnt->rma.mode & 1)) return ret;
   ret = rivatnt_rma_in(rivatnt->rma_addr + ((rivatnt->rma.mode & 0xe) << 1) + (addr & 3), rivatnt);
-  break;
-  }*/
+  return ret;
+  }
   
   if (((addr & 0xfff0) == 0x3d0 || (addr & 0xfff0) == 0x3b0) && !(svga->miscout & 1))
     addr ^= 0x60;
@@ -342,16 +802,19 @@ static uint8_t rivatnt_in(uint16_t addr, void *p)
     //        if (addr != 0x3da) pclog("S3 in %04X %04X:%08X  ", addr, CS, pc);
   switch (addr)
   {
-  case 0x3D0 ... 0x3D3:
-  pclog("RIVA TNT RMA BAR Register read %04X %04X:%08X\n", addr, CS, pc);
-  if(!(rivatnt->rma.mode & 1)) break;
-  ret = rivatnt_rma_in(rivatnt->rma_addr + ((rivatnt->rma.mode & 0xe) << 1) + (addr & 3), rivatnt);
-  break;
   case 0x3D4:
   ret = svga->crtcreg;
   break;
   case 0x3D5:
+  switch(svga->crtcreg)
+  {
+  case 0x3e:
+  ret = (rivatnt->i2c.sda << 3) | (rivatnt->i2c.scl << 2);
+  break;
+  default:
   ret = svga->crtc[svga->crtcreg];
+  break;
+  }
   if(svga->crtcreg > 0x18)
     pclog("RIVA TNT Extended CRTC read %02X %04X:%08X\n", svga->crtcreg, CS, pc);
   break;
@@ -370,19 +833,6 @@ static void rivatnt_out(uint16_t addr, uint8_t val, void *p)
 
   uint8_t old;
   
-  /*switch(addr)
-  {
-  case 0x3D0 ... 0x3D3:
-  pclog("RIVA TNT RMA BAR Register write %04X %02x %04X:%08X\n", addr, val, CS, pc);
-  rivatnt->rma.access_reg[addr & 3] = val;
-  if(!(rivatnt->rma.mode & 1)) return;
-  rivatnt_rma_out(rivatnt->rma_addr + ((rivatnt->rma.mode & 0xe) << 1) + (addr & 3), rivatnt->rma.access_reg[addr & 3], rivatnt);
-  return;
-  }*/
-
-  if (((addr & 0xfff0) == 0x3d0 || (addr & 0xfff0) == 0x3b0) && !(svga->miscout & 1))
-    addr ^= 0x60;
-
   switch(addr)
   {
   case 0x3D0 ... 0x3D3:
@@ -391,6 +841,13 @@ static void rivatnt_out(uint16_t addr, uint8_t val, void *p)
   if(!(rivatnt->rma.mode & 1)) return;
   rivatnt_rma_out(rivatnt->rma_addr + ((rivatnt->rma.mode & 0xe) << 1) + (addr & 3), rivatnt->rma.access_reg[addr & 3], rivatnt);
   return;
+  }
+
+  if (((addr & 0xfff0) == 0x3d0 || (addr & 0xfff0) == 0x3b0) && !(svga->miscout & 1))
+    addr ^= 0x60;
+
+  switch(addr)
+  {
   case 0x3D4:
   svga->crtcreg = val;
   return;
@@ -406,17 +863,17 @@ static void rivatnt_out(uint16_t addr, uint8_t val, void *p)
   case 0x1a:
   //if(val & 2) svga->dac8bit = 1;
   //else svga->dac8bit = 0;
-  if(!(val & 4)) svga_recalctimings(svga);
+  svga_recalctimings(svga);
   break;
   case 0x1e:
-  rivatnt->read_bank = val >> 1;
-  if (svga->chain4) svga->read_bank = rivatnt->read_bank << 16;
-  else              svga->read_bank = rivatnt->read_bank << 14;
+  rivatnt->read_bank = val;
+  if (svga->chain4) svga->read_bank = rivatnt->read_bank << 15;
+  else              svga->read_bank = rivatnt->read_bank << 13;
   break;
   case 0x1d:
-  rivatnt->write_bank = val >> 1;
-  if (svga->chain4) svga->write_bank = rivatnt->write_bank << 16;
-  else              svga->write_bank = rivatnt->write_bank << 14;
+  rivatnt->write_bank = val;
+  if (svga->chain4) svga->write_bank = rivatnt->write_bank << 15;
+  else              svga->write_bank = rivatnt->write_bank << 13;
   break;
   case 0x26:
   if (!svga->attrff)
@@ -430,6 +887,10 @@ static void rivatnt_out(uint16_t addr, uint8_t val, void *p)
   break;
   case 0x38:
   rivatnt->rma.mode = val & 0xf;
+  break;
+  case 0x3f:
+  rivatnt->i2c.scl = (val & 0x20) ? 1 : 0;
+  rivatnt->i2c.sda = (val & 0x10) ? 1 : 0;
   break;
   }
   if(svga->crtcreg > 0x18)
@@ -574,14 +1035,16 @@ static void rivatnt_pci_write(int func, int addr, uint8_t val, void *p)
 
 static void rivatnt_recalctimings(svga_t *svga)
 {
-  svga->ma_latch |= (svga->crtc[0x19] & 0x1f) << 16;
-  svga->rowoffset |= (svga->crtc[0x19] & 0xe0) << 3;
-  if (svga->crtc[0x25] & 0x01) svga->vtotal      |= 0x400;
-  if (svga->crtc[0x25] & 0x02) svga->dispend     |= 0x400;
-  if (svga->crtc[0x25] & 0x04) svga->vblankstart |= 0x400;
-  if (svga->crtc[0x25] & 0x08) svga->vsyncstart  |= 0x400;
-  if (svga->crtc[0x25] & 0x10) svga->htotal      |= 0x100;
-  if (svga->crtc[0x2d] & 0x01) svga->hdisp       |= 0x100;
+  rivatnt_t *rivatnt = (rivatnt_t *)svga->p;
+
+  svga->ma_latch += (svga->crtc[0x19] & 0x1f) << 16;
+  svga->rowoffset += (svga->crtc[0x19] & 0xe0) << 3;
+  if (svga->crtc[0x25] & 0x01) svga->vtotal      += 0x400;
+  if (svga->crtc[0x25] & 0x02) svga->dispend     += 0x400;
+  if (svga->crtc[0x25] & 0x04) svga->vblankstart += 0x400;
+  if (svga->crtc[0x25] & 0x08) svga->vsyncstart  += 0x400;
+  if (svga->crtc[0x25] & 0x10) svga->htotal      += 0x100;
+  if (svga->crtc[0x2d] & 0x01) svga->hdisp       += 0x100;
   //The effects of the large screen bit seem to just be doubling the row offset.
   //However, these large modes still don't work. Possibly core SVGA bug? It does report 640x2 res after all.
   if (!(svga->crtc[0x1a]) & 0x04) svga->rowoffset <<= 1;
@@ -589,16 +1052,33 @@ static void rivatnt_recalctimings(svga_t *svga)
   {
     case 1:
     svga->bpp = 8;
+    svga->lowres = 0;
     svga->render = svga_render_8bpp_highres;
     break;
     case 2:
     svga->bpp = 16;
+    svga->lowres = 0;
     svga->render = svga_render_16bpp_highres;
     break;
     case 3:
     svga->bpp = 32;
+    svga->lowres = 0;
     svga->render = svga_render_32bpp_highres;
     break;
+  }
+  
+  if (((svga->miscout >> 2) & 2) == 2)
+  {
+	double freq = 13500000.0;
+
+	if(rivatnt->pramdac.v_m == 0) freq = 0;
+	else
+	{
+		freq = (freq * rivatnt->pramdac.v_n) / (1 << rivatnt->pramdac.v_p) / rivatnt->pramdac.v_m;
+		pclog("RIVA TNT Pixel clock is %f Hz\n", freq);
+	}
+	
+        svga->clock = cpuclock / freq;
   }
 }
 
@@ -614,7 +1094,7 @@ static void *rivatnt_init()
   rivatnt_in, rivatnt_out,
   NULL, NULL);
 
-  rom_init(&rivatnt->bios_rom, "roms/riva128.bin", 0xc0000, 0x10000, 0xffff, 0, MEM_MAPPING_EXTERNAL);
+  rom_init(&rivatnt->bios_rom, "roms/rivatnt.bin", 0xc0000, 0x10000, 0xffff, 0, MEM_MAPPING_EXTERNAL);
   if (PCI)
     mem_mapping_disable(&rivatnt->bios_rom.mapping);
 
@@ -651,6 +1131,12 @@ static void *rivatnt_init()
   rivatnt->pci_regs[0x2e] = 0x16;
   rivatnt->pci_regs[0x2f] = 0x10;
 
+  //TODO: utter hack to get nt4 to not crash.
+  rivatnt->pramdac.nvpll = 0x3c20d;
+  rivatnt->pramdac.nv_m = 0x0d;
+  rivatnt->pramdac.nv_n = 0xc2;
+  rivatnt->pramdac.nv_p = 3;
+  
   pci_add(rivatnt_pci_read, rivatnt_pci_write, rivatnt);
 
   return rivatnt;
@@ -670,7 +1156,7 @@ static void rivatnt_close(void *p)
 
 static int rivatnt_available()
 {
-  return rom_present("roms/riva128.bin");
+  return rom_present("roms/rivatnt.bin");
 }
 
 static void rivatnt_speed_changed(void *p)
