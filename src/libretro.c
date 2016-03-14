@@ -516,11 +516,16 @@ void retro_run(void)
 static void keyboard_cb(bool down, unsigned keycode,
       uint32_t character, uint16_t mod)
 {
-   bool latch = down ? true : false;
+   bool latch = down ? 1 : 0;
 
 
    log_cb(RETRO_LOG_INFO, "Down: %s, Code: %d, Char: %u, Mod: %u.\n",
          down ? "yes" : "no", keycode, character, mod);
+
+   for(unsigned c = 0;c<272;c++)
+   {
+      pcem_key[c] = 0;
+   }
 
 
    switch (keycode)
@@ -529,7 +534,7 @@ static void keyboard_cb(bool down, unsigned keycode,
          pcem_key[0x42] = latch;
          break;
       case RETROK_RETURN:
-         pcem_key[0x0e] = latch;
+         pcem_key[0x1c] = latch;
          break;
       case RETROK_a:
          pcem_key[0x1e] = latch;
