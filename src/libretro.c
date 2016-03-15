@@ -13,6 +13,7 @@
 #include "cpu.h"
 #include "model.h"
 #include "nvr.h"
+#include "sound.h"
 #include "video.h"
 
 typedef struct
@@ -456,8 +457,12 @@ void retro_set_environment(retro_environment_t cb)
    environ_cb = cb;
 
    static const struct retro_variable vars[] = {
+      { " pcem_model",
+         "Model (restart); auto|IBM PC|IBM XT|IBM PCjr|Generic XT clone|AMI XT clone|DTK XT clone|VTech Laser Turbo XT|VTech Laster XT3|Phoenix XT clone|Juko XT clone|Tandy 1000|Tandy 1000 HX|Tandy 1000 SL/2|Amstrad PC1512|Sinclair PC200|Euro PC|Olivetti M24|Amstrad PC1640|Amstrad PC2086|Amstrad PC3086|IBM AT|Commodore PC 30 III|AMI 286 clone|DELL System 200|IBM PS/1 model 2011|Compaq Deskpro 386|Acer 386SX25/N|DTK 386SX clone|Phoenix 386 clone|Amstrad MegaPC|AMI 386 clone|AMI 486 clone|AMI WinBIOS 486|DTK PKM-0038S E-2|Award SiS 496/497|Rise Computer R418|Intel Premiere/PCI|Intel Premiere/PCI II|Intel Advanced/EV|PC Partner MB500N|Acer M3a|Acer V35N|ASUS P/I-P55T2P4|Award 430VX PCI|Epox P55-VA" },
       { "pcem_gfxcard",
-         "Graphics card (restart); CGA|New CGA|MDA|Hercules|EGA|Compaq EGA|Super EGA|Trident TVGA8900D|Tseng ET4000|Tseng EGT4000/W32p (Diamond Stealth 32)|S3 Vision864 (Paradise Bahamas 64)|S3 764/Trio64 (Number Nine 9FX)|S3 Virge|Trident TGUI9440|IBM VGA|Compaq/Paradise VGA|ATI VGA Edge-16|ATI VGA Charger|Oak OTI-067|ATI Graphics Pro Turbo (Mach64)|Cirrus Logic CL-GD5429|S3 Virge/DX|S3 732/Trio32 (Phoenix)|S3 764/Trio64 (Phoenix)|nVidia Riva TNT|Incolor|nVidia Riva 128" },
+         "Graphics card (restart); auto|CGA|New CGA|MDA|Hercules|EGA|Compaq EGA|Super EGA|Trident TVGA8900D|Tseng ET4000|Tseng EGT4000/W32p (Diamond Stealth 32)|S3 Vision864 (Paradise Bahamas 64)|S3 764/Trio64 (Number Nine 9FX)|S3 Virge|Trident TGUI9440|IBM VGA|Compaq/Paradise VGA|ATI VGA Edge-16|ATI VGA Charger|Oak OTI-067|ATI Graphics Pro Turbo (Mach64)|Cirrus Logic CL-GD5429|S3 Virge/DX|S3 732/Trio32 (Phoenix)|S3 764/Trio64 (Phoenix)|nVidia Riva TNT|Incolor|nVidia Riva 128" },
+      { "pcem_sndcard",
+         "Sound card (restart); auto|AdLib (No DSP)|Soundblaster 1 (DSP v1.05)|Soundblaster 1.5 (DSP v2.00)|Soundblaster 2 (DSP v2.01)|Soundblaster Pro (DSP v3.00)|Soundblaster Pro 2 (DSP v3.02 + OPL3)|Soundblaster 16 (DSP v4.05 + OPL3)|AdLib Gold|Windows Sound System|Pro Audio Spectrum 16" },
       { "pcem_fpu_enabled",
          "Floating Point Unit (restart); disabled|enabled" },
       { "pcem_gus_enabled",
@@ -517,10 +522,42 @@ static void check_variables(bool first_time_startup)
 
    if (first_time_startup)
    {
+      var.key = "pcem_sndcard";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "auto"))
+            sound_card_current = SB2;
+         else if (!strcmp(var.value, "AdLib (No DSP)"))
+            sound_card_current = SADLIB;
+         else if (!strcmp(var.value, "Soundblaster 1 (DSP v1.05)"))
+            sound_card_current = SB1;
+         else if (!strcmp(var.value, "Soundblaster 1.5 (DSP v2.00)"))
+            sound_card_current = SB15;
+         else if (!strcmp(var.value, "Soundblaster 2 (DSP v2.01)"))
+            sound_card_current = SB2;
+         else if (!strcmp(var.value, "Soundblaster Pro (DSP v3.00)"))
+            sound_card_current = SBPRO;
+         else if (!strcmp(var.value, "Soundblaster Pro 2 (DSP v3.02 + OPL3)"))
+            sound_card_current = SBPRO2;
+         else if (!strcmp(var.value, "Soundblaster 16 (DSP v4.05 + OPL3)"))
+            sound_card_current = SB16;
+         else if (!strcmp(var.value, "AdLib Gold"))
+            sound_card_current = SADGOLD;
+         else if (!strcmp(var.value, "Windows Sound System"))
+            sound_card_current = SND_WSS;
+         else if (!strcmp(var.value, "Pro Audio Spectrum 16"))
+            sound_card_current = SND_PAS16;
+      }
+      else
+         sound_card_current = SB2;
+
       var.key = "pcem_gfxcard";
 
       if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
       {
+         if (!strcmp(var.value, "auto"))
+            gfxcard = 0;
          if (!strcmp(var.value, "CGA"))
             gfxcard = GFX_CGA;
          else if (!strcmp(var.value, "New CGA"))
@@ -577,7 +614,7 @@ static void check_variables(bool first_time_startup)
             gfxcard = GFX_RIVA128;
       }
       else
-          gfxcard = GFX_CGA;
+          gfxcard = 0;
 
       var.key = "pcem_fpu_enabled";
 
