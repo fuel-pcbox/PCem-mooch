@@ -411,7 +411,6 @@ void retro_init(void)
 
    for (i = 0; i < 256; i++)
       pal_lookup[i] = makecol(cgapal[i].r << 2, cgapal[i].g << 2, cgapal[i].b << 2);
-
 }
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
@@ -513,31 +512,300 @@ void retro_run(void)
 
 }
 
+
 static void keyboard_cb(bool down, unsigned keycode,
       uint32_t character, uint16_t mod)
 {
+   unsigned c;
    bool latch = down ? 1 : 0;
 
 
    log_cb(RETRO_LOG_INFO, "Down: %s, Code: %d, Char: %u, Mod: %u.\n",
          down ? "yes" : "no", keycode, character, mod);
 
-   for(unsigned c = 0;c<272;c++)
-   {
+   for(c = 0;c<272;c++)
       pcem_key[c] = 0;
-   }
+
+#if 0
+
+   /* 
+    * p0         = 0x52 
+    * p1         = 0x4f
+    * p2         = 0x50
+    * p3         = 0x51
+    * p4         = 0x4b
+    * p5         = 0x4c
+    * p6         = 0x4d
+    * p7         = 0x47
+    * p8         = 0x48
+    * p9         = 0x49
+   
+    * `ª         = 0x29
+    *  -_        = 0x0c
+    *  =+        = 0x0d
+    *  backspace = 0x0e
+
+
+    * ;;         = 0x27
+    * '@         = 0x28
+    * \|         = 0x2b
+    * #~* /      = 0x56
+
+    * ,<         = 0x33
+    * .>         = 0x34
+    * /?         = 0x35
+
+    * /          = 0xb5
+    * *          = 0x37
+
+    * menu       = 0xdd
+   
+    */
+
+#if 0
+   static int key_convert[128] =
+   {
+      0x4a, 0x4e, 0x53, 0x9c, 0xff,   -1,   -1,   -1, /* p-,  p+, pDL, pEN, psc, pse, abnt, yen*/
+      -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1, /*kana, convert, noconvert, at, circumflex, colon2, kanji, pad equals*/
+   };
+#endif
+
+#endif
 
 
    switch (keycode)
    {
+      case RETROK_COMMA:
+         pcem_key[-1] = latch;
+         break;
+
+      case RETROK_a:
+         pcem_key[0x1e] = latch;
+         break;
+      case RETROK_b:
+         pcem_key[0x30] = latch;
+         break;
+      case RETROK_c:
+         pcem_key[0x2e] = latch;
+         break;
+      case RETROK_d:
+         pcem_key[0x20] = latch;
+         break;
+      case RETROK_e:
+         pcem_key[0x12] = latch;
+         break;
+      case RETROK_f:
+         pcem_key[0x21] = latch;
+         break;
+      case RETROK_g:
+         pcem_key[0x22] = latch;
+         break;
+      case RETROK_h:
+         pcem_key[0x23] = latch;
+         break;
+      case RETROK_i:
+         pcem_key[0x17] = latch;
+         break;
+      case RETROK_j:
+         pcem_key[0x24] = latch;
+         break;
+      case RETROK_k:
+         pcem_key[0x25] = latch;
+         break;
+      case RETROK_l:
+         pcem_key[0x26] = latch;
+         break;
+      case RETROK_m:
+         pcem_key[0x32] = latch;
+         break;
+      case RETROK_n:
+         pcem_key[0x31] = latch;
+         break;
+      case RETROK_o:
+         pcem_key[0x18] = latch;
+         break;
+      case RETROK_p:
+         pcem_key[0x19] = latch;
+         break;
+      case RETROK_q:
+         pcem_key[0x10] = latch;
+         break;
+      case RETROK_r:
+         pcem_key[0x13] = latch;
+         break;
+      case RETROK_s:
+         pcem_key[0x1f] = latch;
+         break;
+      case RETROK_t:
+         pcem_key[0x14] = latch;
+         break;
+      case RETROK_u:
+         pcem_key[0x16] = latch;
+         break;
+      case RETROK_v:
+         pcem_key[0x2f] = latch;
+         break;
+      case RETROK_w:
+         pcem_key[0x11] = latch;
+         break;
+      case RETROK_x:
+         pcem_key[0x2d] = latch;
+         break;
+      case RETROK_y:
+         pcem_key[0x15] = latch;
+         break;
+      case RETROK_z:
+         pcem_key[0x2c] = latch;
+         break;
+
+      case RETROK_0:
+         pcem_key[0x0b] = latch;
+         break;
+      case RETROK_1:
+         pcem_key[0x02] = latch;
+         break;
+      case RETROK_2:
+         pcem_key[0x03] = latch;
+         break;
+      case RETROK_3:
+         pcem_key[0x04] = latch;
+         break;
+      case RETROK_4:
+         pcem_key[0x05] = latch;
+         break;
+      case RETROK_5:
+         pcem_key[0x06] = latch;
+         break;
+      case RETROK_6:
+         pcem_key[0x07] = latch;
+         break;
+      case RETROK_7:
+         pcem_key[0x08] = latch;
+         break;
+      case RETROK_8:
+         pcem_key[0x09] = latch;
+         break;
+      case RETROK_9:
+         pcem_key[0x0a] = latch;
+         break;
+
+      case RETROK_F1:
+         pcem_key[0x3b] = latch;
+         break;
+      case RETROK_F2:
+         pcem_key[0x3c] = latch;
+         break;
+      case RETROK_F3:
+         pcem_key[0x3d] = latch;
+         break;
+      case RETROK_F4:
+         pcem_key[0x3e] = latch;
+         break;
+      case RETROK_F5:
+         pcem_key[0x3f] = latch;
+         break;
+      case RETROK_F6:
+         pcem_key[0x40] = latch;
+         break;
+      case RETROK_F7:
+         pcem_key[0x41] = latch;
+         break;
       case RETROK_F8:
          pcem_key[0x42] = latch;
+         break;
+      case RETROK_F9:
+         pcem_key[0x43] = latch;
+         break;
+      case RETROK_F10:
+         pcem_key[0x44] = latch;
+         break;
+      case RETROK_F11:
+         pcem_key[0x57] = latch;
+         break;
+      case RETROK_F12:
+         pcem_key[0x58] = latch;
+         break;
+
+      case RETROK_ESCAPE:
+         pcem_key[0x01] = latch;
+         break;
+      case RETROK_TAB:
+         pcem_key[0x0f] = latch;
+         break;
+      case RETROK_LEFTBRACKET:
+         pcem_key[0x1a] = latch;
+         break;
+      case RETROK_RIGHTBRACKET:
+         pcem_key[0x1b] = latch;
          break;
       case RETROK_RETURN:
          pcem_key[0x1c] = latch;
          break;
-      case RETROK_a:
-         pcem_key[0x1e] = latch;
+      case RETROK_SPACE:
+         pcem_key[0x39] = latch;
+         break;
+      case RETROK_INSERT:
+         pcem_key[0xd2] = latch;
+         break;
+      case RETROK_DELETE:
+         pcem_key[0xd3] = latch;
+         break;
+      case RETROK_HOME:
+         pcem_key[0xc7] = latch;
+         break;
+      case RETROK_END:
+         pcem_key[0xcf] = latch;
+         break;
+      case RETROK_PAGEUP:
+         pcem_key[0xc9] = latch;
+         break;
+      case RETROK_PAGEDOWN:
+         pcem_key[0xd1] = latch;
+         break;
+      case RETROK_LEFT:
+         pcem_key[0xcb] = latch;
+         break;
+      case RETROK_RIGHT:
+         pcem_key[0xcd] = latch;
+         break;
+      case RETROK_UP:
+         pcem_key[0xc8] = latch;
+         break;
+      case RETROK_DOWN:
+         pcem_key[0xd0] = latch;
+         break;
+      case RETROK_LSHIFT:
+         pcem_key[0x2a] = latch;
+         break;
+      case RETROK_RSHIFT:
+         pcem_key[0x36] = latch;
+         break;
+      case RETROK_LCTRL:
+         pcem_key[0x1d] = latch;
+         break;
+      case RETROK_RCTRL:
+         pcem_key[0x9d] = latch;
+         break;
+      case RETROK_LALT:
+         pcem_key[0x38] = latch;
+         break;
+      case RETROK_RALT:
+         pcem_key[0xb8] = latch;
+         break;
+      case RETROK_LSUPER:
+         pcem_key[0xdb] = latch;
+         break;
+      case RETROK_RSUPER:
+         pcem_key[0xdc] = latch;
+         break;
+      case RETROK_SCROLLOCK:
+         pcem_key[0x46] = latch;
+         break;
+      case RETROK_NUMLOCK:
+         pcem_key[0x45] = latch;
+         break;
+      case RETROK_CAPSLOCK:
+         pcem_key[0x43] = latch;
          break;
       case 0:
          break;
@@ -560,26 +828,26 @@ void midi_close(void)
 
 void midi_write(uint8_t val)
 {
-        if (val & 0x80)
-        {
-                midi_cmd_pos = 0;
-                midi_len = midi_lengths[(val >> 4) & 7];
-                midi_command[0] = midi_command[1] = midi_command[2] = 0;
-        }
+   if (val & 0x80)
+   {
+      midi_cmd_pos = 0;
+      midi_len = midi_lengths[(val >> 4) & 7];
+      midi_command[0] = midi_command[1] = midi_command[2] = 0;
+   }
 
-        if (midi_len && midi_cmd_pos < 3)
-        {
-                midi_command[midi_cmd_pos] = val;
+   if (midi_len && midi_cmd_pos < 3)
+   {
+      midi_command[midi_cmd_pos] = val;
 
-                midi_cmd_pos++;
+      midi_cmd_pos++;
 
 #if 0
 #ifdef USE_ALLEGRO_MIDI
-                if (midi_cmd_pos == midi_len)
-                        midi_out(midi_command, midi_len);
+      if (midi_cmd_pos == midi_len)
+         midi_out(midi_command, midi_len);
 #endif
 #endif
-        }
+   }
 }
 
 bool retro_load_game(const struct retro_game_info *info)
