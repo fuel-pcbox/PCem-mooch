@@ -452,9 +452,17 @@ static struct retro_rumble_interface rumble;
 
 void retro_set_environment(retro_environment_t cb)
 {
+   bool no_content = true;
    environ_cb = cb;
 
-   bool no_content = true;
+   static const struct retro_variable vars[] = {
+      { "pcem_voodoo_enabled",
+         "3Dfx Voodoo card; disabled|enabled" },
+      { NULL, NULL },
+   };
+
+   cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars);
+
    cb(RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME, &no_content);
 
    if (cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &logging))
@@ -493,8 +501,21 @@ void retro_reset(void)
    resetpchard();
 }
 
-static void check_variables(void)
+static void check_variables(bool first_time_startup)
 {
+   struct retro_variable var = {0};
+
+   var.key = "pcem_voodoo_enabled";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp(var.value, "enabled"))
+         voodoo_enabled = 1;
+      else
+         voodoo_enabled = 0;
+   }
+   else
+      voodoo_enabled = 0;
 }
 
 static void audio_set_state(bool enable)
@@ -507,7 +528,7 @@ void retro_run(void)
    static int ticks = 0;
    bool updated = false;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
-      check_variables();
+      check_variables(false);
 
    input_poll_cb();
 
@@ -600,7 +621,7 @@ bool retro_load_game(const struct retro_game_info *info)
    struct retro_keyboard_callback cb = { keyboard_cb };
    environ_cb(RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK, &cb);
 
-   check_variables();
+   check_variables(true);
 
    midi_init();
    initpc(0, NULL);
