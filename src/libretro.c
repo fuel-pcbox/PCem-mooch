@@ -456,8 +456,14 @@ void retro_set_environment(retro_environment_t cb)
    environ_cb = cb;
 
    static const struct retro_variable vars[] = {
+      { "pcem_fpu_enabled",
+         "Floating Point Unit (restart); disabled|enabled" },
+      { "pcem_gus_enabled",
+         "Gravis UltraSound audiocard (restart); disabled|enabled" },
+      { "pcem_gameblaster_enabled",
+         "GameBlaster audiocard (restart); disabled|enabled" },
       { "pcem_voodoo_enabled",
-         "3Dfx Voodoo card; disabled|enabled" },
+         "3Dfx Voodoo videocard (restart); disabled|enabled" },
       { NULL, NULL },
    };
 
@@ -505,17 +511,56 @@ static void check_variables(bool first_time_startup)
 {
    struct retro_variable var = {0};
 
-   var.key = "pcem_voodoo_enabled";
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   if (first_time_startup)
    {
-      if (!strcmp(var.value, "enabled"))
-         voodoo_enabled = 1;
+      var.key = "pcem_fpu_enabled";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "enabled"))
+            hasfpu = 1;
+         else
+            hasfpu = 0;
+      }
+      else
+          hasfpu = 0;
+
+      var.key = "pcem_gus_enabled";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "enabled"))
+            GUS = 1;
+         else
+            GUS = 0;
+      }
+      else
+          GUS = 0;
+
+      var.key = "pcem_gameblaster_enabled";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "enabled"))
+            GAMEBLASTER = 1;
+         else
+            GAMEBLASTER = 0;
+      }
+      else
+         GAMEBLASTER = 0;
+
+      var.key = "pcem_voodoo_enabled";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "enabled"))
+            voodoo_enabled = 1;
+         else
+            voodoo_enabled = 0;
+      }
       else
          voodoo_enabled = 0;
    }
-   else
-      voodoo_enabled = 0;
 }
 
 static void audio_set_state(bool enable)
