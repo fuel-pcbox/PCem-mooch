@@ -41,7 +41,6 @@ static retro_video_refresh_t video_cb;
 
 /* forward declarations */
 void closepc(void);
-void saveconfig(void);
 void savenvr(void);
 int loadbios(void);
 void initpc(int argc, char *argv[]);
@@ -464,7 +463,7 @@ void retro_set_environment(retro_environment_t cb)
       { "pcem_sndcard",
          "Sound card (restart); auto|AdLib (No DSP)|Soundblaster 1 (DSP v1.05)|Soundblaster 1.5 (DSP v2.00)|Soundblaster 2 (DSP v2.01)|Soundblaster Pro (DSP v3.00)|Soundblaster Pro 2 (DSP v3.02 + OPL3)|Soundblaster 16 (DSP v4.05 + OPL3)|AdLib Gold|Windows Sound System|Pro Audio Spectrum 16" },
       { "pcem_fpu_enabled",
-         "Floating Point Unit (restart); disabled|enabled" },
+         "CPU Floating Point Unit support (restart); disabled|enabled" },
       { "pcem_gus_enabled",
          "Gravis UltraSound audiocard (restart); disabled|enabled" },
       { "pcem_ssi2001_enabled",
@@ -818,7 +817,6 @@ bool retro_load_game(const struct retro_game_info *info)
          {
             romset = c;
             model = model_getmodel(romset);
-            saveconfig();
             resetpchard();
             break;
          }
@@ -836,7 +834,6 @@ bool retro_load_game(const struct retro_game_info *info)
          if (gfx_present[c])
          {
             gfxcard = c;
-            saveconfig();
             break;
          }
       }
