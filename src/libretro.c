@@ -462,6 +462,8 @@ void retro_set_environment(retro_environment_t cb)
          "Graphics card (restart); auto|CGA|New CGA|MDA|Hercules|EGA|Compaq EGA|Super EGA|Trident TVGA8900D|Tseng ET4000|Tseng EGT4000/W32p (Diamond Stealth 32)|S3 Vision864 (Paradise Bahamas 64)|S3 764/Trio64 (Number Nine 9FX)|S3 Virge|Trident TGUI9440|IBM VGA|Compaq/Paradise VGA|ATI VGA Edge-16|ATI VGA Charger|Oak OTI-067|ATI Graphics Pro Turbo (Mach64)|Cirrus Logic CL-GD5429|S3 Virge/DX|S3 732/Trio32 (Phoenix)|S3 764/Trio64 (Phoenix)|nVidia Riva TNT|Incolor|nVidia Riva 128" },
       { "pcem_sndcard",
          "Sound card (restart); auto|AdLib (No DSP)|Soundblaster 1 (DSP v1.05)|Soundblaster 1.5 (DSP v2.00)|Soundblaster 2 (DSP v2.01)|Soundblaster Pro (DSP v3.00)|Soundblaster Pro 2 (DSP v3.02 + OPL3)|Soundblaster 16 (DSP v4.05 + OPL3)|AdLib Gold|Windows Sound System|Pro Audio Spectrum 16" },
+      { "pcem_video_timing_speed",
+         "Video timing speed; Slow VLB/PCI|Mid VLB/PCI|Fast VLB/PCI|8-bit|Slow 16-bit|Fast 16-bit" },
       { "pcem_overscan_enable",
          "Enable overscan; disabled|enabled" },
       { "pcem_flash_enable",
@@ -525,6 +527,26 @@ static void check_variables(bool first_time_startup)
 
    if (first_time_startup)
    {
+      var.key = "pcem_video_timing_speed";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "Slow VLB/PCI"))
+            video_speed = 3;
+         else if (!strcmp(var.value, "Mid VLB/PCI"))
+            video_speed = 4;
+         else if (!strcmp(var.value, "Fast VLB/PCI"))
+            video_speed = 5;
+         else if (!strcmp(var.value, "8-bit"))
+            video_speed = 0;
+         else if (!strcmp(var.value, "Slow 16-bit"))
+            video_speed = 1;
+         else if (!strcmp(var.value, "Fast 16-bit"))
+            video_speed = 2;
+      }
+      else
+         video_speed = 3;
+
       var.key = "pcem_overscan_enable";
 
       if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
