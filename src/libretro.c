@@ -456,6 +456,8 @@ void retro_set_environment(retro_environment_t cb)
    environ_cb = cb;
 
    static const struct retro_variable vars[] = {
+      { "pcem_gfxcard",
+         "Graphics card (restart); CGA|New CGA|MDA|Hercules|EGA|Compaq EGA|Super EGA|Trident TVGA8900D|Tseng ET4000|Tseng EGT4000/W32p (Diamond Stealth 32)|S3 Vision864 (Paradise Bahamas 64)|S3 764/Trio64 (Number Nine 9FX)|S3 Virge|Trident TGUI9440|IBM VGA|Compaq/Paradise VGA|ATI VGA Edge-16|ATI VGA Charger|Oak OTI-067|ATI Graphics Pro Turbo (Mach64)|Cirrus Logic CL-GD5429|S3 Virge/DX|S3 732/Trio32 (Phoenix)|S3 764/Trio64 (Phoenix)|nVidia Riva TNT|Incolor|nVidia Riva 128" },
       { "pcem_fpu_enabled",
          "Floating Point Unit (restart); disabled|enabled" },
       { "pcem_gus_enabled",
@@ -463,7 +465,7 @@ void retro_set_environment(retro_environment_t cb)
       { "pcem_gameblaster_enabled",
          "GameBlaster audiocard (restart); disabled|enabled" },
       { "pcem_voodoo_enabled",
-         "3Dfx Voodoo videocard (restart); disabled|enabled" },
+         "3Dfx Voodoo add-on card (restart); disabled|enabled" },
       { NULL, NULL },
    };
 
@@ -513,6 +515,68 @@ static void check_variables(bool first_time_startup)
 
    if (first_time_startup)
    {
+      var.key = "pcem_gfxcard";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "CGA"))
+            gfxcard = GFX_CGA;
+         else if (!strcmp(var.value, "New CGA"))
+            gfxcard = GFX_NEW_CGA;
+         else if (!strcmp(var.value, "MDA"))
+            gfxcard = GFX_MDA;
+         else if (!strcmp(var.value, "Hercules"))
+            gfxcard = GFX_HERCULES;
+         else if (!strcmp(var.value, "EGA"))
+            gfxcard = GFX_EGA;
+         else if (!strcmp(var.value, "Compaq EGA"))
+            gfxcard = GFX_COMPAQ_EGA;
+         else if (!strcmp(var.value, "Super EGA"))
+            gfxcard = GFX_SUPER_EGA;
+         else if (!strcmp(var.value, "Trident TVGA8900D"))
+            gfxcard = GFX_TVGA;
+         else if (!strcmp(var.value, "Tseng ET4000"))
+            gfxcard = GFX_ET4000;
+         else if (!strcmp(var.value, "Tseng ET4000/W32p (Diamond Stealth 32)"))
+            gfxcard = GFX_ET4000W32;
+         else if (!strcmp(var.value, "S3 Vision864 (Paradise Bahamas 64)"))
+            gfxcard = GFX_BAHAMAS64;
+         else if (!strcmp(var.value, "S3 764/Trio64 (Number Nine 9FX)"))
+            gfxcard = GFX_N9_9FX;
+         else if (!strcmp(var.value, "S3 Virge"))
+            gfxcard = GFX_VIRGE;
+         else if (!strcmp(var.value, "Trident TGUI9440"))
+            gfxcard = GFX_TGUI9440;
+         else if (!strcmp(var.value, "IBM VGA"))
+            gfxcard = GFX_VGA;
+         else if (!strcmp(var.value, "Compaq/Paradise VGA"))
+            gfxcard = GFX_COMPAQ_VGA;
+         else if (!strcmp(var.value, "ATI VGA Edge-16"))
+            gfxcard = GFX_VGAEDGE16;
+         else if (!strcmp(var.value, "ATI VGA Charger"))
+            gfxcard = GFX_VGACHARGER;
+         else if (!strcmp(var.value, "Oak OTI-067"))
+            gfxcard = GFX_OTI067;
+         else if (!strcmp(var.value, "ATI Graphics Pro Turbo (Mach64)"))
+            gfxcard = GFX_MACH64GX;
+         else if (!strcmp(var.value, "Cirrus Logic CL-GD5429"))
+            gfxcard = GFX_CL_GD5429;
+         else if (!strcmp(var.value, "S3 Virge/DX"))
+            gfxcard = GFX_VIRGEDX;
+         else if (!strcmp(var.value, "S3 732/Trio32 (Phoenix)"))
+            gfxcard = GFX_PHOENIX_TRIO32;
+         else if (!strcmp(var.value, "S3 764/Trio64 (Phoenix)"))
+            gfxcard = GFX_PHOENIX_TRIO64;
+         else if (!strcmp(var.value, "nVidia Riva TNT"))
+            gfxcard = GFX_RIVATNT;
+         else if (!strcmp(var.value, "Incolor"))
+            gfxcard = GFX_INCOLOR;
+         else if (!strcmp(var.value, "nVidia Riva 128"))
+            gfxcard = GFX_RIVA128;
+      }
+      else
+          gfxcard = GFX_CGA;
+
       var.key = "pcem_fpu_enabled";
 
       if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
