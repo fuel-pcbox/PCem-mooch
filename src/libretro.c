@@ -462,6 +462,8 @@ void retro_set_environment(retro_environment_t cb)
          "Floating Point Unit (restart); disabled|enabled" },
       { "pcem_gus_enabled",
          "Gravis UltraSound audiocard (restart); disabled|enabled" },
+      { "pcem_ssi2001_enabled",
+         "SSI 2001 add-on audiocard (restart); disabled|enabled" },
       { "pcem_gameblaster_enabled",
          "GameBlaster audiocard (restart); disabled|enabled" },
       { "pcem_voodoo_enabled",
@@ -588,6 +590,18 @@ static void check_variables(bool first_time_startup)
       }
       else
           hasfpu = 0;
+
+      var.key = "pcem_ssi2001_enabled";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "enabled"))
+             SSI2001 = 1;
+         else
+             SSI2001 = 0;
+      }
+      else
+          SSI2001  = 0;
 
       var.key = "pcem_gus_enabled";
 
