@@ -369,7 +369,7 @@ void retro_get_system_info(struct retro_system_info *info)
 {
    memset(info, 0, sizeof(*info));
    info->library_name     = "PCem";
-   info->library_version  = "v1";
+   info->library_version  = "v12 alpha";
    info->need_fullpath    = false;
    info->valid_extensions = NULL; // Anything is fine, we don't care.
 }
@@ -541,7 +541,7 @@ static void keyboard_cb(bool down, unsigned keycode,
          break;
       case 0:
          break;
-   }
+   }g
 }
 
 static int midi_cmd_pos, midi_len;
