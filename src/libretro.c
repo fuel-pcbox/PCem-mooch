@@ -541,7 +541,7 @@ static void keyboard_cb(bool down, unsigned keycode,
          break;
       case 0:
          break;
-   }g
+   }
 }
 
 static int midi_cmd_pos, midi_len;
