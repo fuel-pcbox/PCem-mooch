@@ -416,6 +416,7 @@ void retro_init(void)
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
+   info->timing.fps            = 60;
    info->timing.sample_rate    = 44100;
    info->geometry.base_width   = 320;
    info->geometry.base_height  = 240;
@@ -490,11 +491,7 @@ void retro_run(void)
    if (quited)
       return;
 
-   ticks+=50000;
-
-   if (ticks)
    {
-      ticks--;
       runpc();
       frames++;
       if (frames >= 200 && nvr_dosave)
@@ -504,11 +501,6 @@ void retro_run(void)
          savenvr();
       }
    }
-   else
-      usleep(1);
-
-   if (ticks > 10)
-      ticks = 0;
    /* missing: audio_cb / video_cb */
 
 }
