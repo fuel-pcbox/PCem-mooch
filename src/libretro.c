@@ -13,6 +13,7 @@
 #include "cpu.h"
 #include "model.h"
 #include "nvr.h"
+#include "sound.h"
 #include "video.h"
 
 typedef struct
@@ -40,7 +41,6 @@ static retro_video_refresh_t video_cb;
 
 /* forward declarations */
 void closepc(void);
-void saveconfig(void);
 void savenvr(void);
 int loadbios(void);
 void initpc(int argc, char *argv[]);
@@ -452,9 +452,39 @@ static struct retro_rumble_interface rumble;
 
 void retro_set_environment(retro_environment_t cb)
 {
+   bool no_content = true;
    environ_cb = cb;
 
-   bool no_content = true;
+   static const struct retro_variable vars[] = {
+      { " pcem_cpucore",
+         "CPU Core; interpreter|dynarec" },
+      { " pcem_model",
+         "Model (restart); auto|IBM PC|IBM XT|IBM PCjr|Generic XT clone|AMI XT clone|DTK XT clone|VTech Laser Turbo XT|VTech Laster XT3|Phoenix XT clone|Juko XT clone|Tandy 1000|Tandy 1000 HX|Tandy 1000 SL/2|Amstrad PC1512|Sinclair PC200|Euro PC|Olivetti M24|Amstrad PC1640|Amstrad PC2086|Amstrad PC3086|IBM AT|Commodore PC 30 III|AMI 286 clone|DELL System 200|IBM PS/1 model 2011|Compaq Deskpro 386|Acer 386SX25/N|DTK 386SX clone|Phoenix 386 clone|Amstrad MegaPC|AMI 386 clone|AMI 486 clone|AMI WinBIOS 486|DTK PKM-0038S E-2|Award SiS 496/497|Rise Computer R418|Intel Premiere/PCI|Intel Premiere/PCI II|Intel Advanced/EV|PC Partner MB500N|Acer M3a|Acer V35N|ASUS P/I-P55T2P4|Award 430VX PCI|Epox P55-VA" },
+      { "pcem_gfxcard",
+         "Graphics card (restart); auto|CGA|New CGA|MDA|Hercules|EGA|Compaq EGA|Super EGA|Trident TVGA8900D|Tseng ET4000|Tseng ET4000/W32p (Diamond Stealth 32)|S3 Vision864 (Paradise Bahamas 64)|S3 764/Trio64 (Number Nine 9FX)|S3 Virge|Trident TGUI9440|IBM VGA|Compaq/Paradise VGA|ATI VGA Edge-16|ATI VGA Charger|Oak OTI-067|ATI Graphics Pro Turbo (Mach64)|Cirrus Logic CL-GD5429|S3 Virge/DX|S3 732/Trio32 (Phoenix)|S3 764/Trio64 (Phoenix)|nVidia Riva TNT|Incolor|nVidia Riva 128" },
+      { "pcem_sndcard",
+         "Sound card (restart); auto|AdLib (No DSP)|Soundblaster 1 (DSP v1.05)|Soundblaster 1.5 (DSP v2.00)|Soundblaster 2 (DSP v2.01)|Soundblaster Pro (DSP v3.00)|Soundblaster Pro 2 (DSP v3.02 + OPL3)|Soundblaster 16 (DSP v4.05 + OPL3)|AdLib Gold|Windows Sound System|Pro Audio Spectrum 16" },
+      { "pcem_video_timing_speed",
+         "Video timing speed; Slow VLB/PCI|Mid VLB/PCI|Fast VLB/PCI|8-bit|Slow 16-bit|Fast 16-bit" },
+      { "pcem_overscan_enable",
+         "Enable overscan; disabled|enabled" },
+      { "pcem_flash_enable",
+         "Enable flash; enabled|disabled" },
+      { "pcem_fpu_enabled",
+         "CPU Floating Point Unit support (restart); disabled|enabled" },
+      { "pcem_gus_enabled",
+         "Gravis UltraSound audiocard (restart); disabled|enabled" },
+      { "pcem_ssi2001_enabled",
+         "SSI 2001 add-on audiocard (restart); disabled|enabled" },
+      { "pcem_gameblaster_enabled",
+         "GameBlaster audiocard (restart); disabled|enabled" },
+      { "pcem_voodoo_enabled",
+         "3Dfx Voodoo add-on card (restart); disabled|enabled" },
+      { NULL, NULL },
+   };
+
+   cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars);
+
    cb(RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME, &no_content);
 
    if (cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &logging))
@@ -493,8 +523,222 @@ void retro_reset(void)
    resetpchard();
 }
 
-static void check_variables(void)
+static void check_variables(bool first_time_startup)
 {
+   struct retro_variable var = {0};
+
+   if (first_time_startup)
+   {
+      var.key = "pcem_cpucore";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "interpreter"))
+            cpu_use_dynarec = 0;
+         else if (!strcmp(var.value, "dynarec"))
+            cpu_use_dynarec = 1;
+      }
+      else
+         cpu_use_dynarec = 0;
+
+      var.key = "pcem_video_timing_speed";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "Slow VLB/PCI"))
+            video_speed = 3;
+         else if (!strcmp(var.value, "Mid VLB/PCI"))
+            video_speed = 4;
+         else if (!strcmp(var.value, "Fast VLB/PCI"))
+            video_speed = 5;
+         else if (!strcmp(var.value, "8-bit"))
+            video_speed = 0;
+         else if (!strcmp(var.value, "Slow 16-bit"))
+            video_speed = 1;
+         else if (!strcmp(var.value, "Fast 16-bit"))
+            video_speed = 2;
+      }
+      else
+         video_speed = 3;
+
+      var.key = "pcem_overscan_enable";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "disabled"))
+            enable_overscan = 0;
+         else if (!strcmp(var.value, "enabled"))
+            enable_overscan = 1;
+      }
+      else
+         enable_overscan = 0;
+
+      var.key = "pcem_flash_enable";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "disabled"))
+            enable_flash = 0;
+         else if (!strcmp(var.value, "enabled"))
+            enable_flash = 1;
+      }
+      else
+         enable_flash = 1;
+
+      var.key = "pcem_sndcard";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "auto"))
+            sound_card_current = SB2;
+         else if (!strcmp(var.value, "AdLib (No DSP)"))
+            sound_card_current = SADLIB;
+         else if (!strcmp(var.value, "Soundblaster 1 (DSP v1.05)"))
+            sound_card_current = SB1;
+         else if (!strcmp(var.value, "Soundblaster 1.5 (DSP v2.00)"))
+            sound_card_current = SB15;
+         else if (!strcmp(var.value, "Soundblaster 2 (DSP v2.01)"))
+            sound_card_current = SB2;
+         else if (!strcmp(var.value, "Soundblaster Pro (DSP v3.00)"))
+            sound_card_current = SBPRO;
+         else if (!strcmp(var.value, "Soundblaster Pro 2 (DSP v3.02 + OPL3)"))
+            sound_card_current = SBPRO2;
+         else if (!strcmp(var.value, "Soundblaster 16 (DSP v4.05 + OPL3)"))
+            sound_card_current = SB16;
+         else if (!strcmp(var.value, "AdLib Gold"))
+            sound_card_current = SADGOLD;
+         else if (!strcmp(var.value, "Windows Sound System"))
+            sound_card_current = SND_WSS;
+         else if (!strcmp(var.value, "Pro Audio Spectrum 16"))
+            sound_card_current = SND_PAS16;
+      }
+      else
+         sound_card_current = SB2;
+
+      var.key = "pcem_gfxcard";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "auto"))
+            gfxcard = 0;
+         if (!strcmp(var.value, "CGA"))
+            gfxcard = GFX_CGA;
+         else if (!strcmp(var.value, "New CGA"))
+            gfxcard = GFX_NEW_CGA;
+         else if (!strcmp(var.value, "MDA"))
+            gfxcard = GFX_MDA;
+         else if (!strcmp(var.value, "Hercules"))
+            gfxcard = GFX_HERCULES;
+         else if (!strcmp(var.value, "EGA"))
+            gfxcard = GFX_EGA;
+         else if (!strcmp(var.value, "Compaq EGA"))
+            gfxcard = GFX_COMPAQ_EGA;
+         else if (!strcmp(var.value, "Super EGA"))
+            gfxcard = GFX_SUPER_EGA;
+         else if (!strcmp(var.value, "Trident TVGA8900D"))
+            gfxcard = GFX_TVGA;
+         else if (!strcmp(var.value, "Tseng ET4000"))
+            gfxcard = GFX_ET4000;
+         else if (!strcmp(var.value, "Tseng ET4000/W32p (Diamond Stealth 32)"))
+            gfxcard = GFX_ET4000W32;
+         else if (!strcmp(var.value, "S3 Vision864 (Paradise Bahamas 64)"))
+            gfxcard = GFX_BAHAMAS64;
+         else if (!strcmp(var.value, "S3 764/Trio64 (Number Nine 9FX)"))
+            gfxcard = GFX_N9_9FX;
+         else if (!strcmp(var.value, "S3 Virge"))
+            gfxcard = GFX_VIRGE;
+         else if (!strcmp(var.value, "Trident TGUI9440"))
+            gfxcard = GFX_TGUI9440;
+         else if (!strcmp(var.value, "IBM VGA"))
+            gfxcard = GFX_VGA;
+         else if (!strcmp(var.value, "Compaq/Paradise VGA"))
+            gfxcard = GFX_COMPAQ_VGA;
+         else if (!strcmp(var.value, "ATI VGA Edge-16"))
+            gfxcard = GFX_VGAEDGE16;
+         else if (!strcmp(var.value, "ATI VGA Charger"))
+            gfxcard = GFX_VGACHARGER;
+         else if (!strcmp(var.value, "Oak OTI-067"))
+            gfxcard = GFX_OTI067;
+         else if (!strcmp(var.value, "ATI Graphics Pro Turbo (Mach64)"))
+            gfxcard = GFX_MACH64GX;
+         else if (!strcmp(var.value, "Cirrus Logic CL-GD5429"))
+            gfxcard = GFX_CL_GD5429;
+         else if (!strcmp(var.value, "S3 Virge/DX"))
+            gfxcard = GFX_VIRGEDX;
+         else if (!strcmp(var.value, "S3 732/Trio32 (Phoenix)"))
+            gfxcard = GFX_PHOENIX_TRIO32;
+         else if (!strcmp(var.value, "S3 764/Trio64 (Phoenix)"))
+            gfxcard = GFX_PHOENIX_TRIO64;
+         else if (!strcmp(var.value, "nVidia Riva TNT"))
+            gfxcard = GFX_RIVATNT;
+         else if (!strcmp(var.value, "Incolor"))
+            gfxcard = GFX_INCOLOR;
+         else if (!strcmp(var.value, "nVidia Riva 128"))
+            gfxcard = GFX_RIVA128;
+      }
+      else
+          gfxcard = 0;
+
+      var.key = "pcem_fpu_enabled";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "enabled"))
+            hasfpu = 1;
+         else
+            hasfpu = 0;
+      }
+      else
+          hasfpu = 0;
+
+      var.key = "pcem_ssi2001_enabled";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "enabled"))
+             SSI2001 = 1;
+         else
+             SSI2001 = 0;
+      }
+      else
+          SSI2001  = 0;
+
+      var.key = "pcem_gus_enabled";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "enabled"))
+            GUS = 1;
+         else
+            GUS = 0;
+      }
+      else
+          GUS = 0;
+
+      var.key = "pcem_gameblaster_enabled";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "enabled"))
+            GAMEBLASTER = 1;
+         else
+            GAMEBLASTER = 0;
+      }
+      else
+         GAMEBLASTER = 0;
+
+      var.key = "pcem_voodoo_enabled";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "enabled"))
+            voodoo_enabled = 1;
+         else
+            voodoo_enabled = 0;
+      }
+      else
+         voodoo_enabled = 0;
+   }
 }
 
 static void audio_set_state(bool enable)
@@ -507,7 +751,7 @@ void retro_run(void)
    static int ticks = 0;
    bool updated = false;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
-      check_variables();
+      check_variables(false);
 
    input_poll_cb();
 
@@ -600,7 +844,7 @@ bool retro_load_game(const struct retro_game_info *info)
    struct retro_keyboard_callback cb = { keyboard_cb };
    environ_cb(RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK, &cb);
 
-   check_variables();
+   check_variables(true);
 
    midi_init();
    initpc(0, NULL);
@@ -637,7 +881,6 @@ bool retro_load_game(const struct retro_game_info *info)
          {
             romset = c;
             model = model_getmodel(romset);
-            saveconfig();
             resetpchard();
             break;
          }
@@ -655,7 +898,6 @@ bool retro_load_game(const struct retro_game_info *info)
          if (gfx_present[c])
          {
             gfxcard = c;
-            saveconfig();
             break;
          }
       }

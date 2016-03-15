@@ -234,8 +234,10 @@ void initpc(int argc, char *argv[])
         
         loadconfig(config_file);
         pclog("Config loaded\n");
+#ifndef __LIBRETRO__
         if (config_file)
                 saveconfig();
+#endif
 
         codegen_init();
         
@@ -507,12 +509,14 @@ void runpc()
                         emu_fps = frames;
                         frames = 0;
                 }
+#ifndef __LIBRETRO__
                 if (win_title_update)
                 {
                         win_title_update=0;
                         sprintf(s, "PCem v10.1 - %i%% - %s - %s - %s", fps, model_getname(), models[model].cpu[cpu_manufacturer].cpus[cpu].name, (!mousecapture) ? "Click to capture mouse" : "Press CTRL-END or middle button to release mouse");
                         set_window_title(s);
                 }
+#endif
                 done++;
                 frame++;
 }
@@ -680,6 +684,7 @@ void loadconfig(char *fn)
         cdrom_channel = config_get_int(NULL, "cdrom_channel", 2);
 }
 
+#ifndef __LIBRETRO__
 void saveconfig()
 {
         config_set_int(NULL, "gameblaster", GAMEBLASTER);
@@ -748,3 +753,4 @@ void saveconfig()
         
         config_save(config_file_default);
 }
+#endif
