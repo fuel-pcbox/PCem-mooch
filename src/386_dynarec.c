@@ -317,6 +317,34 @@ int rep386(int fv)
                 case 0x08:
                 pc=ipc+1;
                 break;
+		case 0x30f:
+		{
+			uint8_t opcode3 = readmemb(cs,pc); pc++;
+			switch(opcode3|(fv<<8))
+			{
+				case 0x1bc:
+				switch(op32)
+				{
+					case 0:
+					opBSF_w_a16(fetchdat);
+					break;
+					case 1:
+					opBSF_l_a16(fetchdat);
+					break;
+					case 2:
+					opBSF_w_a32(fetchdat);
+					break;
+					case 3:
+					opBSF_l_a32(fetchdat);
+					break;
+				}
+				break;
+				default:
+				pclog("Bad REP 0F %02x\n", opcode3);
+				break;
+			}
+			break;
+		}
                 case 0x26: case 0x126: case 0x226: case 0x326: /*ES:*/
                 ea_seg = &_es;
                 goto startrep;

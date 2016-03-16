@@ -17,7 +17,7 @@
         else                                                                    \
                 flags |= Z_FLAG;
 
-static int opBSF_w_a16(uint32_t fetchdat)
+int opBSF_w_a16(uint32_t fetchdat)
 {
         uint16_t temp;
         
@@ -29,7 +29,7 @@ static int opBSF_w_a16(uint32_t fetchdat)
         CLOCK_CYCLES((is486) ? 6 : 10);
         return 0;
 }
-static int opBSF_w_a32(uint32_t fetchdat)
+int opBSF_w_a32(uint32_t fetchdat)
 {
         uint16_t temp;
         
@@ -41,7 +41,7 @@ static int opBSF_w_a32(uint32_t fetchdat)
         CLOCK_CYCLES((is486) ? 6 : 10);
         return 0;
 }
-static int opBSF_l_a16(uint32_t fetchdat)
+int opBSF_l_a16(uint32_t fetchdat)
 {
         uint32_t temp;
         
@@ -53,7 +53,7 @@ static int opBSF_l_a16(uint32_t fetchdat)
         CLOCK_CYCLES((is486) ? 6 : 10);
         return 0;
 }
-static int opBSF_l_a32(uint32_t fetchdat)
+int opBSF_l_a32(uint32_t fetchdat)
 {
         uint32_t temp;
         
