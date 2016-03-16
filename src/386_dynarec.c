@@ -314,15 +314,9 @@ int rep386(int fv)
                 case 0xC3: case 0x1C3: case 0x2C3: case 0x3C3:
                 pc--;
                 break;
-                case 0x08:
+                case 0x08: case 0x0f: case 0x10f: case 0x20f: case 0x30f:
                 pc=ipc+1;
                 break;
-		case 0x0f: case 0x10f: case 0x20f: case 0x30f:
-		{
-			uint8_t opcode3 = readmemb(cs,pc); pc++;
-			x86_opcodes[(opcode3 | op32) & 0x3ff](fetchdat);
-			break;
-		}
                 case 0x26: case 0x126: case 0x226: case 0x326: /*ES:*/
                 ea_seg = &_es;
                 goto startrep;
