@@ -314,7 +314,7 @@ int rep386(int fv)
                 case 0xC3: case 0x1C3: case 0x2C3: case 0x3C3:
                 pc--;
                 break;
-                case 0x08: case 0x0f: case 0x10f: case 0x20f: case 0x30f:
+                case 0x08: case 0x0f: case 0x10f: case 0x20f: case 0x30f: default:
                 pc=ipc+1;
                 break;
                 case 0x26: case 0x126: case 0x226: case 0x326: /*ES:*/
@@ -1090,13 +1090,6 @@ int rep386(int fv)
                 if ((c>0) && (fv==tempz))  { pc=ipc; firstrepcycle=0; }
                 else firstrepcycle=1;
                 break;
-
-
-                default:
-                        pc=ipc;
-                        cycles-=20;
-                pclog("Bad REP %02X %i\n", temp, rep32 >> 8);
-                x86illegal();
         }
         if (rep32&0x200) ECX=c;
         else             CX=c;
