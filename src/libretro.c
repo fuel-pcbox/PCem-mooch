@@ -615,6 +615,153 @@ static void check_variables(bool first_time_startup)
       else
          sound_card_current = SB2;
 
+      var.key = "pcem_model";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "auto"))
+         {
+         }
+         else if (!strcmp(var.value, "IBM PC"))
+         {
+         }
+         else if (!strcmp(var.value, "IBM XT"))
+         {
+         }
+         else if (!strcmp(var.value, "IBM PCjr"))
+         {
+         }
+         else if (!strcmp(var.value, "Generix XT clone"))
+         {
+         }
+         else if (!strcmp(var.value, "AMI XT clone"))
+         {
+         }
+         else if (!strcmp(var.value, "DTK XT clone"))
+         {
+         }
+         else if (!strcmp(var.value, "VTech Laser Turbo XT"))
+         {
+         }
+         else if (!strcmp(var.value, "VTech Laster XT3"))
+         {
+         }
+         else if (!strcmp(var.value, "Phoenix XT clone"))
+         {
+         }
+         else if (!strcmp(var.value, "Juko XT clone"))
+         {
+         }
+         else if (!strcmp(var.value, "Tandy 1000"))
+         {
+         }
+         else if (!strcmp(var.value, "Tandy 1000 HX"))
+         {
+         }
+         else if (!strcmp(var.value, "Tandy 1000 SL/2"))
+         {
+         }
+         else if (!strcmp(var.value, "Amstrad PC1512"))
+         {
+         }
+         else if (!strcmp(var.value, "Sinclair PC200"))
+         {
+         }
+         else if (!strcmp(var.value, "Euro PC"))
+         {
+         }
+         else if (!strcmp(var.value, "Olivetti M24"))
+         {
+         }
+         else if (!strcmp(var.value, "Amstrad PC1640"))
+         {
+         }
+         else if (!strcmp(var.value, "Amstrad PC2086"))
+         {
+         }
+         else if (!strcmp(var.value, "Amstrad PC3086"))
+         {
+         }
+         else if (!strcmp(var.value, "IBM AT"))
+         {
+         }
+         else if (!strcmp(var.value, "Commodore PC 30 III"))
+         {
+         }
+         else if (!strcmp(var.value, "AMI 286 clone"))
+         {
+         }
+         else if (!strcmp(var.value, "DELL System 200"))
+         {
+         }
+         else if (!strcmp(var.value, "IBM PS/1 model 2011"))
+         {
+         }
+         else if (!strcmp(var.value, "Compaq Deskpro 386"))
+         {
+         }
+         else if (!strcmp(var.value, "Acer 386SX25/N"))
+         {
+         }
+         else if (!strcmp(var.value, "DTK 386SX clone"))
+         {
+         }
+         else if (!strcmp(var.value, "Phoenix 386 clone"))
+         {
+         }
+         else if (!strcmp(var.value, "Amstrad MegaPC"))
+         {
+         }
+         else if (!strcmp(var.value, "AMI 386 clone"))
+         {
+         }
+         else if (!strcmp(var.value, "AMI 486 clone"))
+         {
+         }
+         else if (!strcmp(var.value, "AMI WinBIOS 486"))
+         {
+         }
+         else if (!strcmp(var.value, "DTK PKM-0038S E-2"))
+         {
+         }
+         else if (!strcmp(var.value, "Award SiS 496/497"))
+         {
+         }
+         else if (!strcmp(var.value, "Rise Computer R418"))
+         {
+         }
+         else if (!strcmp(var.value, "Intel Premiere/PCI"))
+         {
+         }
+         else if (!strcmp(var.value, "Intel Premiere/PCI II"))
+         {
+         }
+         else if (!strcmp(var.value, "Intel Advanced/EV"))
+         {
+         }
+         else if (!strcmp(var.value, "PC Partner MB500N"))
+         {
+         }
+         else if (!strcmp(var.value, "Acer M3a"))
+         {
+         }
+         else if (!strcmp(var.value, "Acer V35N"))
+         {
+         }
+         else if (!strcmp(var.value, "ASUS P/I-P55T2P4"))
+         {
+         }
+         else if (!strcmp(var.value, "Award 430VX PCI"))
+         {
+         }
+         else if (!strcmp(var.value, "Epox P55-VA"))
+         {
+         }
+      }
+      else
+      {
+      }
+
       var.key = "pcem_gfxcard";
 
       if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -775,18 +922,18 @@ void retro_run(void)
 static void keyboard_cb(bool down, unsigned keycode,
       uint32_t character, uint16_t mod)
 {
+   unsigned c;
+   int key_idx;
    bool latch = down ? 1 : 0;
 
 
    log_cb(RETRO_LOG_INFO, "Down: %s, Code: %d, Char: %u, Mod: %u.\n",
          down ? "yes" : "no", keycode, character, mod);
 
-   for(unsigned c = 0;c<272;c++)
-   {
+   for(c = 0;c<272;c++)
       pcem_key[c] = 0;
-   }
 
-   int key_idx = key_convert[keycode];
+   key_idx = key_convert[keycode];
    if (key_idx == -1)
       return;
 
