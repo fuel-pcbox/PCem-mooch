@@ -353,6 +353,11 @@ static void *paradise_wd90c11_megapc_init()
         return paradise;
 }
 
+static int paradise_wd90c11_standalone_available()
+{
+        return rom_present("roms/megapc/41651-bios lo.u18") && rom_present("roms/megapc/211253-bios hi.u19");
+}
+
 static void *cpqvga_init()
 {
         paradise_t *paradise = paradise_pvga1a_init();
@@ -427,6 +432,17 @@ device_t paradise_wd90c11_megapc_device =
         paradise_wd90c11_megapc_init,
         paradise_close,
         NULL,
+        paradise_speed_changed,
+        paradise_force_redraw,
+        paradise_add_status_info
+};
+device_t paradise_wd90c11_device =
+{
+        "Paradise WD90C11",
+        0,
+        paradise_wd90c11_megapc_init,
+        paradise_close,
+        paradise_wd90c11_standalone_available,
         paradise_speed_changed,
         paradise_force_redraw,
         paradise_add_status_info

@@ -368,6 +368,7 @@ enum
         GFX_RIVATNT,
         GFX_INCOLOR,
         GFX_RIVA128,
+        GFX_WD90C11,
         
         GFX_MAX
 };
