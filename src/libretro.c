@@ -922,18 +922,18 @@ void retro_run(void)
 static void keyboard_cb(bool down, unsigned keycode,
       uint32_t character, uint16_t mod)
 {
+   unsigned c;
+   int key_idx;
    bool latch = down ? 1 : 0;
 
 
    log_cb(RETRO_LOG_INFO, "Down: %s, Code: %d, Char: %u, Mod: %u.\n",
          down ? "yes" : "no", keycode, character, mod);
 
-   for(unsigned c = 0;c<272;c++)
-   {
+   for(c = 0;c<272;c++)
       pcem_key[c] = 0;
-   }
 
-   int key_idx = key_convert[keycode];
+   key_idx = key_convert[keycode];
    if (key_idx == -1)
       return;
 
