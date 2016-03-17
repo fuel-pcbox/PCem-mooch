@@ -466,7 +466,7 @@ void at_i430vx_init()
 void at_p55va_init()
 {
         at_init();
-        mouse_serial_init();
+        mouse_ps2_init();
         pci_init(PCI_CONFIG_TYPE_1, 0, 31);
         i430vx_init();
         piix3_init(7);
