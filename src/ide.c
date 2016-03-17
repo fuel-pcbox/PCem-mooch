@@ -2677,12 +2677,12 @@ bad_atapi_command:
                 ide->packetstatus=2;
                 idecallback[ide_board]=50*IDE_TIME;
                 break;
-/*                default:
+        default:
                 pclog("Bad ATAPI command %02X\n",idebufferb[0]);
                 pclog("Packet data :\n");
                 for (c=0;c<12;c++)
                     pclog("%02X\n",idebufferb[c]);
-                exit(-1);*/
+                //exit(-1);
         }
 }
 
