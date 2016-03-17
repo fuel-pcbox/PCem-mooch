@@ -82,6 +82,7 @@ void     at_dtk486_init();
 void       at_r418_init();
 void      at_plato_init();
 void     at_mb500n_init();
+void   at_p54tp4xe_init();
 void    at_acerm3a_init();
 void   at_acerv35n_init();
 void    at_p55t2p4_init();
@@ -134,6 +135,7 @@ MODEL models[] =
         {"Intel Premiere/PCI II",ROM_PLATO,      { "Intel", cpus_PentiumS5, "",  NULL,         "",      NULL},         0, 1,   1, 128, 1,       at_plato_init},
         {"Intel Advanced/EV",   ROM_ENDEAVOR,    { "Intel", cpus_PentiumS5,"IDT", cpus_WinChip, "",      NULL},         0, 1,   1, 128, 1,   at_endeavor_init},
         {"PC Partner MB500N",   ROM_MB500N,      { "Intel", cpus_PentiumS5,"IDT", cpus_WinChip, "",      NULL},         0, 1,   1, 128, 1,     at_mb500n_init},
+	{"ASUS P/I-P54TP4XE",   ROM_P54TP4XE,    { "Intel", cpus_PentiumS5, "IDT", cpus_WinChip, "",     NULL},         0, 1,   1, 512, 1, at_p54tp4xe_init},
         {"Acer M3a",            ROM_ACERM3A,     { "Intel", cpus_Pentium, "IDT", cpus_WinChip, "AMD",   cpus_K6},         0, 1,   1, 512, 1,     at_acerm3a_init},
         {"Acer V35N",           ROM_ACERV35N,    { "Intel", cpus_Pentium, "IDT", cpus_WinChip, "AMD",   cpus_K6},         0, 1,   1, 512, 1,    at_acerv35n_init},
         {"ASUS P/I-P55T2P4",    ROM_P55T2P4,     { "Intel", cpus_Pentium, "IDT", cpus_WinChip, "AMD",   cpus_K6},         0, 1,   1, 512, 1,     at_p55t2p4_init},
@@ -415,6 +417,19 @@ void at_mb500n_init()
         fdc37c665_init();
         intel_endeavor_init();
         device_add(&intel_flash_bxt_device);
+}
+
+void at_p54tp4xe_init()
+{
+        at_init();
+        mouse_ps2_init();
+        pci_init(PCI_CONFIG_TYPE_1, 0xd, 0x10);
+        i430fx_init();
+        piix_init(7);
+        fdc37c665_init();
+        intel_endeavor_init();
+        device_add(&intel_flash_bxt_device);
+	if (cdrom_channel >= 4)  ide_ter_init();
 }
 
 void at_acerm3a_init()

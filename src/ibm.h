@@ -330,6 +330,7 @@ enum
 	ROM_ACERV35N,   /*Acer V35N / 430HX / Acer BIOS / SMC FDC37C932FR*/
         ROM_P55T2P4,    /*ASUS P/I-P55T2P4 / 430HX / Award BIOS / Winbond W8387FF*/
         ROM_P55VA,      /*Epox P55-VA / 430VX / Award BIOS / SMC FDC37C932FR*/
+        ROM_P54TP4XE,
 	
         ROM_MAX
 };

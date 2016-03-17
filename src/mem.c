@@ -635,6 +635,14 @@ int loadbios()
          fclose(f);
          biosmask = 0x1ffff;
          return 1;
+	 
+      case ROM_P54TP4XE:
+                f = romfopen("roms/p54tp4xe/T15I0302.AWD", "rb");
+                if (!f) break;
+                fread(rom,           0x20000, 1, f);                
+                fclose(f);
+                biosmask = 0x1ffff;
+                return 1;
 
       case ROM_ACERM3A:
          f = romfopen("roms/acerm3a/r01-b3.bin", "rb");         
