@@ -459,7 +459,7 @@ void retro_set_environment(retro_environment_t cb)
       { " pcem_cpucore",
          "CPU Core; interpreter|dynarec" },
       { " pcem_model",
-         "Model (restart); auto|IBM PC|IBM XT|IBM PCjr|Generic XT clone|AMI XT clone|DTK XT clone|VTech Laser Turbo XT|VTech Laster XT3|Phoenix XT clone|Juko XT clone|Tandy 1000|Tandy 1000 HX|Tandy 1000 SL/2|Amstrad PC1512|Sinclair PC200|Euro PC|Olivetti M24|Amstrad PC1640|Amstrad PC2086|Amstrad PC3086|IBM AT|Commodore PC 30 III|AMI 286 clone|DELL System 200|IBM PS/1 model 2011|Compaq Deskpro 386|Acer 386SX25/N|DTK 386SX clone|Phoenix 386 clone|Amstrad MegaPC|AMI 386 clone|AMI 486 clone|AMI WinBIOS 486|DTK PKM-0038S E-2|Award SiS 496/497|Rise Computer R418|Intel Premiere/PCI|Intel Premiere/PCI II|Intel Advanced/EV|PC Partner MB500N|Acer M3a|Acer V35N|ASUS P/I-P55T2P4|Award 430VX PCI|Epox P55-VA" },
+         "Model (restart); auto|IBM PC|IBM XT|IBM PCjr|Generic XT clone|AMI XT clone|DTK XT clone|VTech Laser Turbo XT|VTech Laser XT3|Phoenix XT clone|Juko XT clone|Tandy 1000|Tandy 1000 HX|Tandy 1000 SL/2|Amstrad PC1512|Sinclair PC200|Euro PC|Olivetti M24|Amstrad PC1640|Amstrad PC2086|Amstrad PC3086|IBM AT|Commodore PC 30 III|AMI 286 clone|DELL System 200|IBM PS/1 model 2011|Compaq Deskpro 386|Acer 386SX25/N|DTK 386SX clone|Phoenix 386 clone|Amstrad MegaPC|AMI 386 clone|AMI 486 clone|AMI WinBIOS 486|DTK PKM-0038S E-2|Award SiS 496/497|Rise Computer R418|Intel Premiere/PCI|Intel Premiere/PCI II|Intel Advanced/EV|PC Partner MB500N|ASUS P/I-P53TP4XE|Acer M3a|Acer V35N|ASUS P/I-P55T2P4|Award 430VX PCI|Epox P55-VA" },
       { "pcem_gfxcard",
          "Graphics card (restart); auto|CGA|New CGA|MDA|Hercules|EGA|Compaq EGA|Super EGA|Trident TVGA8900D|Tseng ET4000|Tseng ET4000/W32p (Diamond Stealth 32)|S3 Vision864 (Paradise Bahamas 64)|S3 764/Trio64 (Number Nine 9FX)|S3 Virge|Trident TGUI9440|IBM VGA|Compaq/Paradise VGA|ATI VGA Edge-16|ATI VGA Charger|Oak OTI-067|ATI Graphics Pro Turbo (Mach64)|Cirrus Logic CL-GD5429|S3 Virge/DX|S3 732/Trio32 (Phoenix)|S3 764/Trio64 (Phoenix)|nVidia Riva TNT|Incolor|nVidia Riva 128" },
       { "pcem_sndcard",
@@ -621,141 +621,191 @@ static void check_variables(bool first_time_startup)
       {
          if (!strcmp(var.value, "auto"))
          {
+            romset = ROM_P55VA;
          }
          else if (!strcmp(var.value, "IBM PC"))
          {
+            romset = ROM_IBMPC;
          }
          else if (!strcmp(var.value, "IBM XT"))
          {
+            romset = ROM_IBMXT;
          }
          else if (!strcmp(var.value, "IBM PCjr"))
          {
+            romset = ROM_IBMPCJR;
          }
-         else if (!strcmp(var.value, "Generix XT clone"))
+         else if (!strcmp(var.value, "Generic XT clone"))
          {
+            romset = ROM_GENXT;
          }
          else if (!strcmp(var.value, "AMI XT clone"))
          {
+            romset = ROM_AMIXT;
          }
          else if (!strcmp(var.value, "DTK XT clone"))
          {
+            romset = ROM_DTKXT;
          }
          else if (!strcmp(var.value, "VTech Laser Turbo XT"))
          {
+            romset = ROM_LTXT;
          }
-         else if (!strcmp(var.value, "VTech Laster XT3"))
+         else if (!strcmp(var.value, "VTech Laser XT3"))
          {
+            romset = ROM_LXT3;
          }
          else if (!strcmp(var.value, "Phoenix XT clone"))
          {
+            romset = ROM_PXXT;
          }
          else if (!strcmp(var.value, "Juko XT clone"))
          {
+            romset = ROM_JUKOPC;
          }
          else if (!strcmp(var.value, "Tandy 1000"))
          {
+            romset = ROM_TANDY;
          }
          else if (!strcmp(var.value, "Tandy 1000 HX"))
          {
+            romset = ROM_TANDY1000HX;
          }
          else if (!strcmp(var.value, "Tandy 1000 SL/2"))
          {
+            romset = ROM_TANDY1000SL2;
          }
          else if (!strcmp(var.value, "Amstrad PC1512"))
          {
+            romset = ROM_PC1512;
          }
          else if (!strcmp(var.value, "Sinclair PC200"))
          {
+            romset = ROM_PC200;
          }
          else if (!strcmp(var.value, "Euro PC"))
          {
+            romset = ROM_EUROPC;
          }
          else if (!strcmp(var.value, "Olivetti M24"))
          {
+            romset = ROM_OLIM24;
          }
          else if (!strcmp(var.value, "Amstrad PC1640"))
          {
+            romset = ROM_PC1640;
          }
          else if (!strcmp(var.value, "Amstrad PC2086"))
          {
+            romset = ROM_PC2086;
          }
          else if (!strcmp(var.value, "Amstrad PC3086"))
          {
+            romset = ROM_PC3086;
          }
          else if (!strcmp(var.value, "IBM AT"))
          {
+            romset = ROM_IBMAT;
          }
          else if (!strcmp(var.value, "Commodore PC 30 III"))
          {
+            romset = ROM_CMDPC30;
          }
          else if (!strcmp(var.value, "AMI 286 clone"))
          {
+            romset = ROM_AMI286;
          }
          else if (!strcmp(var.value, "DELL System 200"))
          {
+            romset = ROM_DELL200;
          }
          else if (!strcmp(var.value, "IBM PS/1 model 2011"))
          {
+            romset = ROM_IBMPS1_2011;
          }
          else if (!strcmp(var.value, "Compaq Deskpro 386"))
          {
+            romset = ROM_DESKPRO_386;
          }
          else if (!strcmp(var.value, "Acer 386SX25/N"))
          {
+            romset = ROM_ACER386;
          }
          else if (!strcmp(var.value, "DTK 386SX clone"))
          {
+            romset = ROM_DTK386;
          }
          else if (!strcmp(var.value, "Phoenix 386 clone"))
          {
+            romset = ROM_PX386;
          }
          else if (!strcmp(var.value, "Amstrad MegaPC"))
          {
+            romset = ROM_MEGAPC;
          }
          else if (!strcmp(var.value, "AMI 386 clone"))
          {
+            romset = ROM_AMI386;
          }
          else if (!strcmp(var.value, "AMI 486 clone"))
          {
+            romset = ROM_AMI486;
          }
          else if (!strcmp(var.value, "AMI WinBIOS 486"))
          {
+            romset = ROM_WIN486;
          }
          else if (!strcmp(var.value, "DTK PKM-0038S E-2"))
          {
+            romset = ROM_DTK486;
          }
          else if (!strcmp(var.value, "Award SiS 496/497"))
          {
+            romset = ROM_SIS496;
          }
          else if (!strcmp(var.value, "Rise Computer R418"))
          {
+            romset = ROM_R418;
          }
          else if (!strcmp(var.value, "Intel Premiere/PCI"))
          {
+            romset = ROM_REVENGE;
          }
          else if (!strcmp(var.value, "Intel Premiere/PCI II"))
          {
+            romset = ROM_PLATO;
          }
          else if (!strcmp(var.value, "Intel Advanced/EV"))
          {
+            romset = ROM_ENDEAVOR;
          }
          else if (!strcmp(var.value, "PC Partner MB500N"))
          {
+            romset = ROM_MB500N;
+         }
+         else if (!strcmp(var.value, "ASUS P/I-P54TP4XE"))
+         {
+            romset = ROM_P54TP4XE;
          }
          else if (!strcmp(var.value, "Acer M3a"))
          {
+            romset = ROM_ACERM3A;
          }
          else if (!strcmp(var.value, "Acer V35N"))
          {
+            romset = ROM_ACERV35N;
          }
          else if (!strcmp(var.value, "ASUS P/I-P55T2P4"))
          {
+            romset = ROM_P55T2P4;
          }
          else if (!strcmp(var.value, "Award 430VX PCI"))
          {
+            romset = ROM_430VX;
          }
          else if (!strcmp(var.value, "Epox P55-VA"))
          {
+            romset = ROM_P55VA;
          }
       }
       else
