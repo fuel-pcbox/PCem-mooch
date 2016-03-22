@@ -429,7 +429,7 @@ void at_p54tp4xe_init()
         fdc37c665_init();
         intel_endeavor_init();
         device_add(&intel_flash_bxt_device);
-	if (cdrom_channel >= 4)  ide_ter_init();
+	//if (cdrom_channel >= 4)  ide_ter_init();
 }
 
 void at_acerm3a_init()
