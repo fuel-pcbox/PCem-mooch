@@ -14,6 +14,7 @@
 #define IDM_VID_RESIZE     40050
 #define IDM_VID_DDRAW      40060
 #define IDM_VID_D3D        40061
+#define IDM_VID_OGL        40062
 #define IDM_VID_FULLSCREEN 40070
 #define IDM_VID_FS_FULL    40071
 #define IDM_VID_FS_43      40072

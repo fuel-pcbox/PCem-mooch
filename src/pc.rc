@@ -36,6 +36,7 @@ BEGIN
                         MENUITEM SEPARATOR
                         MENUITEM "&DirectDraw", IDM_VID_DDRAW
                         MENUITEM "Direct&3D",   IDM_VID_D3D
+												MENUITEM "OpenGL",   IDM_VID_OGL
                         MENUITEM SEPARATOR
                         MENUITEM "&Fullscreen", IDM_VID_FULLSCREEN
                         POPUP "Fullscreen &stretch mode"

@@ -37,7 +37,7 @@
 #include "win-ddraw-fs.h"
 #include "win-d3d.h"
 #include "win-d3d-fs.h"
-//#include "win-opengl.h"
+#include "win-ogl.h"
 
 #ifndef MAPVK_VK_TO_VSC
 #define MAPVK_VK_TO_VSC 0
@@ -55,15 +55,17 @@ static struct
         void (*init)(HWND h);
         void (*close)();
         void (*resize)(int x, int y);
-} vid_apis[2][2] =
+} vid_apis[2][3] =
 {
         {
                 ddraw_init, ddraw_close, NULL,
-                d3d_init, d3d_close, d3d_resize
+                d3d_init, d3d_close, d3d_resize,
+		ogl_init, ogl_close, ogl_resize,
         },
         {
                 ddraw_fs_init, ddraw_fs_close, NULL,
-                d3d_fs_init, d3d_fs_close, NULL
+                d3d_fs_init, d3d_fs_close, NULL,
+		ogl_init, ogl_close, ogl_resize
         },
 };
 
@@ -1019,7 +1021,7 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
                         saveconfig();
                         break;
                         
-                        case IDM_VID_DDRAW: case IDM_VID_D3D:
+                        case IDM_VID_DDRAW: case IDM_VID_D3D: case IDM_VID_OGL:
                         startblit();
                         CheckMenuItem(hmenu, IDM_VID_DDRAW + vid_api, MF_UNCHECKED);
                         vid_apis[0][vid_api].close();
