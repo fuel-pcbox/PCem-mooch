@@ -523,14 +523,7 @@ static uint32_t ide_atapi_mode_sense(IDE *ide, uint32_t pos, uint8_t type)
 
 uint32_t atapi_get_cd_volume(int channel)
 {
-	int32_t temp_vol = 0;
-	if (channel == 1)
-		temp_vol = (page_flags[GPMODE_CDROM_AUDIO_PAGE] & PAGE_CHANGED) ? mode_pages_in[GPMODE_CDROM_AUDIO_PAGE][7] : 0xFF;
-	else if (channel = 2)
-		temp_vol = (page_flags[GPMODE_CDROM_AUDIO_PAGE] & PAGE_CHANGED) ? mode_pages_in[GPMODE_CDROM_AUDIO_PAGE][9] : 0xFF;
-
-	temp_vol |= (temp_vol << 8);
-	return temp_vol;
+	return ((page_flags[GPMODE_CDROM_AUDIO_PAGE] & PAGE_CHANGED) && (mode_pages_in[GPMODE_CDROM_AUDIO_PAGE][channel ? 8 : 6] != 0)) ? mode_pages_in[GPMODE_CDROM_AUDIO_PAGE][channel ? 9 : 7] : 0xFF;
 }
 
 /*
