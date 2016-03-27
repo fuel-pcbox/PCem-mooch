@@ -12,12 +12,12 @@
   386 PRM is ambiguous on this subject, but BOCHS doesn't set it and Windows 98
   setup crashes if it is.
   The accessed bit is always set for data and stack selectors though.*/
-//#define CS_ACCESSED
+#define CS_ACCESSED
 
 /*Controls whether the accessed bit in a descriptor is set when a data or stack
   selector is loaded. This SHOULD be set, however Windows 98 setup crashes if it
   is.*/
-//#define SEL_ACCESSED
+#define SEL_ACCESSED
 int stimes = 0;
 int dtimes = 0;
 int btimes = 0;
