@@ -20,6 +20,18 @@ static uint8_t xdf_track0[5][3];
 static uint8_t xdf_spt[5];
 static uint8_t xdf_map[5][24][3];
 
+/* First dimension is possible sector sizes (0 = 128, 7 = 16384), second is possible bit rates (250/360, 250, 300, 500/360, 500, 1000). */
+/* Disks formatted at 250 kbps @ 360 RPM can be read with a 360 RPM single-RPM 5.25" drive by setting the rate to 250 kbps.
+   Disks formatted at 300 kbps @ 300 RPM can be read with any 300 RPM single-RPM drive by setting the rate rate to 300 kbps. */
+static uint8_t maximum_sectors[8][6] = { { 26, 31, 38, 53, 64, 118 },	/*   128 */
+                                         { 15, 19, 23, 32, 38,  73 },	/*   256 */
+                                         {  7, 10, 12, 17, 21,  41 },	/*   512 */
+                                         {  3,  5,  6,  9, 11,  22 },	/*  1024 */
+                                         {  2,  2,  3,  4,  5,  11 },	/*  2048 */
+                                         {  1,  1,  1,  2,  2,   5 },	/*  4096 */
+					 {  0,  0,  0,  1,  1,   3 },	/*  8192 */
+					 {  0,  0,  0,  0,  0,   1 } };	/* 16384 */
+
 /* Needed for formatting! */
 int img_realtrack(int drive, int track)
 {
@@ -34,6 +46,30 @@ void img_writeback(int drive, int track);
 static int img_sector_size_code(int drive)
 {
 	switch(img[drive].sector_size)
+	{
+		case 128:
+			return 0;
+		case 256:
+			return 1;
+		default:
+		case 512:
+			return 2;
+		case 1024:
+			return 3;
+		case 2048:
+			return 4;
+		case 4096:
+			return 5;
+		case 8192:
+			return 6;
+		case 16384:
+			return 7;
+	}
+}
+
+static int sector_size_code(int sector_size)
+{
+	switch(sector_size)
 	{
 		case 128:
 			return 0;
@@ -203,28 +239,29 @@ void img_load(int drive, char *fn)
 		bpt = (uint32_t) bpb_sectors * (uint32_t) bpb_bps;
 		/* Now we should be able to calculate the bit rate. */
 		pclog("The image has %i bytes per track\n", bpt);
-		if (bpt <= 6250)
-			bit_rate_300 = 250;		/* Double-density */
-		else if (bpt <= 7500)
-			bit_rate_300 = 300;		/* Double-density, 300 kbps @ 300 rpm */
-		else if (bpt <= 10416)
+
+		if (bpt <= (maximum_sectors[sector_size_code(bpb_bps)][0] * bpb_bps))
+			bit_rate_300 = ((250.0 * 300.0) / 360.0);
+		else if (bpt <= (maximum_sectors[sector_size_code(bpb_bps)][1] * bpb_bps))
+			bit_rate_300 = 250;
+		else if (bpt <= (maximum_sectors[sector_size_code(bpb_bps)][2] * bpb_bps))
+			bit_rate_300 = 300;
+		else if (bpt <= (maximum_sectors[sector_size_code(bpb_bps)][3] * bpb_bps))
 		{
-			bit_rate_300 = (bpb_mid == 0xF0) ? 500 : ((500.0 * 300.0) / 360.0);		/* High-density @ 300 or 360 rpm, depending on media type ID */
-			max_spt = (bpb_mid == 0xF0) ? 22 : 18;
+			bit_rate_300 = (bpb_mid == 0xF0) ? 500 : ((500.0 * 300.0) / 360.0);
+			if (bpb_bps == 512)  max_spt = maximum_sectors[sector_size_code(bpb_bps)][3];
 		}
-		else if (bpt <= 12500)			/* High-density @ 300 rpm */
+		else if (bpt <= (maximum_sectors[sector_size_code(bpb_bps)][4] * bpb_bps))
 		{
 			bit_rate_300 = 500;
-			max_spt = 22;
+			if (bpb_bps == 512)  max_spt = maximum_sectors[sector_size_code(bpb_bps)][4];
 		}
-		else if (bpt <= 25000)			/* Extended density @ 300 rpm */
-		{
+		else if (bpt <= (maximum_sectors[sector_size_code(bpb_bps)][5] * bpb_bps))
 			bit_rate_300 = 1000;
-			max_spt = 45;
-		}
+			if (bpb_bps == 512)  max_spt = maximum_sectors[sector_size_code(bpb_bps)][5];
 		else					/* Image too big, eject */
 		{
-			pclog("Image has more than 25000 bytes per track, ejecting...\n");
+			pclog("Image is bigger than can fit on an ED floppy, ejecting...\n");
 			fclose(img[drive].f);
 			return;
 		}
@@ -330,20 +367,20 @@ void img_seek(int drive, int track)
         
         if (!img[drive].f)
                 return;
-        pclog("Seek drive=%i track=%i sectors=%i sector_size=%i sides=%i\n", drive, track, img[drive].sectors,img[drive].sector_size, img[drive].sides);
+        // pclog("Seek drive=%i track=%i sectors=%i sector_size=%i sides=%i\n", drive, track, img[drive].sectors,img[drive].sector_size, img[drive].sides);
 //        pclog("  %i %i\n", drive_type[drive], img[drive].tracks);
         if ((img[drive].tracks <= 41) && fdd_doublestep_40(drive))
                 track /= 2;
 
-	pclog("Disk seeked to track %i\n", track);
+	// pclog("Disk seeked to track %i\n", track);
         disc_track[drive] = track;
 
         if (img[drive].sides == 2)
         {
                 fseek(img[drive].f, track * img[drive].sectors * img[drive].sector_size * 2, SEEK_SET);
-		pclog("Seek: Current file position (H0) is: %08X\n", ftell(img[drive].f));
+		// pclog("Seek: Current file position (H0) is: %08X\n", ftell(img[drive].f));
                 fread(img[drive].track_data[0], img[drive].sectors * img[drive].sector_size, 1, img[drive].f);
-		pclog("Seek: Current file position (H1) is: %08X\n", ftell(img[drive].f));
+		// pclog("Seek: Current file position (H1) is: %08X\n", ftell(img[drive].f));
                 fread(img[drive].track_data[1], img[drive].sectors * img[drive].sector_size, 1, img[drive].f);
         }
         else
