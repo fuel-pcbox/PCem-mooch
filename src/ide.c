@@ -2,6 +2,7 @@
   IDE emulation*/
 //#define RPCEMU_IDE
 
+#define CDROM_ISO 200
 #define IDE_TIME (5 * 100 * (1 << TIMER_SHIFT))
 
 #define _LARGEFILE_SOURCE
@@ -47,6 +48,7 @@
 #define WIN_WRITE			0x30 /* 28-Bit Write */
 #define WIN_WRITE_NORETRY		0x31 /* 28-Bit Write */
 #define WIN_VERIFY			0x40 /* 28-Bit Verify */
+#define WIN_VERIFY_ONCE		0x41 /* Added by OBattler - deprected older ATA command, according to the specification I found, it is identical to 0x40 */
 #define WIN_FORMAT			0x50
 #define WIN_SEEK			0x70
 #define WIN_DRIVE_DIAGNOSTICS           0x90 /* Execute Drive Diagnostics */
@@ -62,62 +64,61 @@
 #define WIN_IDENTIFY			0xEC /* Ask drive to identify itself */
 
 /* ATAPI Commands */
-#define GPCMD_TEST_UNIT_READY					0x00
-#define GPCMD_REQUEST_SENSE						0x03
-#define GPCMD_READ_6							0x08	/* Added by OBattler. */
-#define GPCMD_INQUIRY							0x12
-#define GPCMD_MODE_SELECT_6						0x15	/* Added by OBattler. */
-#define GPCMD_MODE_SENSE_6						0x1a	/* Added by OBattler. */
-#define GPCMD_START_STOP_UNIT					0x1b
-#define GPCMD_PREVENT_REMOVAL           		0x1e
-#define GPCMD_READ_CDROM_CAPACITY				0x25
-#define GPCMD_READ_10                   		0x28
-#define GPCMD_SEEK								0x2b
-#define GPCMD_READ_SUBCHANNEL					0x42
-#define GPCMD_READ_TOC_PMA_ATIP					0x43
-#define GPCMD_READ_HEADER						0x44
-#define GPCMD_PLAY_AUDIO_10						0x45	/* Added by OBattler. */
-#define GPCMD_GET_CONFIGURATION					0x46	/* Added by OBattler. */
-#define GPCMD_PLAY_AUDIO_MSF	        		0x47
-#define GPCMD_GET_EVENT_STATUS_NOTIFICATION		0x4a	/* Added by OBattler. */
-#define GPCMD_PAUSE_RESUME						0x4b
-#define GPCMD_STOP_PLAY_SCAN            		0x4e
-#define GPCMD_READ_DISC_INFORMATION				0x51	/* Added by OBattler. */
-#define GPCMD_MODE_SELECT_10					0x55
-#define GPCMD_MODE_SENSE_10						0x5a
-#define GPCMD_PLAY_AUDIO_12						0xa5
-#define GPCMD_READ_12                   		0xa8	/* Added by OBattler. */
-#define GPCMD_SEND_DVD_STRUCTURE				0xad
-#define GPCMD_SET_SPEED							0xbb
-#define GPCMD_MECHANISM_STATUS					0xbd	/* Added by OBattler. */
-#define GPCMD_READ_CD							0xbe
+#define GPCMD_TEST_UNIT_READY           0x00
+#define GPCMD_REQUEST_SENSE		0x03
+#define GPCMD_READ_6			0x08
+#define GPCMD_INQUIRY			0x12
+#define GPCMD_MODE_SELECT_6		0x15
+#define GPCMD_MODE_SENSE_6		0x1a
+#define GPCMD_START_STOP_UNIT		0x1b
+#define GPCMD_PREVENT_REMOVAL          	0x1e
+#define GPCMD_READ_CDROM_CAPACITY	0x25
+#define GPCMD_READ_10                   0x28
+#define GPCMD_SEEK			0x2b
+#define GPCMD_READ_SUBCHANNEL		0x42
+#define GPCMD_READ_TOC_PMA_ATIP		0x43
+#define GPCMD_READ_HEADER		0x44
+#define GPCMD_PLAY_AUDIO_10		0x45
+#define GPCMD_GET_CONFIGURATION		0x46
+#define GPCMD_PLAY_AUDIO_MSF	        0x47
+#define GPCMD_GET_EVENT_STATUS_NOTIFICATION	0x4a
+#define GPCMD_PAUSE_RESUME		0x4b
+#define GPCMD_STOP_PLAY_SCAN            0x4e
+#define GPCMD_READ_DISC_INFORMATION	0x51
+#define GPCMD_MODE_SELECT_10		0x55
+#define GPCMD_MODE_SENSE_10		0x5a
+#define GPCMD_PLAY_AUDIO_12		0xa5
+#define GPCMD_READ_12                   0xa8
+#define GPCMD_SEND_DVD_STRUCTURE	0xad
+#define GPCMD_SET_SPEED			0xbb
+#define GPCMD_MECHANISM_STATUS		0xbd
+#define GPCMD_READ_CD			0xbe
 
 /* Mode page codes for mode sense/set */
-#define GPMODE_R_W_ERROR_PAGE					0x01
-#define GPMODE_CDROM_PAGE						0x0d
-#define GPMODE_CDROM_AUDIO_PAGE					0x0e
-#define GPMODE_CAPABILITIES_PAGE				0x2a
-#define GPMODE_ALL_PAGES						0x3f
+#define GPMODE_R_W_ERROR_PAGE		0x01
+#define GPMODE_CDROM_PAGE		0x0d
+#define GPMODE_CDROM_AUDIO_PAGE		0x0e
+#define GPMODE_CAPABILITIES_PAGE	0x2a
+#define GPMODE_ALL_PAGES		0x3f
 
 /* ATAPI Sense Keys */
-#define SENSE_NONE								0
-#define SENSE_NOT_READY							2
-#define SENSE_ILLEGAL_REQUEST					5
-#define SENSE_UNIT_ATTENTION					6
+#define SENSE_NONE			0
+#define SENSE_NOT_READY			2
+#define SENSE_ILLEGAL_REQUEST		5
+#define SENSE_UNIT_ATTENTION		6
 
 /* ATAPI Additional Sense Codes */
-#define ASC_AUDIO_PLAY_OPERATION				0x00	/* Added by OBattler. */
-#define ASC_ILLEGAL_OPCODE						0x20
-#define	ASC_INV_FIELD_IN_CMD_PACKET				0x24	/* Added by OBattler. */
-#define ASC_MEDIUM_MAY_HAVE_CHANGED				0x28	/* Added by OBattler. */
-#define ASC_MEDIUM_NOT_PRESENT					0x3a
-#define ASC_DATA_PHASE_ERROR					0x4b	/* Added by OBattler. */
-#define ASC_ILLEGAL_MODE_FOR_THIS_TRACK			0x64	/* Added by OBattler. */
+#define ASC_AUDIO_PLAY_OPERATION	0x00
+#define ASC_ILLEGAL_OPCODE		0x20
+#define	ASC_INV_FIELD_IN_CMD_PACKET	0x24
+#define ASC_MEDIUM_MAY_HAVE_CHANGED	0x28
+#define ASC_MEDIUM_NOT_PRESENT		0x3a
+#define ASC_DATA_PHASE_ERROR		0x4b
+#define ASC_ILLEGAL_MODE_FOR_THIS_TRACK	0x64
 
-#define ASCQ_AUDIO_PLAY_OPERATION_IN_PROGRESS	0x11	/* Added by OBattler. */
-#define ASCQ_AUDIO_PLAY_OPERATION_PAUSED		0x12	/* Added by OBattler. */
-#define ASCQ_AUDIO_PLAY_OPERATION_COMPLETED		0x13	/* Added by OBattler. */
- 
+#define ASCQ_AUDIO_PLAY_OPERATION_IN_PROGRESS	0x11
+#define ASCQ_AUDIO_PLAY_OPERATION_PAUSED	0x12
+#define ASCQ_AUDIO_PLAY_OPERATION_COMPLETED	0x13
 
 /* Tell RISC OS that we have a 4x CD-ROM drive (600kb/sec data, 706kb/sec raw).
    Not that it means anything */
@@ -153,46 +154,50 @@
 #define ALLOW_UA		1
 
 /* Table of all ATAPI commands and their flags, needed for the new disc change / not ready handler. */
-uint8_t atapi_cmd_table[0x100] = {
-	[ 0x00 ] = CHECK_READY,		/* Test unit ready */
-	[ 0x03 ] = ALLOW_UA,		/* Request sense */
-	[ 0x08 ] = CHECK_READY,		/* Read (6) */
-	[ 0x15 ] = 0,				/* Mode select (6) */
-	[ 0x12 ] = ALLOW_UA,		/* Inquiry */
-	[ 0x1A ] = 0,				/* Mode sense (6) */
-	[ 0x1B ] = 0,				/* Start/stop or Load/unload */
-	[ 0x1E ] = CHECK_READY,		/* Allow medium removal */
-	[ 0x25 ] = CHECK_READY,		/* Read capacity (10) */
-	[ 0x28 ] = CHECK_READY,		/* Read (10) */
-	[ 0x2B ] = CHECK_READY,		/* Seek (10) */
-	[ 0x42 ] = CHECK_READY,		/* Read subchannel */
-	[ 0x43 ] = CHECK_READY | ALLOW_UA,		/* Read TOC - can get through UNIT_ATTENTION, per VIDE-CDD.SYS */
-	[ 0x44 ] = CHECK_READY,		/* Read header */
-	[ 0x45 ] = CHECK_READY,		/* Play audio (10) */
-	[ 0x46 ] = ALLOW_UA,		/* Get configuration */
-	[ 0x47 ] = CHECK_READY,		/* Play audio (MSF) */
-	[ 0x4A ] = ALLOW_UA,		/* Get event status notification */
-	[ 0x4B ] = CHECK_READY,		/* Pause/resume */
-	[ 0x4E ] = CHECK_READY,		/* Stop play/scan */
-	[ 0x51 ] = CHECK_READY,		/* Read disc information */
-	[ 0x55 ] = 0,				/* Mode select (10) */
-	[ 0x5A ] = 0,				/* Mode sense (10) */
-	[ 0xA5 ] = CHECK_READY,		/* Play audio (12) */
-	[ 0xA8 ] = CHECK_READY,		/* Read (12)  */
-	[ 0xAD ] = CHECK_READY,		/* Read DVD structure (NOT IMPLEMENTED YET) */
-	[ 0xBB ] = 0,				/* Set CD speed */
-	[ 0xBD ] = 0,				/* Mechanism status */
-	[ 0xBE ] = CHECK_READY,		/* Read CD */
-	[ 0xBF ] = CHECK_READY, };	/* Send DVD structure (NOT IMPLEMENTED YET) */
+uint8_t atapi_cmd_table[0x100] =
+{
+	[GPCMD_TEST_UNIT_READY]               = CHECK_READY,
+	[GPCMD_REQUEST_SENSE]                 = ALLOW_UA,
+	[GPCMD_READ_6]                        = CHECK_READY,
+	[GPCMD_INQUIRY]                       = ALLOW_UA,
+	[GPCMD_MODE_SELECT_6]                 = 0,
+	[GPCMD_MODE_SENSE_6]                  = 0,
+	[GPCMD_START_STOP_UNIT]               = 0,
+	[GPCMD_PREVENT_REMOVAL]               = CHECK_READY,
+	[GPCMD_READ_CDROM_CAPACITY]           = CHECK_READY,
+	[GPCMD_READ_10]                       = CHECK_READY,
+	[GPCMD_SEEK]                          = CHECK_READY,
+	[GPCMD_READ_SUBCHANNEL]               = CHECK_READY,
+	[GPCMD_READ_TOC_PMA_ATIP]             = CHECK_READY | ALLOW_UA,		/* Read TOC - can get through UNIT_ATTENTION, per VIDE-CDD.SYS */
+	[GPCMD_READ_HEADER]                   = CHECK_READY,
+	[GPCMD_PLAY_AUDIO_10]                 = CHECK_READY,
+	[GPCMD_GET_CONFIGURATION]             = ALLOW_UA,
+	[GPCMD_PLAY_AUDIO_MSF]                = CHECK_READY,
+	[GPCMD_GET_EVENT_STATUS_NOTIFICATION] = ALLOW_UA,
+	[GPCMD_PAUSE_RESUME]                  = CHECK_READY,
+	[GPCMD_STOP_PLAY_SCAN]                = CHECK_READY,
+	[GPCMD_READ_DISC_INFORMATION]         = CHECK_READY,
+	[GPCMD_MODE_SELECT_10]                = 0,
+	[GPCMD_MODE_SENSE_10]                 = 0,
+	[GPCMD_PLAY_AUDIO_12]                 = CHECK_READY,
+	[GPCMD_READ_12]                       = CHECK_READY,
+	[GPCMD_SEND_DVD_STRUCTURE]            = CHECK_READY,		/* Read DVD structure (NOT IMPLEMENTED YET) */
+	[GPCMD_SET_SPEED]                     = 0,
+	[GPCMD_MECHANISM_STATUS]              = 0,
+	[GPCMD_READ_CD]                       = CHECK_READY,
+	[0xBF] = CHECK_READY	/* Send DVD structure (NOT IMPLEMENTED YET) */
+};
 
 #define IMPLEMENTED		1
 
-uint8_t mode_sense_pages[0x40] = {
-	[ 0x01 ] = IMPLEMENTED,
-	[ 0x0D ] = IMPLEMENTED,
-	[ 0x0E ] = IMPLEMENTED,
-	[ 0x2A ] = IMPLEMENTED,
-	[ 0x3F ] = IMPLEMENTED, };
+uint8_t mode_sense_pages[0x40] =
+{
+	[GPMODE_R_W_ERROR_PAGE]    = IMPLEMENTED,
+	[GPMODE_CDROM_PAGE]        = IMPLEMENTED,
+	[GPMODE_CDROM_AUDIO_PAGE]  = IMPLEMENTED,
+	[GPMODE_CAPABILITIES_PAGE] = IMPLEMENTED,
+	[GPMODE_ALL_PAGES]         = IMPLEMENTED
+};
 
 ATAPI *atapi;
 
@@ -205,13 +210,26 @@ int cdrom_channel = 2;
 uint8_t mode_pages_in[256][256];
 #define PAGE_CHANGEABLE		1
 #define PAGE_CHANGED		2
-uint8_t page_flags[256] = {
-	[ GPMODE_R_W_ERROR_PAGE		] = 0,
-	[ GPMODE_CDROM_PAGE			] = 0,
-	[ GPMODE_CDROM_AUDIO_PAGE	] = PAGE_CHANGEABLE,
-	[ GPMODE_CAPABILITIES_PAGE	] = 0, };
+uint8_t page_flags[256] =
+{
+	[GPMODE_R_W_ERROR_PAGE]    = 0,
+	[GPMODE_CDROM_PAGE]        = 0,
+	[GPMODE_CDROM_AUDIO_PAGE]  = PAGE_CHANGEABLE,
+	[GPMODE_CAPABILITIES_PAGE] = 0,
+};
 uint8_t prefix_len;
 uint8_t page_current;
+
+#define ATAPI_STATUS_IDLE            0
+#define ATAPI_STATUS_COMMAND         1
+#define ATAPI_STATUS_COMPLETE        2
+#define ATAPI_STATUS_DATA            3
+#define ATAPI_STATUS_PACKET_REQ      4
+#define ATAPI_STATUS_PACKET_RECEIVED 5
+#define ATAPI_STATUS_READCD          6
+#define ATAPI_STATUS_REQ_SENSE       7
+#define ATAPI_STATUS_ERROR           0x80
+#define ATAPI_STATUS_ERROR_2         0x81
 
 enum
 {
@@ -236,7 +254,6 @@ typedef struct IDE
         int packetstatus;
         int cdpos,cdlen;
         uint8_t asc;
-        // int discchanged;
         int reset;
         FILE *hdfile;
         uint16_t buffer[65536];
@@ -246,10 +263,9 @@ typedef struct IDE
         uint32_t lba_addr;
         int skip512;
         int blocksize, blockcount;
-		int held_reset;
 } IDE;
 
-IDE ide_drives[4];
+IDE ide_drives[6];
 
 IDE *ext_ide;
 
@@ -265,7 +281,7 @@ static void atapicommand(int ide_board);
 
 int idecallback[3] = {0, 0, 0};
 
-int cur_ide[2];
+int cur_ide[3];
 
 uint8_t getstat(IDE *ide) { return ide->atastat; }
 
@@ -278,14 +294,32 @@ static inline void ide_irq_raise(IDE *ide)
 		updateirqs();
 #else
 //                if (ide->board && !ide->irqstat) pclog("IDE_IRQ_RAISE\n");
+#ifdef MAINLINE
                 picint((ide->board)?(1<<15):(1<<14));
-                if (ide_bus_master_set_irq)
-                        ide_bus_master_set_irq(ide->board);
+#else
+				switch(ide->board)
+				{
+					case 0:
+						picint(1 << 14);
+						break;
+					case 1:
+						picint(1 << 15);
+						break;
+					case 2:
+						picint(1 << 10);
+						break;
+				}
+#endif
+				if (ide->board < 2)
+				{
+					if (ide_bus_master_set_irq)
+							ide_bus_master_set_irq(ide->board);
+				}
 #endif
 	}
 	ide->irqstat=1;
         ide->service=1;
-	// if(ide->type==IDE_CDROM)  pclog("raising interrupt %i\n", 14 + ide->board);
+	// pclog("raising interrupt %i\n", 14 + ide->board);
 }
 
 static inline void ide_irq_lower(IDE *ide)
@@ -296,10 +330,32 @@ static inline void ide_irq_lower(IDE *ide)
 		iomd.irqb.status &= ~IOMD_IRQB_IDE;
 		updateirqs();
 #else
+#ifdef MAINLINE
                 picintc((ide->board)?(1<<15):(1<<14));
+#else
+				switch(ide->board)
+				{
+					case 0:
+						picintc(1 << 14);
+						break;
+					case 1:
+						picintc(1 << 15);
+						break;
+					case 2:
+						picintc(1 << 10);
+						break;
+				}
+#endif
 #endif
 //	}
 	ide->irqstat=0;
+}
+
+int get_irq(uint8_t board)
+{
+	if (board == 0)  return 1 << 14;
+	if (board == 1)  return 1 << 15;
+	if (board == 2)  return 1 << 10;
 }
 
 void ide_irq_update(IDE *ide)
@@ -315,10 +371,17 @@ void ide_irq_update(IDE *ide)
 		updateirqs();
         }
 #else
+#ifdef MAINLINE
 	if (ide->irqstat && !((pic2.pend|pic2.ins)&0x40) && !(ide->fdisk & 2))
             picint((ide->board)?(1<<15):(1<<14));
         else if ((pic2.pend|pic2.ins)&0x40)
             picintc((ide->board)?(1<<15):(1<<14));
+#else
+	if (ide->irqstat && !((pic2.pend|pic2.ins)&0x40) && !(ide->fdisk & 2))
+            picint(get_irq(ide->board));
+        else if ((pic2.pend|pic2.ins)&0x40)
+            picintc(get_irq(ide->board));
+#endif
 #endif
 }
 /**
@@ -440,7 +503,7 @@ static void ide_atapi_identify(IDE *ide)
  */
 static uint32_t ide_atapi_mode_sense(IDE *ide, uint32_t pos, uint8_t type)
 {
-		uint8_t *buf = (uint8_t *) ide->buffer;
+	uint8_t *buf = (uint8_t *) ide->buffer;
 //        pclog("ide_atapi_mode_sense %02X\n",type);
         if (type==GPMODE_ALL_PAGES || type==GPMODE_R_W_ERROR_PAGE)
         {
@@ -453,7 +516,7 @@ static uint32_t ide_atapi_mode_sense(IDE *ide, uint32_t pos, uint8_t type)
         	buf[pos++] = 0; /* Reserved */
         	buf[pos++] = 0; /* Reserved */
         	buf[pos++] = 0; /* Reserved */
-		}
+        }
 
         if (type==GPMODE_ALL_PAGES || type==GPMODE_CDROM_PAGE)
         {
@@ -470,9 +533,12 @@ static uint32_t ide_atapi_mode_sense(IDE *ide, uint32_t pos, uint8_t type)
         {
         	/* &0e - CD-ROM Audio Control Parameters */
         	buf[pos++] = GPMODE_CDROM_AUDIO_PAGE;
-        	if (page_flags[GPMODE_CDROM_AUDIO_PAGE] && PAGE_CHANGED)
+		buf[pos++] = 0xE; /* Page length */
+		if (page_flags[GPMODE_CDROM_AUDIO_PAGE] & PAGE_CHANGED)
 		{
-			for (int i = 0; i < 14; i++)
+                        int i;
+                        
+			for (i = 0; i < 14; i++)
 			{
 				buf[pos++] = mode_pages_in[GPMODE_CDROM_AUDIO_PAGE][i];
 			}
@@ -664,7 +730,6 @@ void ide_set_signature(IDE *ide)
 	ide->head=0;
 	ide->cylinder=(IDE_DRIVE_IS_CDROM(ide) ? 0xEB14 : ((ide->type == IDE_HDD) ? 0 : 0xFFFF));
 	if (ide->type == IDE_HDD)  ide->drive = 0;
-	// ide->cylinder=(IDE_DRIVE_IS_CDROM(ide) ? 0xEB14 : 0);
 }
 
 void resetide(void)
@@ -682,7 +747,15 @@ void resetide(void)
                 ide_drives[d].service = 0;
                 ide_drives[d].board = (d & 2) ? 1 : 0;
         }
-	
+		
+		for (d = 4; d < 6; d++)
+		{
+                ide_drives[d].type = IDE_NONE;
+                ide_drives[d].atastat = READY_STAT | DSC_STAT;
+                ide_drives[d].service = 0;
+                ide_drives[d].board = 2;
+		}
+		
 	page_flags[GPMODE_CDROM_AUDIO_PAGE] &= 0xFD;		/* Clear changed flag for CDROM AUDIO mode page. */
 	memset(mode_pages_in[GPMODE_CDROM_AUDIO_PAGE], 0, 256);	/* Clear the page itself. */
 
@@ -695,8 +768,24 @@ void resetide(void)
 	else
            ide_drives[1].type = IDE_CDROM;
 #else
-		/* Make CD-ROM IDE channel customizable and avoid loading a hard disk on it if CD-ROM is enabled. */
-		for (d = 0; d < 4; d++)
+	for (d = 0; d < 4; d++)
+	{
+		ide_drives[d].packetstatus = 0xFF;
+
+		if ((cdrom_channel == d) && cdrom_enabled)
+		{
+			ide_drives[d].type = IDE_CDROM;
+		}
+		else
+		{
+			loadhd(&ide_drives[d], d, ide_fn[d]);
+		}
+			
+		ide_set_signature(&ide_drives[d]);
+	}
+		
+		/* REMOVE WHEN SUBMITTING TO MAINLINE - START */
+		for (d = 4; d < 6; d++)
 		{
 			ide_drives[d].packetstatus = 0xFF;
 
@@ -706,25 +795,32 @@ void resetide(void)
 			}
 			else
 			{
-				loadhd(&ide_drives[d], d, ide_fn[d]);
+				ide_drives[d].type = IDE_NONE;
 			}
 			
 			ide_set_signature(&ide_drives[d]);
 		}
+		/* REMOVE WHEN SUBMITTING TO MAINLINE - END */
 #endif
 
         cur_ide[0] = 0;
         cur_ide[1] = 2;
+
+        cur_ide[2] = 4;
         
 //        ide_drives[1].type = IDE_CDROM;
+
+		page_flags[GPMODE_CDROM_AUDIO_PAGE] &= ~PAGE_CHANGED;
 }
 
 int idetimes=0;
 void writeidew(int ide_board, uint16_t val)
 {
         IDE *ide = &ide_drives[cur_ide[ide_board]];
-		if (ide->packetstatus && (ide->packetstatus != 4))  return;				/* VERY IMPORTANT: Some software issue excess writes after the 12 bytes required by the command, this will have all of them ignored! */
-		// pclog("16-bit write to %04X = %04X, ps = %i\n", 0x1F0 ^ (ide_board ? 0x80 : 0), val, ide->packetstatus);
+        
+        /*Some software issue excess writes after the 12 bytes required by the command, this will have all of them ignored*/
+	if (ide->packetstatus && (ide->packetstatus != ATAPI_STATUS_PACKET_REQ))
+                return;
 #ifndef RPCEMU_IDE
 /*        if (ide_board && (cr0&1) && !(eflags&VM_FLAG))
         {
@@ -739,16 +835,16 @@ void writeidew(int ide_board, uint16_t val)
         ide->buffer[ide->pos >> 1] = val;
         ide->pos+=2;
 
-        if (ide->packetstatus==4)
+        if (ide->packetstatus == ATAPI_STATUS_PACKET_REQ)
         {
 		if ((ide->pos>=prefix_len+4) && (page_flags[page_current] & PAGE_CHANGEABLE))
 		{
-				mode_pages_in[page_current][ide->pos - prefix_len - 4] = ((uint8_t *) ide->buffer)[ide->pos - 2];
-				mode_pages_in[page_current][ide->pos - prefix_len - 3] = ((uint8_t *) ide->buffer)[ide->pos - 1];
+			mode_pages_in[page_current][ide->pos - prefix_len - 4] = ((uint8_t *) ide->buffer)[ide->pos - 2];
+			mode_pages_in[page_current][ide->pos - prefix_len - 3] = ((uint8_t *) ide->buffer)[ide->pos - 1];
 		}
                 if (ide->pos>=(ide->packlen+2))
                 {
-                        ide->packetstatus=5;
+                        ide->packetstatus = ATAPI_STATUS_PACKET_RECEIVED;
                         timer_process();
                         idecallback[ide_board]=6*IDE_TIME;
                         timer_update_outstanding();
@@ -757,12 +853,13 @@ void writeidew(int ide_board, uint16_t val)
                 }
                 return;
         }
-        else if (ide->packetstatus==5) return;
+        else if (ide->packetstatus == ATAPI_STATUS_PACKET_RECEIVED)
+                return;
         else if (ide->command == WIN_PACKETCMD && ide->pos>=0xC)
         {
                 ide->pos=0;
                 ide->atastat = BUSY_STAT;
-                ide->packetstatus=1;
+                ide->packetstatus = ATAPI_STATUS_COMMAND;
 /*                idecallback[ide_board]=6*IDE_TIME;*/
 		timer_process();
                 callbackide(ide_board);
@@ -808,17 +905,19 @@ void writeide(int ide_board, uint16_t addr, uint8_t val)
         }*/
 #endif
 //        if ((cr0&1) && !(eflags&VM_FLAG))
-		// if (ide->type == IDE_CDROM)  pclog("WriteIDE %04X %02X from %04X(%08X):%08X %i\n", addr, val, CS, cs, pc, ins);
-		// pclog("8-bit write to %04X = %02X\n", addr, val);
+//         pclog("WriteIDE %04X %02X from %04X(%08X):%08X %i\n", addr, val, CS, cs, pc, ins);
 //        return;
         addr|=0x80;
+		/* ONLY FOR EXPERIMENTAL */
+		addr|=0x10;			/* 1F0 | 10 = 1F0, 1E8 | 10 = 1F8 */
+		addr&=0xFFF7;		/* 1F0 & FFF7 = 1F0, 1F8 | FFF7 = 1F0 */
 //        if (ide_board) pclog("Write IDEb %04X %02X %04X(%08X):%04X %i  %02X %02X\n",addr,val,CS,cs,pc,ins,ide->atastat,ide_drives[0].atastat);
         /*if (idedebug) */
 //        pclog("Write IDE %08X %02X %04X:%08X\n",addr,val,CS,pc);
 //        int c;
 //      rpclog("Write IDE %08X %02X %08X %08X\n",addr,val,PC,armregs[12]);
 
-        if (ide->type == IDE_NONE && addr != 0x1f6 && addr != 0x3f6) return;
+        if (ide->type == IDE_NONE && (addr == 0x1f0 || addr == 0x1f7)) return;
         
         switch (addr)
         {
@@ -863,7 +962,8 @@ void writeide(int ide_board, uint16_t addr, uint8_t val)
         {
                 dumpregs();
                 exit(-1);
-        }*/			
+        }*/
+        
                 if (cur_ide[ide_board] != ((val>>4)&1)+(ide_board<<1))
                 {
                         cur_ide[ide_board]=((val>>4)&1)+(ide_board<<1);
@@ -941,10 +1041,10 @@ void writeide(int ide_board, uint16_t addr, uint8_t val)
                 case WIN_READ:
                 case WIN_READ_NORETRY:
                 case WIN_READ_DMA:
-                        /* if (ide.secount>1)
+/*                        if (ide.secount>1)
                         {
-							fatal("Read %i sectors from sector %i cylinder %i head %i\n",ide.secount,ide.sector,ide.cylinder,ide.head);
-                        } */
+                                fatal("Read %i sectors from sector %i cylinder %i head %i\n",ide.secount,ide.sector,ide.cylinder,ide.head);
+                        }*/
 #if 0
                         if (ide->lba) pclog("Read %i sectors from LBA addr %07X\n",ide->secount,ide->lba_addr);
                         else          pclog("Read %i sectors from sector %i cylinder %i head %i  %i\n",ide->secount,ide->sector,ide->cylinder,ide->head,ins);
@@ -990,6 +1090,7 @@ void writeide(int ide_board, uint16_t addr, uint8_t val)
                         return;
 
                 case WIN_VERIFY:
+				case WIN_VERIFY_ONCE:
 #if 0
                         if (ide->lba) pclog("Read verify %i sectors from LBA addr %07X\n",ide->secount,ide->lba_addr);
                         else          pclog("Read verify %i sectors from sector %i cylinder %i head %i\n",ide->secount,ide->sector,ide->cylinder,ide->head);
@@ -1010,7 +1111,6 @@ void writeide(int ide_board, uint16_t addr, uint8_t val)
                 case WIN_SPECIFY: /* Initialize Drive Parameters */
                         ide->atastat = BUSY_STAT;
                         timer_process();
-                        // idecallback[ide_board]=200*IDE_TIME;
                         idecallback[ide_board]=30*IDE_TIME;
                         timer_update_outstanding();
 //                        pclog("SPECIFY\n");
@@ -1040,7 +1140,7 @@ void writeide(int ide_board, uint16_t addr, uint8_t val)
                         return;
 
                 case WIN_PACKETCMD: /* ATAPI Packet */
-                        ide->packetstatus=0;
+                        ide->packetstatus = ATAPI_STATUS_IDLE;
                         ide->atastat = BUSY_STAT;
                         timer_process();
                         idecallback[ide_board]=1;//30*IDE_TIME;
@@ -1060,17 +1160,7 @@ void writeide(int ide_board, uint16_t addr, uint8_t val)
                 return;
 
         case 0x3F6: /* Device control */
-                // if ((ide->fdisk&4) && !(val&4) && (ide->type != IDE_NONE || ide_other->type != IDE_NONE))
-#if 0
-                if (!(ide->fdisk&4) && (val&4))
-				{
-                    idecallback[ide_board]=30*IDE_TIME;
-                    timer_update_outstanding();					
-                    ide->held_reset = ide_other->held_reset = 1;
-                    ide->atastat = ide_other->atastat = BUSY_STAT;
-				}
-#endif                
-				if ((ide->fdisk&4) && !(val&4))
+                if ((ide->fdisk&4) && !(val&4) && (ide->type != IDE_NONE || ide_other->type != IDE_NONE))
                 {
 			timer_process();
                         idecallback[ide_board]=500*IDE_TIME;
@@ -1079,7 +1169,7 @@ void writeide(int ide_board, uint16_t addr, uint8_t val)
                         ide->atastat = ide_other->atastat = BUSY_STAT;
 //                        pclog("IDE Reset %i\n", ide_board);
                 }
-                ide->fdisk=val;
+                ide->fdisk = ide_other->fdisk = val;
                 ide_irq_update(ide);
                 return;
         }
@@ -1092,9 +1182,10 @@ uint8_t readide(int ide_board, uint16_t addr)
         uint8_t temp;
         uint16_t tempw;
 
-		uint16_t temp_addr = addr;		/* For logging purposes! */
-		
         addr|=0x80;
+		/* ONLY FOR EXPERIMENTAL */
+		addr|=0x10;			/* 1F0 | 10 = 1F0, 1E8 | 10 = 1F8 */
+		addr&=0xFFF7;		/* 1F0 & FFF7 = 1F0, 1F8 | FFF7 = 1F0 */
 #ifndef RPCEMU_IDE
 /*        if (ide_board && (cr0&1) && !(eflags&VM_FLAG))
         {
@@ -1106,7 +1197,7 @@ uint8_t readide(int ide_board, uint16_t addr)
 //         pclog("ReadIDE %04X  from %04X(%08X):%08X\n", addr, CS, cs, pc);
 //        return 0xFF;
 
-        if (ide->type == IDE_NONE && addr != 0x1f6) return 0;
+        if (ide->type == IDE_NONE && (addr == 0x1f0 || addr == 0x1f7)) return 0;
 //        /*if (addr!=0x1F7 && addr!=0x3F6) */pclog("Read IDEb %04X %02X %02X %i %04X:%04X %i  %04X\n",addr,ide->atastat,(ide->atastat & ~DSC_STAT) | (ide->service ? SERVICE_STAT : 0),cur_ide[ide_board],CS,pc,ide_board, BX);
 //rpclog("Read IDE %08X %08X %02X\n",addr,PC,iomd.irqb.mask);
         switch (addr)
@@ -1153,8 +1244,6 @@ uint8_t readide(int ide_board, uint16_t addr)
                         break;
                 }
                 ide_irq_lower(ide);
-				/* if (ide->fdisk & 4)
-                   temp = 0x80; */
                 if (ide->type == IDE_CDROM)
                 {
 //                        pclog("Read CDROM status %02X\n",(ide->atastat & ~DSC_STAT) | (ide->service ? SERVICE_STAT : 0));
@@ -1191,9 +1280,6 @@ uint8_t readide(int ide_board, uint16_t addr)
                 break;
         }
 //        if (ide_board) pclog("Read IDEb %04X %02X   %02X %02X %i %04X:%04X %i\n", addr, temp, ide->atastat,(ide->atastat & ~DSC_STAT) | (ide->service ? SERVICE_STAT : 0),cur_ide[ide_board],CS,pc,ide_board);
-
-		// pclog("8-bit read from %04X = %02X\n", temp_addr, temp);
-
         return temp;
 //        fatal("Bad IDE read %04X\n", addr);
 }
@@ -1219,13 +1305,11 @@ uint16_t readidew(int ide_board)
 		temp=(temp>>8)|(temp<<8);
 	#endif
         ide->pos+=2;
-		if ((ide->command == WIN_PACKETCMD) && ((ide->packetstatus==7) || (ide->packetstatus==8)))
-		{
-				// pclog("REQUEST SENSE: Returning %04X at position %02X\n", temp, ide->pos - 2);
-				// pclog("16-bit read from %04X = %04X\n", 0x1F0 ^ (ide_board ? 0x80 : 0), temp);
-				callnonreadcd(ide);
-				return temp;
-		}
+	if ((ide->command == WIN_PACKETCMD) && ((ide->packetstatus == ATAPI_STATUS_REQ_SENSE) || (ide->packetstatus==8)))
+	{
+		callnonreadcd(ide);
+		return temp;
+	}
         if ((ide->pos>=512 && ide->command != WIN_PACKETCMD) || (ide->command == WIN_PACKETCMD && ide->pos>=ide->packlen))
         {
 //                pclog("Over! packlen %i %i\n",ide->packlen,ide->pos);
@@ -1238,7 +1322,7 @@ uint16_t readidew(int ide_board)
                 else
                 {
                         ide->atastat = READY_STAT | DSC_STAT;
-                        ide->packetstatus=0;
+                        ide->packetstatus = ATAPI_STATUS_IDLE;
                         if (ide->command == WIN_READ || ide->command == WIN_READ_NORETRY || ide->command == WIN_READ_MULTIPLE)
                         {
                                 ide->secount = (ide->secount - 1) & 0xff;
@@ -1261,7 +1345,6 @@ uint16_t readidew(int ide_board)
                 }
         }
 //        pclog("Read IDEw %04X\n",temp);
-		// pclog("16-bit read from %04X = %04X\n", 0x1F0 ^ (ide_board ? 0x80 : 0), temp);
         return temp;
 }
 
@@ -1285,18 +1368,9 @@ void callbackide(int ide_board)
         if (ide->command==0x30) times30++;
 //        if (times30==2240) output=1;
         //if (times30==2471 && ide->command==0xA0) output=1;
-///*if (ide_board) */if (IDE_DRIVE_IS_CDROM(ide))  pclog("CALLBACK %02X %i %i  %i\n",ide->command,times30,ide->reset,cur_ide[ide_board]);
+///*if (ide_board) */pclog("CALLBACK %02X %i %i  %i\n",ide->command,times30,ide->reset,cur_ide[ide_board]);
 //        if (times30==1294)
 //                output=1;
-#if 0
-		if (ide->held_reset)
-		{
-                ide->atastat = ide_other->atastat = READY_STAT | DSC_STAT;
-				ide->held_reset = 0;
-				ide_other->held_reset = 0;
-				return;
-		}
-#endif
         if (ide->reset)
         {
                 ide->atastat = ide_other->atastat = READY_STAT | DSC_STAT;
@@ -1347,7 +1421,7 @@ void callbackide(int ide_board)
         case WIN_RESTORE:
         case WIN_SEEK:
                 if (IDE_DRIVE_IS_CDROM(ide)) {
-                        // pclog("WIN_RESTORE callback on CD-ROM\n");
+                        pclog("WIN_RESTORE callback on CD-ROM\n");
                         goto abort_cmd;
                 }
 //                pclog("WIN_RESTORE callback\n");
@@ -1358,7 +1432,7 @@ void callbackide(int ide_board)
         case WIN_READ:
         case WIN_READ_NORETRY:
                 if (IDE_DRIVE_IS_CDROM(ide)) {
-						ide_set_signature(ide);		/* odd, but ATA4 8.27.5.2 requires it */
+			ide_set_signature(ide);
                         goto abort_cmd;
                 }
                 addr = ide_get_sector(ide) * 512;
@@ -1526,8 +1600,9 @@ void callbackide(int ide_board)
 #endif
                 return;
 
-        case WIN_VERIFY:
-                if (IDE_DRIVE_IS_CDROM(ide)) {
+		case WIN_VERIFY:
+		case WIN_VERIFY_ONCE:
+				if (IDE_DRIVE_IS_CDROM(ide)) {
                         goto abort_cmd;
                 }
                 ide->pos=0;
@@ -1559,23 +1634,23 @@ void callbackide(int ide_board)
                 return;
 
         case WIN_DRIVE_DIAGNOSTICS:
-				ide_set_signature(ide);
+		ide_set_signature(ide);
                 ide->error=1; /*No error detected*/
-				if (IDE_DRIVE_IS_CDROM(ide))
-				{
-					ide->atastat = 0;
-				}
-				else
-				{
-					ide->atastat = READY_STAT | DSC_STAT;
-					ide_irq_raise(ide);
-				}
+		if (IDE_DRIVE_IS_CDROM(ide))
+		{
+			ide->atastat = 0;
+		}
+		else
+		{
+			ide->atastat = READY_STAT | DSC_STAT;
+			ide_irq_raise(ide);
+		}
                 return;
 
         case WIN_SPECIFY: /* Initialize Drive Parameters */
                 if (IDE_DRIVE_IS_CDROM(ide)) {
 #ifndef RPCEMU_IDE
-                        // pclog("IS CDROM - ABORT\n");
+                        pclog("IS CDROM - ABORT\n");
 #endif
                         goto abort_cmd;
                 }
@@ -1604,14 +1679,14 @@ void callbackide(int ide_board)
         case WIN_SET_MULTIPLE_MODE:
                 if (IDE_DRIVE_IS_CDROM(ide)) {
 #ifndef RPCEMU_IDE
-                        // pclog("IS CDROM - ABORT\n");
+                        pclog("IS CDROM - ABORT\n");
 #endif
                         goto abort_cmd;
                 }
                 ide->blocksize = ide->secount;
                 ide->atastat = READY_STAT | DSC_STAT;
 #ifndef RPCEMU_IDE
-                // pclog("Set multiple mode - %i\n", ide->blocksize);
+                pclog("Set multiple mode - %i\n", ide->blocksize);
 #endif
                 ide_irq_raise(ide);
                 return;
@@ -1621,17 +1696,17 @@ void callbackide(int ide_board)
                 goto abort_cmd;
 
         case WIN_IDENTIFY: /* Identify Device */
-				if (ide->type == IDE_NONE)
-				{
-					goto abort_cmd;
-				}
+		if (ide->type == IDE_NONE)
+		{
+			goto abort_cmd;
+		}
                 if (IDE_DRIVE_IS_CDROM(ide))
-				{
-					ide_set_signature(ide);
-					goto abort_cmd;
-				}
-				else
-				{
+		{
+			ide_set_signature(ide);
+			goto abort_cmd;
+		}
+		else
+		{
                         ide_identify(ide);
                         ide->pos=0;
                         ide->atastat = DRQ_STAT | READY_STAT | DSC_STAT;
@@ -1643,24 +1718,24 @@ void callbackide(int ide_board)
         case WIN_PACKETCMD: /* ATAPI Packet */
                 if (!IDE_DRIVE_IS_CDROM(ide)) goto abort_cmd;
 //                pclog("Packet callback! %i %08X\n",ide->packetstatus,ide);
-                if (!ide->packetstatus)
+
+                if (ide->packetstatus == ATAPI_STATUS_IDLE)
                 {
-						readcdmode=0;
+			readcdmode=0;
                         ide->pos=0;
                         ide->secount = (uint8_t)((ide->secount&0xF8)|1);
-                        // ide->atastat = DRQ_STAT |(ide->atastat&ERR_STAT);
                         ide->atastat = READY_STAT | DRQ_STAT |(ide->atastat&ERR_STAT);
                         //ide_irq_raise(ide);
 //                        pclog("1 Preparing to recieve packet max DRQ count %04X\n",ide->cylinder);
                 }
-                else if (ide->packetstatus==1)
+                else if (ide->packetstatus == ATAPI_STATUS_COMMAND)
                 {
                         ide->atastat = BUSY_STAT|(ide->atastat&ERR_STAT);
 //                        pclog("Running ATAPI command 2\n");
                         atapicommand(ide_board);
 //                        exit(-1);
                 }
-                else if (ide->packetstatus==2)
+                else if (ide->packetstatus == ATAPI_STATUS_COMPLETE)
                 {
 //                        pclog("packetstatus==2\n");
                         ide->atastat = READY_STAT;
@@ -1668,49 +1743,48 @@ void callbackide(int ide_board)
                         ide_irq_raise(ide);
 //                        if (iomd.irqb.mask&2) output=1;
                 }
-                else if (ide->packetstatus==3)
+                else if (ide->packetstatus == ATAPI_STATUS_DATA)
                 {
-                        // ide->atastat = DRQ_STAT|(ide->atastat&ERR_STAT);
                         ide->atastat = READY_STAT|DRQ_STAT|(ide->atastat&ERR_STAT);
 //                        rpclog("Recieve data packet 3! %02X\n",ide->atastat);
                         ide_irq_raise(ide);
                         ide->packetstatus=0xFF;
                 }
-                else if (ide->packetstatus==4)
+                else if (ide->packetstatus == ATAPI_STATUS_PACKET_REQ)
                 {
-                        ide->atastat = 0x58 | (ide->atastat&ERR_STAT);
+                        ide->atastat = 0x58 | (ide->atastat & ERR_STAT);
 //                        pclog("Send data packet 4!\n");
                         ide_irq_raise(ide);
 //                        ide.packetstatus=5;
                         ide->pos=2;
                 }
-                else if (ide->packetstatus==5)
+                else if (ide->packetstatus == ATAPI_STATUS_PACKET_RECEIVED)
                 {
 //                        pclog("Packetstatus 5 !\n");
                         atapicommand(ide_board);
                 }
-                else if (ide->packetstatus==6) /*READ CD callback*/
+                else if (ide->packetstatus == ATAPI_STATUS_READCD) /*READ CD callback*/
                 {
                         ide->atastat = DRQ_STAT|(ide->atastat&ERR_STAT);
 //                        pclog("Recieve data packet 6!\n");
                         ide_irq_raise(ide);
 //                        ide.packetstatus=0xFF;
                 }
-				else if (ide->packetstatus==7)	/*REQUEST SENSE callback #1*/
-				{
-						// pclog("REQUEST SENSE callback #1: setting status to 0x5A\n");
-						ide->atastat = 0x58 | (ide->atastat & ERR_STAT);
-						ide_irq_raise(ide);
-				}
-                else if (ide->packetstatus==0x80) /*Error callback*/
+		else if (ide->packetstatus == ATAPI_STATUS_REQ_SENSE)	/*REQUEST SENSE callback #1*/
+		{
+			pclog("REQUEST SENSE callback #1: setting status to 0x5A\n");
+			ide->atastat = 0x58 | (ide->atastat & ERR_STAT);
+			ide_irq_raise(ide);
+		}
+                else if (ide->packetstatus == ATAPI_STATUS_ERROR) /*Error callback*/
                 {
 //                        pclog("Packet error\n");
                         ide->atastat = READY_STAT | ERR_STAT;
                         ide_irq_raise(ide);
                 }
-                else if (ide->packetstatus==0x81) /*Error callback with atastat already set - needed for the disc change stuff.*/
+                else if (ide->packetstatus == ATAPI_STATUS_ERROR_2) /*Error callback with atastat already set - needed for the disc change stuff.*/
                 {
-                        // pclog("Packet check status\n");
+                        //pclog("Packet check status\n");
                         ide->atastat = ERR_STAT;
                         ide_irq_raise(ide);
                 }
@@ -1743,30 +1817,23 @@ void ide_callback_ter()
 	callbackide(2);
 }
 
-/*ATAPI CD-ROM emulation
-  This mostly seems to work. It is implemented only on Windows at the moment as
-  I haven't had time to implement any interfaces for it in the generic gui.
-  It mostly depends on driver files - cdrom-iso.c for ISO image files (in theory
-  on any platform) and cdrom-ioctl.c for Win32 IOCTL access. There's an ATAPI
-  interface defined in ide.h.
-  There are a couple of bugs in the CD audio handling.
-  */
+/*ATAPI CD-ROM emulation*/
 
 struct
 {
         int sensekey,asc,ascq;
 } atapi_sense;
 
-/* Needed for the GET EVENT STATUS MODIFICATION handling. */
 static uint32_t atapi_event_status(IDE *ide, uint8_t *buffer)
 {
-	uint8_t event_code, media_status;
-	media_status = 0;
+	uint8_t event_code, media_status = 0;
+
 	if (buffer[5])
 	{
 		media_status = MS_TRAY_OPEN;
 		atapi->stop();
-	} else
+	}
+        else
 	{
 		media_status = MS_MEDIA_PRESENT;
 	}
@@ -1794,18 +1861,13 @@ static uint32_t atapi_event_status(IDE *ide, uint8_t *buffer)
 	return 8;
 }
 
-/* New disc change handling by OBattler - better than the old one because it works with all software I've tested it with,
-   while the old code had problems with VIDE-CDD.SYS (a DOS CD-ROM driver that's faster than OAKCDROM.SYS), NT 3.x, etc.). */
-uint8_t changed_status = 0;
+static int changed_status = 0;
 
 void atapi_cmd_error(IDE *ide, uint8_t sensekey, uint8_t asc)
 {
 	ide->error = (sensekey << 4);
 	ide->atastat = READY_STAT | ERR_STAT;
 	ide->secount = (ide->secount & ~7) | 3;
-	// atapi_sense.sensekey = sensekey;
-	// atapi_sense.asc = asc;
-	// ide->discchanged=0;
 	ide->packetstatus = 0x80;
 	idecallback[ide->board]=50*IDE_TIME;
 }
@@ -1844,33 +1906,32 @@ void atapi_command_send_init(IDE *ide, uint8_t command, int req_length, int allo
 	// no bytes transferred yet
 	ide->pos = 0;
 
-	/* Chicago Build 99 issues Inquiry with cylinder set to 0 - it probably means "Just use whatever amount of bytes per read as you wish". */
 	if ((ide->cylinder > req_length) || (ide->cylinder == 0))
 		ide->cylinder = req_length;
 	if (ide->cylinder > alloc_length)
 		ide->cylinder = alloc_length;
 
-	// pclog("atapi_command_send_init(ide, %02X, %04X, %04X)\n", command, req_length, alloc_length);
-	// pclog("IDE settings: Pos=%08X, Secount=%08X, Cylinder=%08X\n", ide->pos, ide->secount, ide->cylinder);
+	//pclog("atapi_command_send_init(ide, %02X, %04X, %04X)\n", command, req_length, alloc_length);
+	//pclog("IDE settings: Pos=%08X, Secount=%08X, Cylinder=%08X\n", ide->pos, ide->secount, ide->cylinder);
 }
 
 static void atapi_command_ready(int ide_board, int packlen)
 {
 	IDE *ide = &ide_drives[cur_ide[ide_board]];
-	ide->packetstatus=7;
+	ide->packetstatus = ATAPI_STATUS_REQ_SENSE;
 	idecallback[ide_board]=60*IDE_TIME;
 	ide->packlen=packlen;
 }
 
 static void atapi_sense_clear(int command, int ignore_ua)
 {
-		if ((atapi_sense.sensekey == SENSE_UNIT_ATTENTION) || ignore_ua)
-		{
-			atapi_prev=command;
-			atapi_sense.sensekey=0;
-			atapi_sense.asc=0;
-			atapi_sense.ascq=0;
-		}
+	if ((atapi_sense.sensekey == SENSE_UNIT_ATTENTION) || ignore_ua)
+	{
+		atapi_prev=command;
+		atapi_sense.sensekey=0;
+		atapi_sense.asc=0;
+		atapi_sense.ascq=0;
+	}
 }
 
 int cd_status = CD_STATUS_EMPTY;
@@ -1880,209 +1941,189 @@ static void atapicommand(int ide_board)
 {
         IDE *ide = &ide_drives[cur_ide[ide_board]];
         uint8_t *idebufferb = (uint8_t *) ide->buffer;
-		uint8_t rcdmode = 0;
+	uint8_t rcdmode = 0;
         int c;
         int len;
         int msf;
         int pos=0;
         unsigned char temp;
         uint32_t size;
-		int is_error;
-		uint8_t page_code;
-		int max_len;
-		unsigned idx = 0;
-		unsigned size_idx;
-		unsigned preamble_len;
-		int toc_format;
-		int temp_command;
-		int alloc_length;
-		int completed;
-		int audio_temp;
+	int is_error;
+	uint8_t page_code;
+	int max_len;
+	unsigned idx = 0;
+	unsigned size_idx;
+	unsigned preamble_len;
+	int toc_format;
+	int temp_command;
+	int alloc_length;
+	int completed;
+
 #ifndef RPCEMU_IDE
-        // pclog("New ATAPI command %02X %i\n",idebufferb[0],ins);
-		// pclog("ata%i-%i: ATAPI command %02x started, sense key is %02x, asc %02x, ascq %02x\n",ide_board,cur_ide[ide_board]&1,idebufferb[0],atapi_sense.sensekey,atapi_sense.asc,atapi_sense.ascq);
+        pclog("New ATAPI command %02X %i\n",idebufferb[0],ins);
 #endif
 //        readflash=1;
-                msf=idebufferb[1]&2;
-                ide->cdlen=0;
+        msf=idebufferb[1]&2;
+        ide->cdlen=0;
 
-		/*
-			Make sure errored state is clear, just in case.
-		*/
-		is_error = 0;
-		/*
-			If medium has changed without an ATAPI unmount, trigger the medium may have changed sense.
-		*/
-		// if ((atapi_sense.sensekey != SENSE_NOT_READY) && atapi->medium_changed())
-		if (atapi->medium_changed())
-		{
-			atapi_insert_cdrom();
-		}
-		/*
-			If UNIT_ATTENTION is set, error out with NOT_READY.
-			VIDE-CDD.SYS will then issue a READ_TOC, which can pass through UNIT_ATTENTION and will clear sense.
-			NT 3.1 / AZTIDECD.SYS will then issue a REQUEST_SENSE, which can also pass through UNIT_ATTENTION but will clear sense AFTER sending it back.
-			In any case, if the command cannot pass through, set our state to errored.
-		*/
-		if (!(atapi_cmd_table[idebufferb[0]] & ALLOW_UA) && atapi_sense.sensekey == SENSE_UNIT_ATTENTION)
-		{
-			// atapi_cmd_error(ide, SENSE_NOT_READY, ASC_MEDIUM_NOT_PRESENT);
-			atapi_cmd_error(ide, atapi_sense.sensekey, atapi_sense.asc);
-			is_error = 1;
-		}
-		/*
-			Unless the command issued was a REQUEST_SENSE or TEST_UNIT_READY, clear sense.
-			This is important because both VIDE-CDD.SYS and NT 3.1 / AZTIDECD.SYS rely on this behaving VERY specifically.
-			VIDE-CDD.SYS will clear sense through READ_TOC, while NT 3.1 / AZTIDECD.SYS will issue a REQUEST_SENSE.
-		*/
-        if ((idebufferb[0]!=GPCMD_REQUEST_SENSE) && (idebufferb[0]!=GPCMD_TEST_UNIT_READY))
-		{
-				/* GPCMD_TEST_UNIT_READY is NOT supposed to clear sense! */
-                atapi_sense_clear(idebufferb[0], 1);
-		}
+	is_error = 0;
 
-		/*
-			If our state has been set to errored, clear it, and return.
-		*/
-		if (is_error)
-		{
-			is_error = 0;
-			return;
-		}
-		
-		if ((atapi_cmd_table[idebufferb[0]] & CHECK_READY) && !atapi->ready())
-		{
-			atapi_cmd_error(ide, SENSE_NOT_READY, ASC_MEDIUM_NOT_PRESENT);
-			atapi_sense.sensekey = SENSE_NOT_READY;
-			atapi_sense.asc = ASC_MEDIUM_NOT_PRESENT;
-			atapi_sense.ascq = 0;
-			return;
-		}
-		
-		prev_status = cd_status;
-		cd_status = atapi->status();
-		if (((prev_status == CD_STATUS_PLAYING) || (prev_status == CD_STATUS_PAUSED)) && ((cd_status != CD_STATUS_PLAYING) && (cd_status != CD_STATUS_PAUSED)))
-		{
-			completed = 1;
-		}
-		else
-		{
-			completed = 0;
-		}
-
-		// pclog("ata%i-%i: ATAPI command %02x continuing\n",ide_board,cur_ide[ide_board]&1,idebufferb[0]);
-
-        switch (idebufferb[0])
-        {
-        case GPCMD_TEST_UNIT_READY:
-		ide->packetstatus=2;
-		idecallback[ide_board]=50*IDE_TIME;
-                break;
-
-        case GPCMD_REQUEST_SENSE: /* Used by ROS 4+ */
-	alloc_length = idebufferb[4];
-	temp_command = idebufferb[0];
-	atapi_command_send_init(ide, temp_command, 18, alloc_length);
-	
-	/*Will return 18 bytes of 0*/
-        memset(idebufferb,0,512);
-	
-	idebufferb[0]=0x80|0x70;
-
-	if ((atapi_sense.sensekey > 0) || (cd_status < CD_STATUS_PLAYING))
+	if (atapi->medium_changed())
 	{
-		if (completed)
-		{
-			idebufferb[2]=SENSE_ILLEGAL_REQUEST;
-			idebufferb[12]=ASC_AUDIO_PLAY_OPERATION;
-			idebufferb[13]=ASCQ_AUDIO_PLAY_OPERATION_COMPLETED;
-		}
-		else
-		{
-			idebufferb[2]=atapi_sense.sensekey;
-			idebufferb[12]=atapi_sense.asc;
-			idebufferb[13]=atapi_sense.ascq;
-		}
+		atapi_insert_cdrom();
+	}
+	/*If UNIT_ATTENTION is set, error out with NOT_READY.
+	  VIDE-CDD.SYS will then issue a READ_TOC, which can pass through UNIT_ATTENTION and will clear sense.
+	  NT 3.1 / AZTIDECD.SYS will then issue a REQUEST_SENSE, which can also pass through UNIT_ATTENTION but will clear sense AFTER sending it back.
+	  In any case, if the command cannot pass through, set our state to errored.*/
+	if (!(atapi_cmd_table[idebufferb[0]] & ALLOW_UA) && atapi_sense.sensekey == SENSE_UNIT_ATTENTION)
+	{
+		atapi_cmd_error(ide, atapi_sense.sensekey, atapi_sense.asc);
+		is_error = 1;
+	}
+	/*Unless the command issued was a REQUEST_SENSE or TEST_UNIT_READY, clear sense.
+          This is important because both VIDE-CDD.SYS and NT 3.1 / AZTIDECD.SYS rely on this behaving VERY specifically.
+          VIDE-CDD.SYS will clear sense through READ_TOC, while NT 3.1 / AZTIDECD.SYS will issue a REQUEST_SENSE.*/
+        if ((idebufferb[0]!=GPCMD_REQUEST_SENSE) && (idebufferb[0]!=GPCMD_TEST_UNIT_READY))
+	{
+		/* GPCMD_TEST_UNIT_READY is NOT supposed to clear sense! */
+		atapi_sense_clear(idebufferb[0], 1);
+	}
+
+	/*If our state has been set to errored, clear it, and return.*/
+	if (is_error)
+	{
+		is_error = 0;
+		return;
+	}
+		
+	if ((atapi_cmd_table[idebufferb[0]] & CHECK_READY) && !atapi->ready())
+	{
+		atapi_cmd_error(ide, SENSE_NOT_READY, ASC_MEDIUM_NOT_PRESENT);
+		atapi_sense.sensekey = SENSE_NOT_READY;
+		atapi_sense.asc = ASC_MEDIUM_NOT_PRESENT;
+		atapi_sense.ascq = 0;
+		return;
+	}
+
+	prev_status = cd_status;
+	cd_status = atapi->status();
+	if (((prev_status == CD_STATUS_PLAYING) || (prev_status == CD_STATUS_PAUSED)) && ((cd_status != CD_STATUS_PLAYING) && (cd_status != CD_STATUS_PAUSED)))
+	{
+		completed = 1;
 	}
 	else
 	{
-		idebufferb[2]=SENSE_ILLEGAL_REQUEST;
-		idebufferb[12]=ASC_AUDIO_PLAY_OPERATION;
-		idebufferb[13]=(cd_status == CD_STATUS_PLAYING) ? ASCQ_AUDIO_PLAY_OPERATION_IN_PROGRESS : ASCQ_AUDIO_PLAY_OPERATION_PAUSED;
+		completed = 0;
 	}
 
-	idebufferb[7]=10;
+        switch (idebufferb[0])
+        {
+                case GPCMD_TEST_UNIT_READY:
+		ide->packetstatus = ATAPI_STATUS_COMPLETE;
+		idecallback[ide_board]=50*IDE_TIME;
+                break;
 
-	// pclog("REQUEST SENSE start\n");
-	atapi_command_ready(ide_board, 18);
+                case GPCMD_REQUEST_SENSE: /* Used by ROS 4+ */
+		alloc_length = idebufferb[4];
+		temp_command = idebufferb[0];
+		atapi_command_send_init(ide, temp_command, 18, alloc_length);
+				
+                /*Will return 18 bytes of 0*/
+                memset(idebufferb,0,512);
 
-	/* Clear the sense stuff as per the spec. */
-	atapi_sense_clear(temp_command, 0);
-	break;
+		idebufferb[0]=0x80|0x70;
 
-        case GPCMD_SET_SPEED:
-                ide->packetstatus=2;
+		if ((atapi_sense.sensekey > 0) || (cd_status < CD_STATUS_PLAYING))
+		{
+			if (completed)
+			{
+				idebufferb[2]=SENSE_ILLEGAL_REQUEST;
+				idebufferb[12]=ASC_AUDIO_PLAY_OPERATION;
+				idebufferb[13]=ASCQ_AUDIO_PLAY_OPERATION_COMPLETED;
+			}
+			else
+			{
+				idebufferb[2]=atapi_sense.sensekey;
+				idebufferb[12]=atapi_sense.asc;
+				idebufferb[13]=atapi_sense.ascq;
+			}
+		}
+		else
+		{
+			idebufferb[2]=SENSE_ILLEGAL_REQUEST;
+			idebufferb[12]=ASC_AUDIO_PLAY_OPERATION;
+			idebufferb[13]=(cd_status == CD_STATUS_PLAYING) ? ASCQ_AUDIO_PLAY_OPERATION_IN_PROGRESS : ASCQ_AUDIO_PLAY_OPERATION_PAUSED;
+		}
+
+		idebufferb[7]=10;
+
+		// pclog("REQUEST SENSE start\n");
+		atapi_command_ready(ide_board, 18);
+
+		/* Clear the sense stuff as per the spec. */
+		atapi_sense_clear(temp_command, 0);
+                break;
+
+                case GPCMD_SET_SPEED:
+                ide->packetstatus = ATAPI_STATUS_COMPLETE;
                 idecallback[ide_board]=50*IDE_TIME;
                 break;
 
 		case GPCMD_MECHANISM_STATUS: /*0xbd*/
-				len=(idebufferb[7]<<16)|(idebufferb[8]<<8)|idebufferb[9];
-				
-				if (len == 0)
-					fatal("Zero allocation length to MECHANISM STATUS not impl.\n");
-			
-				atapi_command_send_init(ide, idebufferb[0], 8, alloc_length);
-			
-				idebufferb[0] = 0;
-				idebufferb[1] = 0;
-				idebufferb[2] = 0;
-				idebufferb[3] = 0;
-				idebufferb[4] = 0;
-				idebufferb[5] = 1;
-				idebufferb[6] = 0;
-				idebufferb[7] = 0;
-				// len = 8;
-			
-				atapi_command_ready(ide_board, 8);
-				break;			
+		len=(idebufferb[7]<<16)|(idebufferb[8]<<8)|idebufferb[9];
+
+		if (len == 0)
+			fatal("Zero allocation length to MECHANISM STATUS not impl.\n");
+
+		atapi_command_send_init(ide, idebufferb[0], 8, alloc_length);
 		
-        case GPCMD_READ_TOC_PMA_ATIP:
+		idebufferb[0] = 0;
+		idebufferb[1] = 0;
+		idebufferb[2] = 0;
+		idebufferb[3] = 0;
+		idebufferb[4] = 0;
+		idebufferb[5] = 1;
+		idebufferb[6] = 0;
+		idebufferb[7] = 0;
+		// len = 8;
+			
+		atapi_command_ready(ide_board, 8);
+		break;	
+		
+                case GPCMD_READ_TOC_PMA_ATIP:
 //                pclog("Read TOC ready? %08X\n",ide);
                 toctimes++;
 //                if (toctimes==2) output=3;
 //                pclog("Read TOC %02X\n",idebufferb[9]);
-				toc_format = idebufferb[2] & 0xf;
-				if (toc_format == 0)
-					toc_format = (idebufferb[9]>>6) & 3;
+		toc_format = idebufferb[2] & 0xf;
+		if (toc_format == 0)
+			toc_format = (idebufferb[9]>>6) & 3;
                 switch (toc_format)
                 {
                         case 0: /*Normal*/
-						// pclog("ATAPI: READ TOC type requested: Normal\n");
+			// pclog("ATAPI: READ TOC type requested: Normal\n");
                         len=idebufferb[8]+(idebufferb[7]<<8);
                         len=atapi->readtoc(idebufferb,idebufferb[6],msf,len,0);
                         break;
                         case 1: /*Multi session*/
-						// pclog("ATAPI: READ TOC type requested: Multi-session\n");
+			// pclog("ATAPI: READ TOC type requested: Multi-session\n");
                         len=idebufferb[8]+(idebufferb[7]<<8);
                         len=atapi->readtoc_session(idebufferb,msf,len);
                         idebufferb[0]=0; idebufferb[1]=0xA;
                         break;
-						case 2: /*Raw*/
-						// pclog("ATAPI: READ TOC type requested: Raw TOC\n");
-						len=idebufferb[8]+(idebufferb[7]<<8);
-						len=atapi->readtoc_raw(idebufferb,len);
-						break;
+			case 2: /*Raw*/
+			// pclog("ATAPI: READ TOC type requested: Raw TOC\n");
+			len=idebufferb[8]+(idebufferb[7]<<8);
+			len=atapi->readtoc_raw(idebufferb,len);
+			break;
                         default:
-						// pclog("ATAPI: Unknown READ TOC type requested: %i\n", (idebufferb[9]>>6));
+			// pclog("ATAPI: Unknown READ TOC type requested: %i\n", (idebufferb[9]>>6));
                         ide->atastat = READY_STAT | ERR_STAT;    /*CHECK CONDITION*/
                         ide->error = (SENSE_ILLEGAL_REQUEST << 4) | ABRT_ERR;
-                        if (atapi_sense.sensekey == SENSE_UNIT_ATTENTION) {
+                        if (atapi_sense.sensekey == SENSE_UNIT_ATTENTION)
                                 ide->error |= MCR_ERR;
-                        }
-						/* This is changed a bit to satisfy NT 3.x. */
-                        // ide->discchanged=1;
-                        // atapi_sense.asc = ASC_ILLEGAL_OPCODE;
-                        ide->packetstatus=0x80;
+                        ide->packetstatus = ATAPI_STATUS_ERROR;
                         idecallback[ide_board]=50*IDE_TIME;
                         return;
 /*                        pclog("Bad read TOC format\n");
@@ -2093,7 +2134,7 @@ static void atapicommand(int ide_board)
                         exit(-1);*/
                 }
 //                pclog("ATAPI buffer len %i\n",len);
-                ide->packetstatus=3;
+                ide->packetstatus = ATAPI_STATUS_DATA;
                 ide->cylinder=len;
                 ide->secount=2;
                 ide->pos=0;
@@ -2103,17 +2144,15 @@ static void atapicommand(int ide_board)
                 
         case GPCMD_READ_CD:
 //                pclog("Read CD : start LBA %02X%02X%02X%02X Length %02X%02X%02X Flags %02X\n",idebufferb[2],idebufferb[3],idebufferb[4],idebufferb[5],idebufferb[6],idebufferb[7],idebufferb[8],idebufferb[9]);
-				rcdmode = idebufferb[9] & 0xF8;
+		rcdmode = idebufferb[9] & 0xF8;
                 if ((rcdmode != 0x10) && (rcdmode != 0xF8))
                 {
                         ide->atastat = READY_STAT | ERR_STAT;    /*CHECK CONDITION*/
                         ide->error = (SENSE_ILLEGAL_REQUEST << 4) | ABRT_ERR;
-                        if (atapi_sense.sensekey == SENSE_UNIT_ATTENTION) {
+                        if (atapi_sense.sensekey == SENSE_UNIT_ATTENTION)
                                 ide->error |= MCR_ERR;
-                        }
-                        // ide->discchanged=0;
                         atapi_sense.asc = ASC_ILLEGAL_OPCODE;
-                        ide->packetstatus=0x80;
+                        ide->packetstatus = ATAPI_STATUS_ERROR;
                         idecallback[ide_board]=50*IDE_TIME;
                         break;
 //                        pclog("Bad flags bits %02X\n",idebufferb[9]);
@@ -2127,18 +2166,20 @@ static void atapicommand(int ide_board)
                 ide->cdlen=(idebufferb[6]<<16)|(idebufferb[7]<<8)|idebufferb[8];
                 ide->cdpos=(idebufferb[2]<<24)|(idebufferb[3]<<16)|(idebufferb[4]<<8)|idebufferb[5];
 //                pclog("Read at %08X %08X\n",ide.cdpos,ide.cdpos*2048);
-				if (rcdmode == 0x10)
-		                atapi->readsector(idebufferb,ide->cdpos);
-				else
-		                atapi->readsector_raw(idebufferb,ide->cdpos);
+		if (rcdmode == 0x10)
+                        atapi->readsector(idebufferb,ide->cdpos);
+		else
+	                atapi->readsector_raw(idebufferb,ide->cdpos);
 #ifndef RPCEMU_IDE
                 readflash=1;
 #endif
-				readcdmode = (rcdmode == 0xF8);
+		readcdmode = (rcdmode == 0xF8);
                 ide->cdpos++;
                 ide->cdlen--;
-                if (ide->cdlen>=0) ide->packetstatus=6;
-                else               ide->packetstatus=3;
+                if (ide->cdlen >= 0)
+                        ide->packetstatus = ATAPI_STATUS_READCD;
+                else
+                        ide->packetstatus = ATAPI_STATUS_DATA;
                 ide->cylinder=(idebufferb[9] == 0x10) ? 2048 : 2352;
                 ide->secount=2;
                 ide->pos=0;
@@ -2151,27 +2192,27 @@ static void atapicommand(int ide_board)
 		case GPCMD_READ_12:
 //                pclog("Read 10 : start LBA %02X%02X%02X%02X Length %02X%02X%02X Flags %02X\n",idebufferb[2],idebufferb[3],idebufferb[4],idebufferb[5],idebufferb[6],idebufferb[7],idebufferb[8],idebufferb[9]);
 
-				readcdmode = 0;
+		readcdmode = 0;
 
-				if (idebufferb[0] == GPCMD_READ_6)
-				{
-					ide->cdlen=idebufferb[4];
-					ide->cdpos=((((uint32_t) idebufferb[1]) & 0x1f)<<16)|(((uint32_t) idebufferb[2])<<8)|((uint32_t) idebufferb[3]);
-				}
-				else if (idebufferb[0] == GPCMD_READ_10)
-				{
-					ide->cdlen=(idebufferb[7]<<8)|idebufferb[8];
-					ide->cdpos=(idebufferb[2]<<24)|(idebufferb[3]<<16)|(idebufferb[4]<<8)|idebufferb[5];
-				}
-				else
-				{
-					ide->cdlen=(((uint32_t) idebufferb[6])<<24)|(((uint32_t) idebufferb[7])<<16)|(((uint32_t) idebufferb[8])<<8)|((uint32_t) idebufferb[9]);
-					ide->cdpos=(((uint32_t) idebufferb[2])<<24)|(((uint32_t) idebufferb[3])<<16)|(((uint32_t) idebufferb[4])<<8)|((uint32_t) idebufferb[5]);
-				}
+		if (idebufferb[0] == GPCMD_READ_6)
+		{
+			ide->cdlen=idebufferb[4];
+			ide->cdpos=((((uint32_t) idebufferb[1]) & 0x1f)<<16)|(((uint32_t) idebufferb[2])<<8)|((uint32_t) idebufferb[3]);
+		}
+		else if (idebufferb[0] == GPCMD_READ_10)
+		{
+			ide->cdlen=(idebufferb[7]<<8)|idebufferb[8];
+			ide->cdpos=(idebufferb[2]<<24)|(idebufferb[3]<<16)|(idebufferb[4]<<8)|idebufferb[5];
+		}
+		else
+		{
+			ide->cdlen=(((uint32_t) idebufferb[6])<<24)|(((uint32_t) idebufferb[7])<<16)|(((uint32_t) idebufferb[8])<<8)|((uint32_t) idebufferb[9]);
+			ide->cdpos=(((uint32_t) idebufferb[2])<<24)|(((uint32_t) idebufferb[3])<<16)|(((uint32_t) idebufferb[4])<<8)|((uint32_t) idebufferb[5]);
+		}
                 if (!ide->cdlen)
                 {
 //                        pclog("All done - callback set\n");
-                        ide->packetstatus=2;
+                        ide->packetstatus = ATAPI_STATUS_COMPLETE;
                         idecallback[ide_board]=20*IDE_TIME;
                         break;
                 }
@@ -2182,8 +2223,10 @@ static void atapicommand(int ide_board)
 #endif
                 ide->cdpos++;
                 ide->cdlen--;
-                if (ide->cdlen>=0) ide->packetstatus=6;
-                else               ide->packetstatus=3;
+                if (ide->cdlen >= 0)
+                        ide->packetstatus = ATAPI_STATUS_READCD;
+                else
+                        ide->packetstatus = ATAPI_STATUS_DATA;
                 ide->cylinder=2048;
                 ide->secount=2;
                 ide->pos=0;
@@ -2196,12 +2239,12 @@ static void atapicommand(int ide_board)
                 {
                         ide->atastat = READY_STAT | ERR_STAT;    /*CHECK CONDITION*/
                         ide->error = (SENSE_ILLEGAL_REQUEST << 4) | ABRT_ERR;
-                        if (atapi_sense.sensekey == SENSE_UNIT_ATTENTION) {
+                        if (atapi_sense.sensekey == SENSE_UNIT_ATTENTION)
+                        {
                                 ide->error |= MCR_ERR;
                         }
-                        // ide->discchanged=0;
                         atapi_sense.asc = ASC_ILLEGAL_OPCODE;
-                        ide->packetstatus=0x80;
+                        ide->packetstatus = ATAPI_STATUS_ERROR;
                         idecallback[ide_board]=50*IDE_TIME;
                         break;
 //                        pclog("Read Header MSF!\n");
@@ -2211,7 +2254,7 @@ static void atapicommand(int ide_board)
                 idebufferb[0]=1; /*2048 bytes user data*/
                 idebufferb[1]=idebufferb[2]=idebufferb[3]=0;
                 
-                ide->packetstatus=3;
+                ide->packetstatus = ATAPI_STATUS_DATA;
                 ide->cylinder=8;
                 ide->secount=2;
                 ide->pos=0;
@@ -2221,72 +2264,58 @@ static void atapicommand(int ide_board)
                 
 		case GPCMD_MODE_SENSE_6:
 		case GPCMD_MODE_SENSE_10:
-				temp_command = idebufferb[0];
+		temp_command = idebufferb[0];
 		
-				if (temp_command == GPCMD_MODE_SENSE_6)
-						len=idebufferb[4];
-				else
+		if (temp_command == GPCMD_MODE_SENSE_6)
+			len=idebufferb[4];
+		else
                         len=(idebufferb[8]|(idebufferb[7]<<8));
 
                 temp=idebufferb[2] & 0x3F;
-		
-			memset(idebufferb, 0, len);
-			alloc_length = len;
 
-				for (c=0;c<len;c++) idebufferb[c]=0;
-				if (!(mode_sense_pages[temp] & IMPLEMENTED))
-				{
+		memset(idebufferb, 0, len);
+		alloc_length = len;
+		// for (c=0;c<len;c++) idebufferb[c]=0;
+		if (!(mode_sense_pages[temp] & IMPLEMENTED))
+		{
                         // ide->atastat = READY_STAT | ERR_STAT;    /*CHECK CONDITION*/
                         ide->error = (SENSE_ILLEGAL_REQUEST << 4) | ABRT_ERR;
                         idecallback[ide_board]=50*IDE_TIME;
-						atapi_cmd_error(ide, atapi_sense.sensekey, atapi_sense.asc);
-						ide->atastat = 0x53;
-                        ide->packetstatus=0x80;
-						atapi_sense.sensekey = SENSE_ILLEGAL_REQUEST;
+			atapi_cmd_error(ide, atapi_sense.sensekey, atapi_sense.asc);
+			ide->atastat = 0x53;
+                        ide->packetstatus = ATAPI_STATUS_ERROR;
+			atapi_sense.sensekey = SENSE_ILLEGAL_REQUEST;
                         atapi_sense.asc = ASC_INV_FIELD_IN_CMD_PACKET;
-						atapi_sense.ascq = 0;
+			atapi_sense.ascq = 0;
                         return;
-				}
-				
-				if (temp_command == GPCMD_MODE_SENSE_6)
-				{
-						len = ide_atapi_mode_sense(ide,4,temp);
-						idebufferb[0] = len - 1;
-						// idebufferb[1]=3; /*120mm data CD-ROM*/
-						idebufferb[1]=0x70;
-				}
-				else
-				{
-						len = ide_atapi_mode_sense(ide,8,temp);
-						idebufferb[0]=(len - 2)>>8;
-						idebufferb[1]=(len - 2)&255;
-						// idebufferb[2]=3; /*120mm data CD-ROM*/
-						idebufferb[2]=0x70;
-				}				
+		}
+			
+		if (temp_command == GPCMD_MODE_SENSE_6)
+		{
+			len = ide_atapi_mode_sense(ide,4,temp);
+			idebufferb[0] = len - 1;
+			idebufferb[1]=3; /*120mm data CD-ROM*/
+		}
+        	else
+		{
+			len = ide_atapi_mode_sense(ide,8,temp);
+			idebufferb[0]=(len - 2)>>8;
+			idebufferb[1]=(len - 2)&255;
+			idebufferb[2]=3; /*120mm data CD-ROM*/
+		}				
 
-				atapi_command_send_init(ide, temp_command, len, alloc_length);
+		atapi_command_send_init(ide, temp_command, len, alloc_length);
 
-				atapi_command_ready(ide_board, len);
+		atapi_command_ready(ide_board, len);
+		return;
 
-#if 0
-				
-				// pclog("Mode sense issued: returning length %i\n", len);
-				ide->cylinder=ide->packlen=len;
-				ide->packetstatus=3;
-				ide->secount=2;
-				ide->pos=0;
-                idecallback[ide_board]=1000*IDE_TIME;
-#endif		
-				return;
-
-        case GPCMD_MODE_SELECT_6:
-        case GPCMD_MODE_SELECT_10:
-//              if (!atapi->ready()) { atapi_notready(); return; }
-                if (ide->packetstatus==5)
+		case GPCMD_MODE_SELECT_6:
+                case GPCMD_MODE_SELECT_10:
+                if (ide->packetstatus == ATAPI_STATUS_PACKET_RECEIVED)
                 {
                         ide->atastat = READY_STAT;
+                        ide->secount=3;
 //                        pclog("Recieve data packet!\n");
-			ide->secount=3;
                         ide_irq_raise(ide);
                         ide->packetstatus=0xFF;
                         ide->pos=0;
@@ -2295,19 +2324,20 @@ static void atapicommand(int ide_board)
                 }
                 else
                 {
-						if (idebufferb[0] == GPCMD_MODE_SELECT_6)
-						{
-							len=idebufferb[4];
-							prefix_len = 6;
-						}
-						else
-						{
-							len=(idebufferb[7]<<8)|idebufferb[8];
-							prefix_len = 10;
-						}
+			if (idebufferb[0] == GPCMD_MODE_SELECT_6)
+			{
+				len=idebufferb[4];
+				prefix_len = 6;
+			}
+			else
+			{
+				len=(idebufferb[7]<<8)|idebufferb[8];
+				prefix_len = 10;
+			}
 			page_current = idebufferb[2];
-			if (page_flags[page_current] & PAGE_CHANGEABLE)  page_flags[GPMODE_CDROM_AUDIO_PAGE] |= PAGE_CHANGED;
-                        ide->packetstatus=4;
+			if (page_flags[page_current] & PAGE_CHANGEABLE)
+                                page_flags[GPMODE_CDROM_AUDIO_PAGE] |= PAGE_CHANGED;
+                        ide->packetstatus = ATAPI_STATUS_PACKET_REQ;
                         ide->cylinder=len;
                         ide->secount=0;
                         ide->pos=0;
@@ -2322,154 +2352,187 @@ static void atapicommand(int ide_board)
                 return;
 
 		case GPCMD_GET_CONFIGURATION: /*0x46*/
-				if (idebufferb[2] != 0 || idebufferb[3] != 0)
-				{
-					ide->atastat = READY_STAT | ERR_STAT;
-					ide->error = (SENSE_ILLEGAL_REQUEST << 4) | ABRT_ERR;
-					if (atapi_sense.sensekey == SENSE_UNIT_ATTENTION) {
-						ide->error |= MCR_ERR;
-					}
-					// ide->discchanged=0;
-					atapi_sense.asc = ASC_INV_FIELD_IN_CMD_PACKET;
-					ide->packetstatus=0x80;
-					idecallback[ide_board]=50*IDE_TIME;
-					break;
-				}
-				/* The number of sectors from the media tells us which profile
-				   to use as current.  0 means there is no media. */
-				pos = (idebufferb[2]<<24)|(idebufferb[3]<<16)|(idebufferb[4]<<8)|idebufferb[5];
-				len = (idebufferb[7]<<8)|idebufferb[8];
-				idebufferb[10] = 0x02 | 0x01;
-				len = 8 + 4;
-				ide->packetstatus=3;
-				ide->cylinder=len;
-				ide->secount=2;
-				ide->pos=0;
-				idecallback[ide_board]=60*IDE_TIME;
-				ide->packlen=len;
-				break;
+		if (idebufferb[2] != 0 || idebufferb[3] != 0)
+		{
+			ide->atastat = READY_STAT | ERR_STAT;
+			ide->error = (SENSE_ILLEGAL_REQUEST << 4) | ABRT_ERR;
+			if (atapi_sense.sensekey == SENSE_UNIT_ATTENTION)
+				ide->error |= MCR_ERR;
+			atapi_sense.asc = ASC_INV_FIELD_IN_CMD_PACKET;
+			ide->packetstatus = ATAPI_STATUS_ERROR;
+			idecallback[ide_board]=50*IDE_TIME;
+			break;
+		}
+		/* The number of sectors from the media tells us which profile
+		   to use as current.  0 means there is no media. */
+		pos = (idebufferb[2]<<24)|(idebufferb[3]<<16)|(idebufferb[4]<<8)|idebufferb[5];
+		len = (idebufferb[7]<<8)|idebufferb[8];
+		idebufferb[10] = 0x02 | 0x01;
+		len = 8 + 4;
+		ide->packetstatus = ATAPI_STATUS_DATA;
+		ide->cylinder=len;
+		ide->secount=2;
+		ide->pos=0;
+		idecallback[ide_board]=60*IDE_TIME;
+		ide->packlen=len;
+		break;
 			
-		case GPCMD_GET_EVENT_STATUS_NOTIFICATION: /*0x4a*/
-				if (idebufferb[1] != 0)
-				{
-					ide->atastat = READY_STAT | ERR_STAT;
-					ide->error = (SENSE_ILLEGAL_REQUEST << 4) | ABRT_ERR;
-					if (atapi_sense.sensekey == SENSE_UNIT_ATTENTION)
-					{
-						ide->error |= MCR_ERR;
-					}
-					// ide->discchanged=0;
-					atapi_sense.asc=ASC_INV_FIELD_IN_CMD_PACKET;
-					ide->packetstatus=0x80;
-					idecallback[ide_board]=50*IDE_TIME;
-					break;
-				}
-			
-				uint8_t events, class;
-			
-				events = 1 << GESN_MEDIA;
-				class = 0;
-			
-				if (idebufferb[4] & (1 << GESN_MEDIA))
-				{
-					class |= GESN_MEDIA;
-					len = atapi_event_status(ide, idebufferb);
-				}
-				else
-				{
-					class = 0x80;
-					len = idebufferb[4];
-				}
-				len=(idebufferb[7]<<8)|idebufferb[8]; 
-			
-				ide->cylinder=len;
-				ide->packetstatus=3;
-				ide->secount=2;
-				ide->pos=0;
-				idecallback[ide_board]=50*IDE_TIME;
-				ide->packlen=len;
-				break;
-					
-		case GPCMD_READ_DISC_INFORMATION:
-				idebufferb[1] = 32;
-				idebufferb[2] = 0xe; /* last session complete, disc finalized */
-				idebufferb[3] = 1; /* first track on disc */
-				idebufferb[4] = 1; /* # of sessions */
-				idebufferb[5] = 1; /* first track of last session */
-				idebufferb[6] = 1; /* last track of last session */
-				idebufferb[7] = 0x20; /* unrestricted use */
-				idebufferb[8] = 0x00; /* CD-ROM */
-			
-				len=34;
-				ide->packetstatus=3;
-				ide->cylinder=len;
-				ide->secount=2;
-				ide->pos=0;
-				idecallback[ide_board]=60*IDE_TIME;
-				ide->packlen=len;			
-				break;
+                case GPCMD_GET_EVENT_STATUS_NOTIFICATION: /*0x4a*/
+                temp_command = idebufferb[0];
+                alloc_length = len;
+                
+                {
+                        struct
+                        {
+                                uint8_t opcode;
+                                uint8_t polled;
+                                uint8_t reserved2[2];
+                                uint8_t class;
+                                uint8_t reserved3[2];
+                                uint16_t len;
+                                uint8_t control;
+                        } *gesn_cdb;
+            
+                        struct
+                        {
+                                uint16_t len;
+                                uint8_t notification_class;
+                                uint8_t supported_events;
+                        } *gesn_event_header;
+                        unsigned int used_len;
+            
+                        gesn_cdb = (void *)idebufferb;
+                        gesn_event_header = (void *)idebufferb;
+            
+                        /* It is fine by the MMC spec to not support async mode operations */
+                        if (!(gesn_cdb->polled & 0x01))
+                        {   /* asynchronous mode */
+                                /* Only pollign is supported, asynchronous mode is not. */
+                                ide->error = (SENSE_ILLEGAL_REQUEST << 4) | ABRT_ERR;
+                                idecallback[ide_board]=50*IDE_TIME;
+                                atapi_cmd_error(ide, atapi_sense.sensekey, atapi_sense.asc);
+                                ide->atastat = 0x53;
+                                ide->packetstatus=0x80;
+                                atapi_sense.sensekey = SENSE_ILLEGAL_REQUEST;
+                                atapi_sense.asc = ASC_INV_FIELD_IN_CMD_PACKET;
+                                atapi_sense.ascq = 0;
+                                return;
+                        }
+            
+                        /* polling mode operation */
+            
+                        /*
+                         * These are the supported events.
+                         *
+                         * We currently only support requests of the 'media' type.
+                         * Notification class requests and supported event classes are bitmasks,
+                         * but they are built from the same values as the "notification class"
+                         * field.
+                         */
+                        gesn_event_header->supported_events = 1 << GESN_MEDIA;
+            
+                        /*
+                         * We use |= below to set the class field; other bits in this byte
+                         * are reserved now but this is useful to do if we have to use the
+                         * reserved fields later.
+                         */
+                        gesn_event_header->notification_class = 0;
+            
+                        /*
+                         * Responses to requests are to be based on request priority.  The
+                         * notification_class_request_type enum above specifies the
+                         * priority: upper elements are higher prio than lower ones.
+                         */
+                        if (gesn_cdb->class & (1 << GESN_MEDIA))
+                        {
+                                gesn_event_header->notification_class |= GESN_MEDIA;
+                                used_len = atapi_event_status(ide, idebufferb);
+                        }
+                        else
+                        {
+                                gesn_event_header->notification_class = 0x80; /* No event available */
+                                used_len = sizeof(*gesn_event_header);
+                        }
+                        gesn_event_header->len = used_len - sizeof(*gesn_event_header);
+                }
 
-        case GPCMD_PLAY_AUDIO_10:
-        case GPCMD_PLAY_AUDIO_12:
-	case GPCMD_PLAY_AUDIO_MSF:
+                atapi_command_send_init(ide, temp_command, len, alloc_length);
+
+                atapi_command_ready(ide_board, len);
+                break;
+                
+		case GPCMD_READ_DISC_INFORMATION:
+		idebufferb[1] = 32;
+		idebufferb[2] = 0xe; /* last session complete, disc finalized */
+		idebufferb[3] = 1; /* first track on disc */
+		idebufferb[4] = 1; /* # of sessions */
+		idebufferb[5] = 1; /* first track of last session */
+		idebufferb[6] = 1; /* last track of last session */
+		idebufferb[7] = 0x20; /* unrestricted use */
+		idebufferb[8] = 0x00; /* CD-ROM */
+			
+		len=34;
+		ide->packetstatus = ATAPI_STATUS_DATA;
+		ide->cylinder=len;
+		ide->secount=2;
+		ide->pos=0;
+		idecallback[ide_board]=60*IDE_TIME;
+		ide->packlen=len;			
+		break;
+
+                case GPCMD_PLAY_AUDIO_10:
+                case GPCMD_PLAY_AUDIO_12:
+                case GPCMD_PLAY_AUDIO_MSF:
 		/*This is apparently deprecated in the ATAPI spec, and apparently
                   has been since 1995 (!). Hence I'm having to guess most of it*/
-				if (idebufferb[0] == GPCMD_PLAY_AUDIO_10)
-				{
-					pos=(idebufferb[2]<<24)|(idebufferb[3]<<16)|(idebufferb[4]<<8)|idebufferb[5];
-					len=(idebufferb[7]<<8)|idebufferb[8];
-				}
-				else if (idebufferb[0] == GPCMD_PLAY_AUDIO_MSF)
-				{
-					pos=(idebufferb[3]<<16)|(idebufferb[4]<<8)|idebufferb[5];
-					len=(idebufferb[6]<<16)|(idebufferb[7]<<8)|idebufferb[8];
-				}
-				else
-				{
-					pos=(idebufferb[3]<<16)|(idebufferb[4]<<8)|idebufferb[5];
-					len=(idebufferb[7]<<16)|(idebufferb[8]<<8)|idebufferb[9];
-				}
+		if (idebufferb[0] == GPCMD_PLAY_AUDIO_10)
+		{
+			pos=(idebufferb[2]<<24)|(idebufferb[3]<<16)|(idebufferb[4]<<8)|idebufferb[5];
+			len=(idebufferb[7]<<8)|idebufferb[8];
+		}
+		else if (idebufferb[0] == GPCMD_PLAY_AUDIO_MSF)
+		{
+			pos=(idebufferb[3]<<16)|(idebufferb[4]<<8)|idebufferb[5];
+			len=(idebufferb[6]<<16)|(idebufferb[7]<<8)|idebufferb[8];
+		}
+		else
+		{
+			pos=(idebufferb[3]<<16)|(idebufferb[4]<<8)|idebufferb[5];
+			len=(idebufferb[7]<<16)|(idebufferb[8]<<8)|idebufferb[9];
+		}
 
-				if (idebufferb[0] != GPCMD_PLAY_AUDIO_MSF)
-				{
-					// special cases: lba of 0 means MSF of 00:02:00
-					if (pos == 0)  pos = 150;
-					audio_temp = (atapi->is_track_audio(pos, 0) << 1);
-				}
-				else
-					audio_temp = (atapi->is_track_audio(pos, 1) << 1) | 1;
 
-				if ((cdrom_drive < 1) || (cdrom_drive == 200) || (cd_status <= CD_STATUS_DATA_ONLY) || !(audio_temp & 2))
+		if ((cdrom_drive < 1) || (cdrom_drive == CDROM_ISO) || (cd_status <= CD_STATUS_DATA_ONLY) ||
+                    !atapi->is_track_audio(pos, (idebufferb[0] == GPCMD_PLAY_AUDIO_MSF) ? 1 : 0))
                 {
                         ide->atastat = READY_STAT | ERR_STAT;    /*CHECK CONDITION*/
                         ide->error = (SENSE_ILLEGAL_REQUEST << 4) | ABRT_ERR;
 						atapi_sense.sensekey = SENSE_ILLEGAL_REQUEST;
                         atapi_sense.asc = ASC_ILLEGAL_MODE_FOR_THIS_TRACK;
 						atapi_sense.ascq = 0;
-                        ide->packetstatus=0x80;
+                        ide->packetstatus = ATAPI_STATUS_ERROR;
                         idecallback[ide_board]=50*IDE_TIME;
 						atapi_cmd_error(ide, atapi_sense.sensekey, atapi_sense.asc);
                         break;
                 }
 				
-                atapi->playaudio(pos,len,audio_temp & 1);
-                ide->packetstatus=2;
+                atapi->playaudio(pos, len, (idebufferb[0] == GPCMD_PLAY_AUDIO_MSF) ? 1 : 0);
+                ide->packetstatus = ATAPI_STATUS_COMPLETE;
                 idecallback[ide_board]=50*IDE_TIME;
                 break;
-                
-        case GPCMD_READ_SUBCHANNEL:
+
+                case GPCMD_READ_SUBCHANNEL:
                 temp=idebufferb[2]&0x40;
                 if (idebufferb[3]!=1)
                 {
 //                        pclog("Read subchannel check condition %02X\n",idebufferb[3]);
                         ide->atastat = READY_STAT | ERR_STAT;    /*CHECK CONDITION*/
                         ide->error = (SENSE_ILLEGAL_REQUEST << 4) | ABRT_ERR;
-                        if (atapi_sense.sensekey == SENSE_UNIT_ATTENTION) {
+                        if (atapi_sense.sensekey == SENSE_UNIT_ATTENTION)
                                 ide->error |= MCR_ERR;
-                        }
                         // ide->discchanged=1;			/* Fixes some bugs with NT 3.1. */
                         atapi_sense.asc = ASC_ILLEGAL_OPCODE;
-                        ide->packetstatus=0x80;
+                        ide->packetstatus = ATAPI_STATUS_ERROR;
                         idecallback[ide_board]=50*IDE_TIME;
                         break;
 /*                        pclog("Bad read subchannel!\n");
@@ -2488,7 +2551,7 @@ static void atapicommand(int ide_board)
 //                pclog("Read subchannel complete - audio status %02X\n",idebufferb[1]);
                 len=11+5;
                 if (!temp) len=4;
-                ide->packetstatus=3;
+                ide->packetstatus = ATAPI_STATUS_DATA;
                 ide->cylinder=len;
                 ide->secount=2;
                 ide->pos=0;
@@ -2496,17 +2559,15 @@ static void atapicommand(int ide_board)
                 ide->packlen=len;
                 break;
 
-        case GPCMD_START_STOP_UNIT:
+                case GPCMD_START_STOP_UNIT:
                 if (idebufferb[4]!=2 && idebufferb[4]!=3 && idebufferb[4])
                 {
                         ide->atastat = READY_STAT | ERR_STAT;    /*CHECK CONDITION*/
                         ide->error = (SENSE_ILLEGAL_REQUEST << 4) | ABRT_ERR;
-                        if (atapi_sense.sensekey == SENSE_UNIT_ATTENTION) {
+                        if (atapi_sense.sensekey == SENSE_UNIT_ATTENTION)
                                 ide->error |= MCR_ERR;
-                        }
-                        // ide->discchanged=0;
                         atapi_sense.asc = ASC_ILLEGAL_OPCODE;
-                        ide->packetstatus=0x80;
+                        ide->packetstatus = ATAPI_STATUS_ERROR;
                         idecallback[ide_board]=50*IDE_TIME;
                         break;
 /*                        pclog("Bad start/stop unit command\n");
@@ -2518,124 +2579,125 @@ static void atapicommand(int ide_board)
                 if (!idebufferb[4])        atapi->stop();
                 else if (idebufferb[4]==2) atapi->eject();
                 else                       atapi->load();
-                ide->packetstatus=2;
+                ide->packetstatus = ATAPI_STATUS_COMPLETE;
                 idecallback[ide_board]=50*IDE_TIME;
                 break;
                 
-        case GPCMD_INQUIRY:
-				page_code = idebufferb[2];
-				max_len = idebufferb[4];
-				alloc_length = max_len;
-				temp_command = idebufferb[0];
+                case GPCMD_INQUIRY:
+		page_code = idebufferb[2];
+		max_len = idebufferb[4];
+		alloc_length = max_len;
+		temp_command = idebufferb[0];
 				
-				if (idebufferb[1] & 1)
+		if (idebufferb[1] & 1)
+		{
+			preamble_len = 4;
+			size_idx = 3;
+					
+			idebufferb[idx++] = 05;
+			idebufferb[idx++] = page_code;
+			idebufferb[idx++] = 0;
+					
+			idx++;
+			
+			switch (page_code)
+			{
+				case 0x00:
+				idebufferb[idx++] = 0x00;
+				idebufferb[idx++] = 0x83;
+				break;
+        			case 0x83:
+				if (idx + 24 > max_len)
 				{
-					preamble_len = 4;
-					size_idx = 3;
-					
-					idebufferb[idx++] = 05;
-					idebufferb[idx++] = page_code;
-					idebufferb[idx++] = 0;
-					
-					idx++;
-					
-					switch (page_code)
-					{
-						case 0x00:
-							idebufferb[idx++] = 0x00;
-							idebufferb[idx++] = 0x83;
-							break;
-						case 0x83:
-							if (idx + 24 > max_len)
-							{
-								atapi_cmd_error(ide, SENSE_ILLEGAL_REQUEST, ASC_DATA_PHASE_ERROR);
-								atapi_sense.sensekey = SENSE_ILLEGAL_REQUEST;
-								atapi_sense.asc = ASC_DATA_PHASE_ERROR;
-								return;
-							}
-							idebufferb[idx++] = 0x02;
-							idebufferb[idx++] = 0x00;
-							idebufferb[idx++] = 0x00;
-							idebufferb[idx++] = 20;
-							ide_padstr8(idebufferb + idx, 20, "53R141");	/* Serial */
-							idx += 20;
-
-							if (idx + 72 > max_len)
-							{
-								goto atapi_out;
-							}
-							idebufferb[idx++] = 0x02;
-							idebufferb[idx++] = 0x01;
-							idebufferb[idx++] = 0x00;
-							idebufferb[idx++] = 68;
-							ide_padstr8(idebufferb + idx, 8, "PCem"); /* Vendor */
-							idx += 8;
-							ide_padstr8(idebufferb + idx, 40, "PCemCD v1.0"); /* Product */
-							idx += 40;
-							ide_padstr8(idebufferb + idx, 20, "53R141"); /* Product */
-							idx += 20;
-							
-							break;
-						default:
-							atapi_cmd_error(ide, SENSE_ILLEGAL_REQUEST, ASC_INV_FIELD_IN_CMD_PACKET);
-							atapi_sense.sensekey = SENSE_ILLEGAL_REQUEST;
-							atapi_sense.asc = ASC_INV_FIELD_IN_CMD_PACKET;
-							return;
-					}
+					atapi_cmd_error(ide, SENSE_ILLEGAL_REQUEST, ASC_DATA_PHASE_ERROR);
+					atapi_sense.sensekey = SENSE_ILLEGAL_REQUEST;
+					atapi_sense.asc = ASC_DATA_PHASE_ERROR;
+					return;
 				}
-				else
-				{
-					preamble_len = 5;
-					size_idx = 4;
+				idebufferb[idx++] = 0x02;
+				idebufferb[idx++] = 0x00;
+				idebufferb[idx++] = 0x00;
+				idebufferb[idx++] = 20;
+				ide_padstr8(idebufferb + idx, 20, "53R141");	/* Serial */
+				idx += 20;
 
-					idebufferb[0] = 5; /*CD-ROM*/
-					idebufferb[1] = 0x80; /*Removable*/
-					idebufferb[2] = 0;
-					idebufferb[3] = 0x21;
-					idebufferb[4] = 31;
-					idebufferb[5] = 0;
-					idebufferb[6] = 0;
-					idebufferb[7] = 0;
+				if (idx + 72 > max_len)
+				{
+					goto atapi_out;
+				}
+				idebufferb[idx++] = 0x02;
+				idebufferb[idx++] = 0x01;
+				idebufferb[idx++] = 0x00;
+				idebufferb[idx++] = 68;
+				ide_padstr8(idebufferb + idx, 8, "PCem"); /* Vendor */
+				idx += 8;
+				ide_padstr8(idebufferb + idx, 40, "PCemCD v1.0"); /* Product */
+				idx += 40;
+				ide_padstr8(idebufferb + idx, 20, "53R141"); /* Product */
+				idx += 20;
+				
+				break;
+				default:
+				atapi_cmd_error(ide, SENSE_ILLEGAL_REQUEST, ASC_INV_FIELD_IN_CMD_PACKET);
+				atapi_sense.sensekey = SENSE_ILLEGAL_REQUEST;
+				atapi_sense.asc = ASC_INV_FIELD_IN_CMD_PACKET;
+				return;
+        		}
+		}
+		else
+		{
+			preamble_len = 5;
+			size_idx = 4;
+
+			idebufferb[0] = 5; /*CD-ROM*/
+			idebufferb[1] = 0x80; /*Removable*/
+			idebufferb[2] = 0;
+			idebufferb[3] = 0x21;
+			idebufferb[4] = 31;
+			idebufferb[5] = 0;
+			idebufferb[6] = 0;
+			idebufferb[7] = 0;
 #ifdef RPCEMU_IDE
-					ide_padstr8(idebufferb + 8, 8, "RPCemu"); /* Vendor */
-					ide_padstr8(idebufferb + 16, 16, "RPCemuCD"); /* Product */
+                        ide_padstr8(idebufferb + 8, 8, "RPCemu"); /* Vendor */
+                        ide_padstr8(idebufferb + 16, 16, "RPCemuCD"); /* Product */
 #else
-					ide_padstr8(idebufferb + 8, 8, "PCem"); /* Vendor */
-					ide_padstr8(idebufferb + 16, 16, "PCemCD"); /* Product */
+                        ide_padstr8(idebufferb + 8, 8, "PCem"); /* Vendor */
+                        ide_padstr8(idebufferb + 16, 16, "PCemCD"); /* Product */
 #endif
-					ide_padstr8(idebufferb + 32, 4, "v1.0"); /* Revision */
+                        ide_padstr8(idebufferb + 32, 4, "1.0"); /* Revision */
 					
-					idx = 36;
-				}
+                        idx = 36;
+		}
 
 atapi_out:
-				idebufferb[size_idx] = idx - preamble_len;
+		idebufferb[size_idx] = idx - preamble_len;
                 len=idx;
+				
 		atapi_command_send_init(ide, temp_command, len, alloc_length);
 
-		atapi_command_ready(ide_board, len);	
+		atapi_command_ready(ide_board, len);				
                 break;
 
-        case GPCMD_PREVENT_REMOVAL:
-                ide->packetstatus=2;
+                case GPCMD_PREVENT_REMOVAL:
+                ide->packetstatus = ATAPI_STATUS_COMPLETE;
                 idecallback[ide_board]=50*IDE_TIME;
                 break;
 
-        case GPCMD_PAUSE_RESUME:
+                case GPCMD_PAUSE_RESUME:
                 if (idebufferb[8]&1) atapi->resume();
                 else                 atapi->pause();
-                ide->packetstatus=2;
+                ide->packetstatus = ATAPI_STATUS_COMPLETE;
                 idecallback[ide_board]=50*IDE_TIME;
                 break;
 
-        case GPCMD_SEEK:
+                case GPCMD_SEEK:
                 pos=(idebufferb[3]<<16)|(idebufferb[4]<<8)|idebufferb[5];
                 atapi->seek(pos);
-                ide->packetstatus=2;
+                ide->packetstatus = ATAPI_STATUS_COMPLETE;
                 idecallback[ide_board]=50*IDE_TIME;
                 break;
 
-        case GPCMD_READ_CDROM_CAPACITY:
+                case GPCMD_READ_CDROM_CAPACITY:
 		atapi_command_send_init(ide, temp_command, 8, 8);
                 size = atapi->size();
                 idebufferb[0] = (size >> 24) & 0xff;
@@ -2650,53 +2712,51 @@ atapi_out:
 		atapi_command_ready(ide_board, len);
                 break;
                 
-        case GPCMD_SEND_DVD_STRUCTURE:
-        default:
+                case GPCMD_SEND_DVD_STRUCTURE:
+                default:
 bad_atapi_command:
-				ide->atastat = READY_STAT | ERR_STAT;    /*CHECK CONDITION*/
+		ide->atastat = READY_STAT | ERR_STAT;    /*CHECK CONDITION*/
                 ide->error = (SENSE_ILLEGAL_REQUEST << 4) | ABRT_ERR;
-                if (atapi_sense.sensekey == SENSE_UNIT_ATTENTION) {
+                if (atapi_sense.sensekey == SENSE_UNIT_ATTENTION)
                         ide->error |= MCR_ERR;
-                }
-                // ide->discchanged=0;
-				atapi_sense.sensekey = SENSE_ILLEGAL_REQUEST;
+		atapi_sense.sensekey = SENSE_ILLEGAL_REQUEST;
                 atapi_sense.asc = ASC_ILLEGAL_OPCODE;
-                ide->packetstatus=0x80;
+                ide->packetstatus = ATAPI_STATUS_ERROR;
                 idecallback[ide_board]=50*IDE_TIME;
                 break;
 
-        case GPCMD_STOP_PLAY_SCAN:
+                case GPCMD_STOP_PLAY_SCAN:
                 atapi->stop();
-                ide->packetstatus=2;
+                ide->packetstatus = ATAPI_STATUS_COMPLETE;
                 idecallback[ide_board]=50*IDE_TIME;
                 break;
-        /*default:
+/*                default:
                 pclog("Bad ATAPI command %02X\n",idebufferb[0]);
                 pclog("Packet data :\n");
                 for (c=0;c<12;c++)
                     pclog("%02X\n",idebufferb[c]);
-                //exit(-1);*/
+                exit(-1);*/
         }
 }
 
-static void callnonreadcd(IDE *ide)		/* REQUEST SENSE callback */
+static void callnonreadcd(IDE *ide)		/* Callabck for non-Read CD commands */
 {
-		ide_irq_lower(ide);
-		if (ide->pos >= ide->packlen)
-		{
-			// pclog("REQUEST SENSE finished, setting callback\n");
-			ide->packetstatus=2;
-			idecallback[ide->board]=20*IDE_TIME;
-		}
-		else
-		{
-			// pclog("REQUEST SENSE not finished, keep sending data\n");
-			ide->atastat = BUSY_STAT;
-			ide->packetstatus=7;
-			ide->cylinder=2;
-			ide->secount=2;
-			idecallback[ide->board]=60*IDE_TIME;
-		}
+	ide_irq_lower(ide);
+	if (ide->pos >= ide->packlen)
+	{
+		// pclog("Command finished, setting callback\n");
+		ide->packetstatus = ATAPI_STATUS_COMPLETE;
+		idecallback[ide->board]=20*IDE_TIME;
+	}
+	else
+	{
+		// pclog("Command not finished, keep sending data\n");
+		ide->atastat = BUSY_STAT;
+		ide->packetstatus = ATAPI_STATUS_REQ_SENSE;
+		ide->cylinder=2;
+		ide->secount=2;
+		idecallback[ide->board]=60*IDE_TIME;
+	}
 }
 
 static void callreadcd(IDE *ide)
@@ -2705,28 +2765,28 @@ static void callreadcd(IDE *ide)
         if (ide->cdlen<=0)
         {
 //                pclog("All done - callback set\n");
-                ide->packetstatus=2;
+                ide->packetstatus = ATAPI_STATUS_COMPLETE;
                 idecallback[ide->board]=20*IDE_TIME;
                 return;
         }
 //        pclog("Continue readcd! %i blocks left\n",ide->cdlen);
         ide->atastat = BUSY_STAT;
         
-		if (readcdmode)
-				atapi->readsector_raw((uint8_t *) ide->buffer, ide->cdpos);
-		else
-				atapi->readsector((uint8_t *) ide->buffer, ide->cdpos);
+	if (readcdmode)
+		atapi->readsector_raw((uint8_t *) ide->buffer, ide->cdpos);
+	else
+		atapi->readsector((uint8_t *) ide->buffer, ide->cdpos);
 #ifndef RPCEMU_IDE
-                readflash=1;
+        readflash=1;
 #endif
-                ide->cdpos++;
-                ide->cdlen--;
-                ide->packetstatus=6;
-                ide->cylinder=readcdmode ? 2352 : 2048;
-                ide->secount=2;
-                ide->pos=0;
-                idecallback[ide->board]=60*IDE_TIME;
-                ide->packlen=readcdmode ? 2352 : 2048;
+        ide->cdpos++;
+        ide->cdlen--;
+        ide->packetstatus = ATAPI_STATUS_READCD;
+        ide->cylinder=readcdmode ? 2352 : 2048;
+        ide->secount=2;
+        ide->pos=0;
+        idecallback[ide->board]=60*IDE_TIME;
+        ide->packlen=readcdmode ? 2352 : 2048;
 }
 
 
@@ -2781,6 +2841,33 @@ uint32_t ide_read_sec_l(uint16_t addr, void *priv)
         return readidel(1);
 }
 
+/* *** REMOVE FROM CODE SUBMITTED TO MAINLINE - START *** */
+void ide_write_ter(uint16_t addr, uint8_t val, void *priv)
+{
+        writeide(2, addr, val);
+}
+void ide_write_ter_w(uint16_t addr, uint16_t val, void *priv)
+{
+        writeidew(2, val);
+}
+void ide_write_ter_l(uint16_t addr, uint32_t val, void *priv)
+{
+        writeidel(2, val);
+}
+uint8_t ide_read_ter(uint16_t addr, void *priv)
+{
+        return readide(2, addr);
+}
+uint16_t ide_read_ter_w(uint16_t addr, void *priv)
+{
+        return readidew(2);
+}
+uint32_t ide_read_ter_l(uint16_t addr, void *priv)
+{
+        return readidel(2);
+}
+/* *** REMOVE FROM CODE SUBMITTED TO MAINLINE - END *** */
+
 void ide_pri_enable()
 {
         io_sethandler(0x01f0, 0x0008, ide_read_pri, ide_read_pri_w, ide_read_pri_l, ide_write_pri, ide_write_pri_w, ide_write_pri_l, NULL);
@@ -2804,6 +2891,27 @@ void ide_sec_disable()
         io_removehandler(0x0170, 0x0008, ide_read_sec, ide_read_sec_w, ide_read_sec_l, ide_write_sec, ide_write_sec_w, ide_write_sec_l, NULL);
         io_removehandler(0x0376, 0x0001, ide_read_sec, NULL,           NULL,           ide_write_sec, NULL,            NULL           , NULL);
 }
+
+/* *** REMOVE FROM CODE SUBMITTED TO MAINLINE - START *** */
+void ide_ter_enable()
+{
+        io_sethandler(0x0168, 0x0008, ide_read_ter, ide_read_ter_w, ide_read_ter_l, ide_write_ter, ide_write_ter_w, ide_write_ter_l, NULL);
+        io_sethandler(0x036e, 0x0001, ide_read_ter, NULL,           NULL,           ide_write_ter, NULL,            NULL           , NULL);
+}
+
+void ide_ter_disable()
+{
+        io_removehandler(0x0168, 0x0008, ide_read_ter, ide_read_ter_w, ide_read_ter_l, ide_write_ter, ide_write_ter_w, ide_write_ter_l, NULL);
+        io_removehandler(0x036e, 0x0001, ide_read_ter, NULL,           NULL,           ide_write_ter, NULL,            NULL           , NULL);
+}
+
+void ide_ter_init()
+{
+		ide_ter_enable();
+
+        timer_add(ide_callback_ter, &idecallback[2], &idecallback[2],  NULL);
+}
+/* *** REMOVE FROM CODE SUBMITTED TO MAINLINE - END *** */
 
 void ide_init()
 {

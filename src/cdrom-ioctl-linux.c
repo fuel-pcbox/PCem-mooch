@@ -10,6 +10,7 @@
 static ATAPI ioctl_atapi;
 
 static uint32_t last_block = 0;
+static uint32_t cdrom_capacity = 0;
 static int ioctl_inited = 0;
 static char ioctl_path[8];
 static int tocvalid = 0;
@@ -189,7 +190,7 @@ static void ioctl_seek(uint32_t pos)
         ioctl_cd_state = CD_STOPPED;
 }
 
-static int read_toc(int fd)
+static int read_toc(int fd, cdrom_tocentry btoc)
 {
 	struct cdrom_tochdr toc_hdr;
 	int track, err;
@@ -204,13 +205,13 @@ static int read_toc(int fd)
 	first_track = toc_hdr.cdth_trk0;
 	last_track = toc_hdr.cdth_trk1;
 //pclog("read_toc: first_track=%i last_track=%i\n", first_track, last_track);
-	memset(toc, 0, sizeof(toc));
+	memset(btoc, 0, sizeof(btoc));
 
-	for (track = toc_hdr.cdth_trk0; track <= toc_hdr.cdth_trk1; track++)
+	for (track = btoc_hdr.cdth_trk0; track <= btoc_hdr.cdth_trk1; track++)
 	{
-		toc[track].cdte_track = track;
-		toc[track].cdte_format = CDROM_MSF;
-		err = ioctl(fd, CDROMREADTOCENTRY, &toc[track]);
+		btoc[track].cdte_track = track;
+		btoc[track].cdte_format = CDROM_MSF;
+		err = ioctl(fd, CDROMREADTOCENTRY, &btoc[track]);
 		if (err == -1)
 		{
 //			pclog("read_toc: CDROMREADTOCENTRY failed on track %i\n", track);
@@ -257,12 +258,46 @@ static int ioctl_ready(void)
 		int track;
                 ioctl_cd_state = CD_STOPPED;
 
-		tocvalid = read_toc(fd);
+		tocvalid = read_toc(fd, toc);
 		close(fd);
                 return 1;
         }
 	close(fd);
         return 1;
+}
+
+static int ioctl_get_last_block(unsigned char starttrack, int msf, int maxlen, int single)
+{
+        int len=4;
+        long size;
+        int c,d;
+        uint32_t temp;
+		int lb = 0;
+		int tv = 0;
+		cdrom_tocentry lbtoc[100];
+	int fd = open("/dev/cdrom", O_RDONLY|O_NONBLOCK);
+
+	if (fd <= 0)
+		return 0;
+
+        ioctl_cd_state = CD_STOPPED;
+
+	tv = read_toc(fd, lbtoc);
+
+	close(fd);
+
+	if (!tv)
+		return 0;
+
+        last_block = 0;
+        for (c = d; c <= last_track; c++)
+        {
+                uint32_t address;
+                address = MSFtoLBA(toc[c].cdte_addr.msf.minute, toc[c].cdte_addr.msf.second, toc[c].cdte_addr.msf.frame);
+                if (address > last_block)
+                        lb = address;
+        }
+        return lb;
 }
 
 static int ioctl_medium_changed(void)
@@ -296,6 +331,7 @@ static int ioctl_medium_changed(void)
             (toc_entry.cdte_addr.msf.second != toc[toc_hdr.cdth_trk1].cdte_addr.msf.second) ||
             (toc_entry.cdte_addr.msf.frame  != toc[toc_hdr.cdth_trk1].cdte_addr.msf.frame ))
 	{
+		cdrom_capacity = ioctl_get_last_block(0, 0, 4096, 0);
 		return 1;
 	}
         return 0;
@@ -378,6 +414,8 @@ static void ioctl_load(void)
 	ioctl(fd, CDROMEJECT);
 
 	close(fd);
+
+	cdrom_capacity = ioctl_get_last_block(0, 0, 4096, 0);
 }
 
 static void ioctl_readsector(uint8_t *b, int sector)
@@ -390,33 +428,47 @@ static void ioctl_readsector(uint8_t *b, int sector)
 	close(cdrom);
 }
 
-static void lba_to_msf(uint8_t *buf, int lba)
+union
+{
+	struct cdrom_msf* msf;
+	char b[CD_FRAMESIZE_RAW];
+} raw_read_params;
+
+static int lba_to_msf(int lba)
 {
         lba += 150;
-        buf[0] = (lba / 75) / 60;
-        buf[1] = (lba / 75) % 60;
-        buf[2] = lba % 75;
+        return (((lba / 75) / 60) << 16) + (((lba / 75) % 60) << 8) + (lba % 75);
 }
 
 static void ioctl_readsector_raw(uint8_t *b, int sector)
 {
+	int i = 0;
+	int imsf = lba_to_msf(sector);
 	int cdrom = open("/dev/cdrom", O_RDONLY|O_NONBLOCK);
         if (cdrom <= 0)
 		return;
-        lseek(cdrom, sector*2048, SEEK_SET);
-        read(cdrom, b+16, 2048);
-	close(cdrom);
 
-	/* sync bytes */
-	b[0] = 0;
-	memset(b + 1, 0xff, 10);
-	b[11] = 0;
-	b += 12;
-	lba_to_msf(b, sector);
-	b[3] = 1; /* mode 1 data */
-	b += 4;
-	b += 2048;
-	memset(b, 0, 288);
+	raw_read_params.msf = malloc(sizeof(struct cdrom_msf));
+	raw_read_params.msf->cdmsf_frame0 = imsf & 0xff;
+	imsf >>= 8;
+	raw_read_params.msf->cdmsf_sec0 = imsf & 0xff;	
+	imsf >>= 8;
+	raw_read_params.msf->cdmsf_min0 = imsf & 0xff;	
+
+	/* This will read the actual raw sectors from the disc. */
+	err = ioctl(cdrom, CDROMREADRAW, (void *) &raw_read_params);
+	if (err == -1)
+	{
+		pclog("read_toc: CDROMREADTOCHDR failed\n");
+		return 0;
+	}
+	
+	for (i = 0; i < 2352; i++)
+	{
+		b[i] = raw_read_params.b[i];
+	}
+
+	close(cdrom);
 }
 
 static int ioctl_readtoc(unsigned char *b, unsigned char starttrack, int msf, int maxlen, int single)
@@ -432,7 +484,7 @@ static int ioctl_readtoc(unsigned char *b, unsigned char starttrack, int msf, in
 
         ioctl_cd_state = CD_STOPPED;
 
-	tocvalid = read_toc(fd);
+	tocvalid = read_toc(fd, toc);
 
 	close(fd);
 
@@ -604,11 +656,7 @@ static int ioctl_readtoc_raw(unsigned char *b, int maxlen)
 
 static uint32_t ioctl_size()
 {
-        unsigned char b[4096];
-
-        atapi->readtoc(b, 0, 0, 4096, 0);
-        
-        return last_block;
+        return cdrom_capacity;
 }
 
 static int ioctl_status()
@@ -634,7 +682,7 @@ void ioctl_reset()
 	if (fd <= 0)
 		return;
 
-	tocvalid = read_toc(fd);
+	tocvalid = read_toc(fd, toc);
 
 	close(fd);
 }

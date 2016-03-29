@@ -1,13 +1,8 @@
 /*Win32 CD-ROM support via IOCTL*/
 
-#include <stdint.h>
 #include <windows.h>
 #include <io.h>
-#ifdef __MINGW64__
 #include "ntddcdrm.h"
-#else
-#include "ddk/ntddcdrm.h"
-#endif
 #include "ibm.h"
 #include "ide.h"
 #include "cdrom-ioctl.h"
@@ -15,20 +10,10 @@
 int cdrom_drive;
 int old_cdrom_drive;
 
-#if 0
-#ifndef __MINGW64__
-typedef struct _CDROM_TOC_SESSION_DATA {
-  UCHAR      Length[2];
-  UCHAR      FirstCompleteSession;
-  UCHAR      LastCompleteSession;
-  TRACK_DATA TrackData[1];
-} CDROM_TOC_SESSION_DATA, *PCDROM_TOC_SESSION_DATA;
-#endif
-#endif
-
 static ATAPI ioctl_atapi;
 
 static uint32_t last_block = 0;
+static uint32_t cdrom_capacity = 0;
 static int ioctl_inited = 0;
 static char ioctl_path[8];
 void ioctl_close(void);
@@ -232,20 +217,19 @@ static int ioctl_ready(void)
         CDROM_TOC ltoc;
 //        pclog("Ready? %i\n",cdrom_drive);
         if (!cdrom_drive) return 0;
-		pclog("ioctl_ready(): CD-ROM drive not 0\n");
         ioctl_open(0);
         temp=DeviceIoControl(hIOCTL,IOCTL_CDROM_READ_TOC, NULL,0,&ltoc,sizeof(ltoc),&size,NULL);
         ioctl_close();
         if (!temp)
                 return 0;
-		pclog("ioctl_ready(): Drive opened successfully\n");
-	//if ((cdrom_drive != old_cdrom_drive))  pclog("Drive has changed\n");
+	//pclog("ioctl_ready(): Drive opened successfully\n");
+	//if ((cdrom_drive != old_cdrom_drive)) pclog("Drive has changed\n");
         if ((ltoc.TrackData[ltoc.LastTrack].Address[1] != toc.TrackData[toc.LastTrack].Address[1]) ||
             (ltoc.TrackData[ltoc.LastTrack].Address[2] != toc.TrackData[toc.LastTrack].Address[2]) ||
             (ltoc.TrackData[ltoc.LastTrack].Address[3] != toc.TrackData[toc.LastTrack].Address[3]) ||
             !tocvalid || (cdrom_drive != old_cdrom_drive))
         {
-				pclog("ioctl_ready(): Disc or drive changed\n");
+		//pclog("ioctl_ready(): Disc or drive changed\n");
                 ioctl_cd_state = CD_STOPPED;                
   /*              pclog("Not ready %02X %02X %02X  %02X %02X %02X  %i\n",ltoc.TrackData[ltoc.LastTrack].Address[1],ltoc.TrackData[ltoc.LastTrack].Address[2],ltoc.TrackData[ltoc.LastTrack].Address[3],
                                                                         toc.TrackData[ltoc.LastTrack].Address[1], toc.TrackData[ltoc.LastTrack].Address[2], toc.TrackData[ltoc.LastTrack].Address[3],tocvalid);*/
@@ -253,15 +237,38 @@ static int ioctl_ready(void)
 /*                ioctl_open(0);
                 temp=DeviceIoControl(hIOCTL,IOCTL_CDROM_READ_TOC, NULL,0,&toc,sizeof(toc),&size,NULL);
                 ioctl_close();*/
-                toc=ltoc;
-                tocvalid=1;
-				if (cdrom_drive != old_cdrom_drive)  old_cdrom_drive = cdrom_drive;
+		if (cdrom_drive != old_cdrom_drive)
+                        old_cdrom_drive = cdrom_drive;
                 return 1;
         }
 //        pclog("IOCTL says ready\n");
-		pclog("ioctl_ready(): All is good\n");
+//        pclog("ioctl_ready(): All is good\n");
         return 1;
-//        return (temp)?1:0;
+}
+
+static int ioctl_get_last_block(unsigned char starttrack, int msf, int maxlen, int single)
+{
+        int len=4;
+        long size;
+        int c,d;
+        uint32_t temp;
+		CDROM_TOC lbtoc;
+		int lb=0;
+        if (!cdrom_drive) return 0;
+		ioctl_cd_state = CD_STOPPED;
+		pclog("ioctl_readtoc(): IOCtl state now CD_STOPPED\n");
+        ioctl_open(0);
+        DeviceIoControl(hIOCTL,IOCTL_CDROM_READ_TOC, NULL,0,&lbtoc,sizeof(lbtoc),&size,NULL);
+        ioctl_close();
+        tocvalid=1;
+        for (c=d;c<=lbtoc.LastTrack;c++)
+        {
+                uint32_t address;
+                address = MSFtoLBA(toc.TrackData[c].Address[1],toc.TrackData[c].Address[2],toc.TrackData[c].Address[3]);
+                if (address > lb)
+                        lb = address;
+		}
+		return lb;
 }
 
 static int ioctl_medium_changed(void)
@@ -273,24 +280,28 @@ static int ioctl_medium_changed(void)
         ioctl_open(0);
         temp=DeviceIoControl(hIOCTL,IOCTL_CDROM_READ_TOC, NULL,0,&ltoc,sizeof(ltoc),&size,NULL);
         ioctl_close();
-        if (!temp) return 0;				/* Drive empty, a not ready handler matter, not disc change. */
-	if (!tocvalid || (cdrom_drive != old_cdrom_drive))
-	{
-		ioctl_cd_state = CD_STOPPED;
-		toc = ltoc;
-		tocvalid = 1;
-		if (cdrom_drive != old_cdrom_drive)  old_cdrom_drive = cdrom_drive;
-		return 0;
-	}
-	if ((ltoc.TrackData[ltoc.LastTrack].Address[1] != toc.TrackData[toc.LastTrack].Address[1]) ||
+        if (!temp)
+                return 0; /* Drive empty, a not ready handler matter, not disc change. */
+        if (!tocvalid || (cdrom_drive != old_cdrom_drive))
+        {
+                ioctl_cd_state = CD_STOPPED;
+                toc = ltoc;
+                tocvalid = 1;
+                if (cdrom_drive != old_cdrom_drive)
+                        old_cdrom_drive = cdrom_drive;
+				cdrom_capacity = ioctl_get_last_block(0, 0, 4096, 0);
+                return 0;
+        }
+        if ((ltoc.TrackData[ltoc.LastTrack].Address[1] != toc.TrackData[toc.LastTrack].Address[1]) ||
             (ltoc.TrackData[ltoc.LastTrack].Address[2] != toc.TrackData[toc.LastTrack].Address[2]) ||
             (ltoc.TrackData[ltoc.LastTrack].Address[3] != toc.TrackData[toc.LastTrack].Address[3]))
 	{
-		ioctl_cd_state = CD_STOPPED;
-		toc = ltoc;
-		return 1;				/* TOC mismatches. */
+                ioctl_cd_state = CD_STOPPED;
+                toc = ltoc;
+				cdrom_capacity = ioctl_get_last_block(0, 0, 4096, 0);
+		return 1; /* TOC mismatches. */
 	}
-        return 0;						/* Noen of the above, return 0. */
+        return 0; /* None of the above, return 0. */
 }
 
 static uint8_t ioctl_getcurrentsubchannel(uint8_t *b, int msf)
@@ -397,6 +408,7 @@ static void ioctl_load(void)
         ioctl_open(0);
         DeviceIoControl(hIOCTL,IOCTL_STORAGE_LOAD_MEDIA,NULL,0,NULL,0,&size,NULL);
         ioctl_close();
+		cdrom_capacity = ioctl_get_last_block(0, 0, 4096, 0);
 }
 
 static void ioctl_readsector(uint8_t *b, int sector)
@@ -404,26 +416,16 @@ static void ioctl_readsector(uint8_t *b, int sector)
         LARGE_INTEGER pos;
         long size;
         if (!cdrom_drive) return;
-		/* Fixes CD Audio in Windows 95. */
-		if (ioctl_cd_state == CD_PLAYING)
-			return;
-		else
-	        ioctl_cd_state = CD_STOPPED;        
+
+	if (ioctl_cd_state == CD_PLAYING)
+		return;
+
+        ioctl_cd_state = CD_STOPPED;        
         pos.QuadPart=sector*2048;
         ioctl_open(0);
         SetFilePointer(hIOCTL,pos.LowPart,&pos.HighPart,FILE_BEGIN);
         ReadFile(hIOCTL,b,2048,&size,NULL);
         ioctl_close();
-}
-
-static void lba_to_msf(uint8_t *buf, int lba)
-{
-	double dlba = (double) lba + 150;
-	buf[2] = (uint8_t) (((uint32_t) dlba) % 75);
-	dlba /= 75;
-	buf[1] = (uint8_t) (((uint32_t) dlba) % 60);
-	dlba /= 60;
-	buf[0] = (uint8_t) dlba;
 }
 
 static int is_track_audio(uint32_t pos)
@@ -435,7 +437,7 @@ static int is_track_audio(uint32_t pos)
                 return 0;
 
         for (c = toc.FirstTrack; c < toc.LastTrack; c++)
-       {
+        {
                 uint32_t track_address = toc.TrackData[c].Address[3] +
                                          (toc.TrackData[c].Address[2] * 75) +
                                          (toc.TrackData[c].Address[1] * 75 * 60);
@@ -466,24 +468,13 @@ static void ioctl_readsector_raw(uint8_t *b, int sector)
         if (!cdrom_drive) return;
 	if (ioctl_cd_state == CD_PLAYING)
 		return;
-	else
-	        ioctl_cd_state = CD_STOPPED;        
-        pos.QuadPart=sector*2048;
-        ioctl_open(0);
-        SetFilePointer(hIOCTL,pos.LowPart,&pos.HighPart,FILE_BEGIN);
-        ReadFile(hIOCTL,b+16,2048,&size,NULL);
-        ioctl_close();
 
-	/* sync bytes */
-	b[0] = 0;
-	memset(b + 1, 0xff, 10);
-	b[11] = 0;
-	b += 12;
-	lba_to_msf(b, sector);
-	b[3] = 1; /* mode 1 data */
-	b += 4;
-	b += 2048;
-	memset(b, 0, 288);
+        ioctl_cd_state = CD_STOPPED;        
+		pos.QuadPart=sector*2048;		/* Yes, 2048, the API specifies that. */
+        ioctl_open(0);
+		/* This should read the actual raw sectors from the disc. */
+		DeviceIoControl( hIOCTL, IOCTL_CDROM_RAW_READ, NULL, 0, b, 1, &size, NULL );						   
+        ioctl_close();
 }
 
 static int ioctl_readtoc(unsigned char *b, unsigned char starttrack, int msf, int maxlen, int single)
@@ -643,16 +634,13 @@ static int ioctl_readtoc_raw(unsigned char *b, int maxlen)
 
 static uint32_t ioctl_size()
 {
-        unsigned char b[4096];
-
-        atapi->readtoc(b, 0, 0, 4096, 0);
-        
-        return last_block;
+        return cdrom_capacity;
 }
 
 static int ioctl_status()
 {
-	if (!(ioctl_ready) && (cdrom_drive <= 0))  return CD_STATUS_EMPTY;
+	if (!(ioctl_ready) && (cdrom_drive <= 0))
+                return CD_STATUS_EMPTY;
 
 	switch(ioctl_cd_state)
 	{
@@ -705,13 +693,18 @@ int ioctl_open(char d)
         {
                 ioctl_inited=1;
                 CloseHandle(hIOCTL);
+                hIOCTL = NULL;
         }
         return 0;
 }
 
 void ioctl_close(void)
 {
-        CloseHandle(hIOCTL);
+        if (hIOCTL)
+        {
+                CloseHandle(hIOCTL);
+                hIOCTL = NULL;
+        }
 }
 
 static void ioctl_exit(void)

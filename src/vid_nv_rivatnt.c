@@ -73,6 +73,13 @@ typedef struct rivatnt_t
 	{
 		int chanid;
 	} caches[2];
+	
+	struct
+	{
+		int subchan;
+		uint16_t method;
+		uint32_t param;
+	} cache0, cache1[64];
   } pfifo;
   
   struct
@@ -125,6 +132,8 @@ typedef struct rivatnt_t
 	int sda;
 	uint8_t addr; //actually 7 bits
   } i2c;
+  
+  int coretime;
 
 } rivatnt_t;
 
@@ -290,6 +299,10 @@ static uint8_t rivatnt_pfifo_read(uint32_t addr, void *p)
   case 0x00250d: ret = (rivatnt->pfifo.chan_size >> 8) & 0xff; break;
   case 0x00250e: ret = (rivatnt->pfifo.chan_size >> 16) & 0xff; break;
   case 0x00250f: ret = (rivatnt->pfifo.chan_size >> 24) & 0xff; break;
+  //HACK
+  case 0x003204: ret = rivatnt->pfifo.caches[1].chanid; break;
+  case 0x003214: ret = 0x10; break;
+  case 0x003215: ret = 0x01; break;
   }
 
   return ret;
@@ -707,6 +720,12 @@ static void rivatnt_mmio_write_l(uint32_t addr, uint32_t val, void *p)
   rivatnt_user_write(addr, val, rivatnt);
   break;
   }
+}
+
+static void rivatnt_poll(void *p)
+{
+	rivatnt_t *rivatnt = (rivatnt_t *)p;
+	svga_t *svga = &rivatnt->svga;
 }
 
 static uint8_t rivatnt_rma_in(uint16_t addr, void *p)
