@@ -116,8 +116,7 @@ int fetchcycles=0,memcycs,fetchclocks;
 uint8_t prefetchqueue[6];
 uint16_t prefetchpc;
 int prefetchw=0;
-
-static inline uint8_t FETCH(void)
+inline uint8_t FETCH()
 {
         uint8_t temp;
 /*        temp=prefetchqueue[0];
@@ -171,7 +170,7 @@ static inline uint8_t FETCH(void)
         return temp;
 }
 
-static inline void FETCHADD(int c)
+inline void FETCHADD(int c)
 {
         int d;
 //        if (output) printf("FETCHADD %i\n",c);
@@ -226,7 +225,7 @@ void FETCHCOMPLETE()
                 fetchcycles+=(4-(fetchcycles&3));
 }
 
-static inline void FETCHCLEAR(void)
+inline void FETCHCLEAR()
 {
 /*        int c;
         fetchcycles=0;
@@ -391,14 +390,14 @@ static void fetcheal()
         }
 }
 
-static inline uint8_t geteab(void)
+static inline uint8_t geteab()
 {
         if (mod==3)
            return (rm&4)?regs[rm&3].b.h:regs[rm&3].b.l;
         return readmemb(easeg+eaaddr);
 }
 
-static inline uint16_t geteaw(void)
+static inline uint16_t geteaw()
 {
         if (mod==3)
            return regs[rm].w;
@@ -406,7 +405,7 @@ static inline uint16_t geteaw(void)
         return readmemw(easeg,eaaddr);
 }
 
-static inline uint16_t geteaw2(void)
+static inline uint16_t geteaw2()
 {
         if (mod==3)
            return regs[rm].w;
@@ -1041,7 +1040,7 @@ void rep(int fv)
                 else firstrepcycle=1;
                 break;
                 default:
-                        pc=ipc;
+                pc = ipc+1;
                         cycles-=20;
                         FETCHCLEAR();
 //                printf("Bad REP %02X\n",temp);
@@ -2918,24 +2917,24 @@ void execx86(int cycs)
                         case 0xE4: /*IN AL*/
                         temp=FETCH();
                         AL=inb(temp);
-                        cycles-=11; /*Cycles fixed per measurement by reenigne.*/
+                        cycles-=14;
                         break;
                         case 0xE5: /*IN AX*/
                         temp=FETCH();
                         AL=inb(temp);
                         AH=inb(temp+1);
-                        cycles-=16; /*Cycles fixed per measurement by reenigne.*/
+                        cycles-=14;
                         break;
                         case 0xE6: /*OUT AL*/
                         temp=FETCH();
                         outb(temp,AL);
-                        cycles-=12; /*Cycles fixed per measurement by reenigne.*/
+                        cycles-=14;
                         break;
                         case 0xE7: /*OUT AX*/
                         temp=FETCH();
                         outb(temp,AL);
                         outb(temp+1,AH);
-                        cycles-=18; /*Cycles fixed per measurement by reenigne.*/
+                        cycles-=14;
                         break;
 
                         case 0xE8: /*CALL rel 16*/
@@ -2974,21 +2973,21 @@ void execx86(int cycs)
                         break;
                         case 0xEC: /*IN AL,DX*/
                         AL=inb(DX);
-                        cycles-=9; /*Cycles fixed per measurement by reenigne.*/
+                        cycles-=12;
                         break;
                         case 0xED: /*IN AX,DX*/
                         AL=inb(DX);
                         AH=inb(DX+1);
-                        cycles-=13; /*Cycles fixed per measurement by reenigne.*/
+                        cycles-=12;
                         break;
                         case 0xEE: /*OUT DX,AL*/
                         outb(DX,AL);
-                        cycles-=10; /*Cycles fixed per measurement by reenigne.*/
+                        cycles-=12;
                         break;
                         case 0xEF: /*OUT DX,AX*/
                         outb(DX,AL);
                         outb(DX+1,AH);
-                        cycles-=15; /*Cycles fixed per measurement by reenigne.*/
+                        cycles-=12;
                         break;
 
                         case 0xF0: /*LOCK*/
