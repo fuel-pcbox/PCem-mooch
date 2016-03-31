@@ -807,6 +807,7 @@ static void check_variables(bool first_time_startup)
          {
             romset = ROM_P55VA;
          }
+	 model = model_getmodel(romset);
       }
       else
       {
@@ -1044,61 +1045,7 @@ bool retro_load_game(const struct retro_game_info *info)
    check_variables(true);
 
    midi_init();
-   initpc(0, NULL);
-
-   d = romset;
-   for (c = 0; c < ROM_MAX; c++)
-   {
-      romset = c;
-      romspresent[c] = loadbios();
-      pclog("romset %i - %i\n", c, romspresent[c]);
-   }
-
-   for (c = 0; c < ROM_MAX; c++)
-   {
-      if (romspresent[c])
-         break;
-   }
-   if (c == ROM_MAX)
-   {
-      printf("No ROMs present!\nYou must have at least one romset to use PCem.");
-      return 0;
-   }
-
-   romset=d;
-   c=loadbios();
-
-   if (!c)
-   {
-      if (romset != -1)
-         printf("Configured romset not available.\nDefaulting to available romset.");
-      for (c = 0; c < ROM_MAX; c++)
-      {
-         if (romspresent[c])
-         {
-            romset = c;
-            model = model_getmodel(romset);
-            resetpchard();
-            break;
-         }
-      }
-   }
-
-   for (c = 0; c < GFX_MAX; c++)
-      gfx_present[c] = video_card_available(video_old_to_new(c));
-
-   if (!video_card_available(video_old_to_new(gfxcard)))
-   {
-      if (gfxcard) printf("Configured video BIOS not available.\nDefaulting to available romset.");
-      for (c = GFX_MAX-1; c >= 0; c--)
-      {
-         if (gfx_present[c])
-         {
-            gfxcard = c;
-            break;
-         }
-      }
-   }
+   initpc(0, NULL);s
 
 	resetpchard();
 
