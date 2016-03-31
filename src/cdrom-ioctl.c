@@ -1,6 +1,5 @@
 /*Win32 CD-ROM support via IOCTL*/
 
-#include <stdint.h>
 #include <windows.h>
 #include <io.h>
 #include "ntddcdrm.h"
@@ -22,7 +21,11 @@ static HANDLE hIOCTL;
 static CDROM_TOC toc;
 static int tocvalid = 0;
 
-#define MSFtoLBA(m,s,f)  (((((m*60)+s)*75)+f)-150)
+// #define MSFtoLBA(m,s,f)  (((((m*60)+s)*75)+f)-150)
+/* The addresses sent from the guest are absolute, ie. a LBA of 0 corresponds to a MSF of 00:00:00. Otherwise, the counter displayed by the guest is wrong:
+   there is a seeming 2 seconds in which audio plays but counter does not move, while a data track before audio jumps to 2 seconds before the actual start
+   of the audio while audio still plays. With an absolute conversion, the counter is fine. */
+#define MSFtoLBA(m,s,f)  ((((m*60)+s)*75)+f)
 
 enum
 {
@@ -53,7 +56,7 @@ void ioctl_audio_callback(int16_t *output, int len)
         {
                 if (ioctl_cd_pos < ioctl_cd_end)
                 {
-		        in.DiskOffset.LowPart  = ioctl_cd_pos * 2048;
+		        in.DiskOffset.LowPart  = (ioctl_cd_pos - 150) * 2048;
         		in.DiskOffset.HighPart = 0;
         		in.SectorCount	       = 1;
         		in.TrackMode	       = CDDA;		
@@ -134,6 +137,11 @@ static void ioctl_playaudio(uint32_t pos, uint32_t len, int ismsf)
            len += pos;
         ioctl_cd_pos   = pos;// + 150;
         ioctl_cd_end   = len;// + 150;
+		if (ioctl_cd_pos < 150)
+		{
+			/* Adjust because the host expects a minimum adjusted LBA of 0 which is equivalent to an absolute LBA of 150. */
+			ioctl_cd_pos = 150;
+		}
         ioctl_cd_state = CD_PLAYING;
         pclog("Audio start %08X %08X %i %i %i\n", ioctl_cd_pos, ioctl_cd_end, ioctl_cd_state, cd_buflen, len);        
 /*        CDROM_PLAY_AUDIO_MSF msf;

@@ -102,6 +102,8 @@ void sound_set_cd_volume(unsigned int vol_l, unsigned int vol_r)
 
 static void sound_cd_thread(void *param)
 {
+		int32_t cd_buffer_temp[2] = {0, 0};
+
         while (1)
         {
                 int c;
@@ -110,10 +112,117 @@ static void sound_cd_thread(void *param)
                 ioctl_audio_callback(cd_buffer, CD_BUFLEN*2);
                 if (soundon)
                 {
-                        for (c = 0; c < CD_BUFLEN*2; c += 2)
+                        int32_t atapi_vol_l = atapi_get_cd_volume(0);
+                        int32_t atapi_vol_r = atapi_get_cd_volume(1);
+						
+						for (c = 0; c < CD_BUFLEN*2; c += 2)
                         {
-                                cd_buffer[c]   = ((int32_t)cd_buffer[c]   * cd_vol_l) / 65535;
-                                cd_buffer[c+1] = ((int32_t)cd_buffer[c+1] * cd_vol_r) / 65535;
+								/* First, adjust input from drive according to ATAPI volume. */
+								cd_buffer[c]   = ((int32_t)cd_buffer[c]   * atapi_vol_l) / 255;
+                                cd_buffer[c+1] = ((int32_t)cd_buffer[c+1] * atapi_vol_r) / 255;
+
+								cd_buffer_temp[0] = cd_buffer_temp[1] = 0;
+								
+								switch(atapi_get_cd_channel(0))
+								{
+									case 1:
+										/* Channel goes to left channel */
+										if (cd_buffer_temp[0])
+										{
+											cd_buffer_temp[0] += cd_buffer[c];
+											cd_buffer_temp[0] /= 2;
+										}
+										else
+										{
+											cd_buffer_temp[0] = cd_buffer[c];
+										}
+										break;
+									case 2:
+										/* Channel goes to right channel */
+										if (cd_buffer_temp[1])
+										{
+											cd_buffer_temp[1] += cd_buffer[c];
+											cd_buffer_temp[1] /= 2;
+										}
+										else
+										{
+											cd_buffer_temp[1] = cd_buffer[c];
+										}
+										break;
+									case 3:
+										/* Channel goes to both channels */
+										if (cd_buffer_temp[0])
+										{
+											cd_buffer_temp[0] += cd_buffer[c];
+											cd_buffer_temp[0] /= 2;
+										}
+										else
+										{
+											cd_buffer_temp[0] = cd_buffer[c];
+										}
+										if (cd_buffer_temp[1])
+										{
+											cd_buffer_temp[1] += cd_buffer[c];
+											cd_buffer_temp[1] /= 2;
+										}
+										else
+										{
+											cd_buffer_temp[1] = cd_buffer[c];
+										}
+										break;
+								}
+								
+								switch(atapi_get_cd_channel(1))
+								{
+									case 1:
+										/* Channel goes to left channel */
+										if (cd_buffer_temp[0])
+										{
+											cd_buffer_temp[0] += cd_buffer[c+1];
+											cd_buffer_temp[0] /= 2;
+										}
+										else
+										{
+											cd_buffer_temp[0] = cd_buffer[c+1];
+										}
+										break;
+									case 2:
+										/* Channel goes to right channel */
+										if (cd_buffer_temp[1])
+										{
+											cd_buffer_temp[1] += cd_buffer[c+1];
+											cd_buffer_temp[1] /= 2;
+										}
+										else
+										{
+											cd_buffer_temp[1] = cd_buffer[c+1];
+										}
+										break;
+									case 3:
+										/* Channel goes to both channels */
+										if (cd_buffer_temp[0])
+										{
+											cd_buffer_temp[0] += cd_buffer[c+1];
+											cd_buffer_temp[0] /= 2;
+										}
+										else
+										{
+											cd_buffer_temp[0] = cd_buffer[c+1];
+										}
+										if (cd_buffer_temp[1])
+										{
+											cd_buffer_temp[1] += cd_buffer[c+1];
+											cd_buffer_temp[1] /= 2;
+										}
+										else
+										{
+											cd_buffer_temp[1] = cd_buffer[c+1];
+										}
+										break;
+								}
+
+                                cd_buffer[c]   = ((int32_t)cd_buffer_temp[0]   * cd_vol_l) / 65535;
+                                cd_buffer[c+1] = ((int32_t)cd_buffer_temp[1]   * cd_vol_r) / 65535;
                         }
                         givealbuffer_cd(cd_buffer);
                 }

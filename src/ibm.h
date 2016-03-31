@@ -481,6 +481,7 @@ extern int cdrom_enabled;
 #define CD_STATUS_PAUSED	3
 #define CD_STATUS_STOPPED	4
 
+extern uint32_t atapi_get_cd_channel(int channel);
 extern uint32_t atapi_get_cd_volume(int channel);
 
 
