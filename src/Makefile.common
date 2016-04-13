@@ -113,6 +113,7 @@ SOURCES_C := $(CORE_DIR)/libretro.c \
 				 $(CORE_DIR)/sound_speaker.c \
 				 $(CORE_DIR)/sound_ssi2001.c \
 				 $(CORE_DIR)/sound_wss.c \
+				 $(CORE_DIR)/sound_ym7128.c \
 				 $(CORE_DIR)/tandy_eeprom.c \
 				 $(CORE_DIR)/tandy_rom.c \
 				 $(CORE_DIR)/timer.c \

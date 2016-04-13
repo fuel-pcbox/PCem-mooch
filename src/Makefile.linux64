@@ -107,6 +107,7 @@ OBJ = 386.o \
 	sound_speaker.o \
 	sound_ssi2001.o \
 	sound_wss.o \
+	sound_ym7128.o
 	soundopenal.o \
 	tandy_eeprom.o \
 	tandy_rom.o \

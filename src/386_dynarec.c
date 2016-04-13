@@ -9,7 +9,6 @@
 #include "codegen.h"
 #include "cpu.h"
 #include "fdc.h"
-#include "pic.h"
 #include "timer.h"
 
 #include "386_common.h"
@@ -314,7 +313,7 @@ int rep386(int fv)
                 case 0xC3: case 0x1C3: case 0x2C3: case 0x3C3:
                 pc--;
                 break;
-                case 0x08: case 0x0f: case 0x10f: case 0x20f: case 0x30f: default:
+                case 0x08:
                 pc=ipc+1;
                 break;
                 case 0x26: case 0x126: case 0x226: case 0x326: /*ES:*/
@@ -1090,6 +1089,12 @@ int rep386(int fv)
                 if ((c>0) && (fv==tempz))  { pc=ipc; firstrepcycle=0; }
                 else firstrepcycle=1;
                 break;
+
+
+                default:
+                pc = ipc+1;
+                //pclog("Bad REP %02X %i\n", temp, rep32 >> 8);
+                break;
         }
         if (rep32&0x200) ECX=c;
         else             CX=c;
@@ -1287,7 +1292,7 @@ void exec386_dynarec(int cycs)
                 int valid_block = 0;
                 trap = 0;
 
-                if (block)
+                if (block && !abrt)
                 {
                         page_t *page = &pages[phys_addr >> 12];
 
@@ -1296,7 +1301,23 @@ void exec386_dynarec(int cycs)
                           also catch any page faults at this stage*/
                         valid_block = (block->pc == cs + pc) && (block->_cs == cs) &&
                                       (block->use32 == use32) && (block->phys == phys_addr) && (block->stack32 == stack32);
-
+                        if (!valid_block)
+                        {
+                                uint64_t mask = (uint64_t)1 << ((phys_addr >> PAGE_MASK_SHIFT) & PAGE_MASK_MASK);
+                                
+                                if (page->code_present_mask & mask)
+                                {
+                                        /*Walk page tree to see if we find the correct block*/
+                                        codeblock_t *new_block = codeblock_tree_find(phys_addr);                                        
+                                        if (new_block)
+                                        {
+                                                valid_block = (new_block->pc == cs + pc) && (new_block->_cs == cs) &&
+                                                                (new_block->use32 == use32) && (new_block->phys == phys_addr) && (new_block->stack32 == stack32);
+                                                if (valid_block)
+                                                        block = new_block;
+                                        }
+                                }
+                        }
                         if (valid_block && (block->page_mask & page->dirty_mask))
                         {
                                 codegen_check_flush(page, page->dirty_mask, phys_addr);
@@ -1332,6 +1353,7 @@ void exec386_dynarec(int cycs)
                 {
                         void (*code)() = (void *)&block->data[BLOCK_START];
 
+                        codeblock_hash[hash] = block;
 //                        if (output) pclog("Run block at %04x:%04x  %04x %04x %04x %04x  %04x %04x  ESP=%08x %04x  %08x %08x  %016llx %08x\n", CS, pc, AX, BX, CX, DX, SI, DI, ESP, BP, get_phys(cs+pc), block->phys, block->page_mask, block->endpc);
 
 inrecomp=1;

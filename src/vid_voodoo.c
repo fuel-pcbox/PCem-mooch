@@ -1,7 +1,5 @@
 #include <stdlib.h>
 #include <stddef.h>
-#include <math.h>
-
 #include "ibm.h"
 #include "device.h"
 #include "mem.h"
@@ -19,13 +17,6 @@
 #define CLAMP16(x) (((x) < 0) ? 0 : (((x) > 0xffff) ? 0xffff : (x)))
 
 #define LOD_MAX 8
-
-enum VOODOO_TYPE
-{
-	VOODOO1,
-	VOODOO2,
-	VOODOO2_SLI
-};
 
 static int tris = 0;
 
@@ -167,8 +158,6 @@ typedef struct voodoo_params_t
 
 typedef struct voodoo_t
 {
-		int voodoo_type;
-	
         mem_mapping_t mapping;
                 
         int pci_enable;
@@ -183,7 +172,7 @@ typedef struct voodoo_t
         
         voodoo_params_t params;
         
-        uint32_t fbiInit0, fbiInit1, fbiInit2, fbiInit3, fbiInit4, fbiInit5, fbiInit6, fbiInit7;
+        uint32_t fbiInit0, fbiInit1, fbiInit2, fbiInit3, fbiInit4;
         
         uint8_t initEnable;
         
@@ -450,10 +439,6 @@ enum
         SST_vSync = 0x224,
         SST_clutData = 0x228,
         SST_dacData = 0x22c,
-	
-	SST_fbiInit5 = 0x244,
-	SST_fbiInit6 = 0x248,
-	SST_fbiInit7 = 0x24c,
 
         SST_textureMode = 0x300,
         SST_tLOD = 0x304,
@@ -609,7 +594,9 @@ enum
         FBZ_DRAW_FRONT = 0x0000,
         FBZ_DRAW_BACK  = 0x4000,
         FBZ_DRAW_MASK  = 0xc000,
-        
+
+        FBZ_DEPTH_BIAS = (1 << 16),
+                
         FBZ_PARAM_ADJUST = (1 << 26)
 };
 
@@ -1835,7 +1822,7 @@ static void voodoo_half_triangle(voodoo_t *voodoo, voodoo_params_t *params, vood
                         x2 = (state->vertexBx << 12) + ((state->dxBC * (real_y - state->vertexBy)) >> 4);
 
                 if (params->fbzMode & (1 << 17))
-                        real_y = voodoo->v_disp - (real_y >> 4);
+                        real_y = (voodoo->v_disp-1) - (real_y >> 4);
                 else
                         real_y >>= 4;
 
@@ -1976,6 +1963,9 @@ static void voodoo_half_triangle(voodoo_t *voodoo, voodoo_params_t *params, vood
                                         new_depth = w_depth;
                                 else
                                         new_depth = CLAMP16(state->z >> 12);
+                                
+                                if (params->fbzMode & FBZ_DEPTH_BIAS)
+                                        new_depth = (new_depth + params->zaColor) & 0xffff;
                                 
                                 if (params->fbzMode & FBZ_DEPTH_ENABLE)
                                 {
@@ -3725,15 +3715,6 @@ static uint32_t voodoo_readl(uint32_t addr, void *p)
                 temp = voodoo->fbiPixelsOut & 0xffffff;
                 break;
 
-		case SST_fbiInit5:
-		if(voodoo->voodoo_type == VOODOO2) temp = voodoo->fbiInit5;
-		break;
-		case SST_fbiInit6:
-		if(voodoo->voodoo_type == VOODOO2) temp = voodoo->fbiInit6;
-		break;
-		case SST_fbiInit7:
-		if(voodoo->voodoo_type == VOODOO2) temp = voodoo->fbiInit7;
-		break;
                 case SST_fbiInit4:
                 temp = voodoo->fbiInit4;
                 break;
@@ -3890,21 +3871,6 @@ static void voodoo_writel(uint32_t addr, uint32_t val, void *p)
                 if (voodoo->initEnable & 0x01)
                         voodoo->fbiInit3 = val;
                 break;
-		
-		case SST_fbiInit5:
-                if (voodoo->initEnable & 0x01)
-                        voodoo->fbiInit5 = val;
-                break;
-		
-		case SST_fbiInit6:
-                if (voodoo->initEnable & 0x01)
-                        voodoo->fbiInit6 = val;
-                break;
-		
-		case SST_fbiInit7:
-                if (voodoo->initEnable & 0x01)
-                        voodoo->fbiInit7 = val;
-                break;
 
                 case SST_hSync:
                 voodoo->hSync = val;
@@ -4045,9 +4011,7 @@ uint8_t voodoo_pci_read(int func, int addr, void *p)
                 case 0x00: return 0x1a; /*3dfx*/
                 case 0x01: return 0x12;
                 
-                case 0x02:
-				if(voodoo->voodoo_type == VOODOO1) return 0x01; /*SST-1 (Voodoo Graphics)*/
-				else if(voodoo->voodoo_type == VOODOO2) return 0x02; /*Voodoo 2*/
+                case 0x02: return 0x01; /*SST-1 (Voodoo Graphics)*/
                 case 0x03: return 0x00;
                 
                 case 0x04: return voodoo->pci_enable ? 0x02 : 0x00; /*Respond to memory accesses*/
@@ -4357,8 +4321,6 @@ void *voodoo_init()
         voodoo_t *voodoo = malloc(sizeof(voodoo_t));
         memset(voodoo, 0, sizeof(voodoo_t));
 
-		voodoo->voodoo_type = device_get_config_int("voodoo_type");
-		
         voodoo->bilinear_enabled = device_get_config_int("bilinear");
         voodoo->scrfilter = device_get_config_int("dacfilter");
         voodoo->texture_size = device_get_config_int("texture_memory");
@@ -4482,26 +4444,6 @@ void voodoo_close(void *p)
 
 static device_config_t voodoo_config[] =
 {
-		{
-				.name = "voodoo_type",
-				.description = "Type of Voodoo",
-				.type = CONFIG_SELECTION,
-				.selection =
-				{
-						{
-								.description = "Voodoo 1",
-								.value = VOODOO1
-						},
-						{
-								.description = "Voodoo 2 (Experimental)",
-								.value = VOODOO2
-						},
-						{
-								.description = ""
-						},
-				},
-				.default_int = VOODOO1
-		},
         {
                 .name = "framebuffer_memory",
                 .description = "Framebuffer memory size",

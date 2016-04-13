@@ -3,6 +3,7 @@
 #include <linux/cdrom.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <stdlib.h>
 #include "ibm.h"
 #include "ide.h"
 #include "cdrom-ioctl.h"
@@ -30,7 +31,6 @@ enum
 
 static int ioctl_cd_state = CD_STOPPED;
 static uint32_t ioctl_cd_pos = 0, ioctl_cd_end = 0;
-
 #define BUF_SIZE 32768
 static int16_t cd_buffer[BUF_SIZE];
 static int cd_buflen = 0;
@@ -57,7 +57,7 @@ void ioctl_audio_callback(int16_t *output, int len)
         {
                 if (ioctl_cd_pos < ioctl_cd_end)
                 {
-			read_audio.addr.lba = ioctl_cd_pos;
+			read_audio.addr.lba = ioctl_cd_pos - 150;
 			read_audio.addr_format = CDROM_LBA;
 			read_audio.nframes = 1;
 			read_audio.buf = (__u8 *)&cd_buffer[cd_buflen];
@@ -163,6 +163,8 @@ static void ioctl_playaudio(uint32_t pos, uint32_t len, int ismsf)
         ioctl_cd_pos   = pos;// + 150;
         ioctl_cd_end   = pos+len;// + 150;
         ioctl_cd_state = CD_PLAYING;
+	if (ioctl_cd_pos < 150)
+		ioctl_cd_pos = 150;
 //        pclog("Audio start %08X %08X %i %i %i\n", ioctl_cd_pos, ioctl_cd_end, ioctl_cd_state, 0, len);
 }
 
@@ -190,7 +192,7 @@ static void ioctl_seek(uint32_t pos)
         ioctl_cd_state = CD_STOPPED;
 }
 
-static int read_toc(int fd, cdrom_tocentry btoc)
+static int read_toc(int fd, struct cdrom_tocentry *btoc)
 {
 	struct cdrom_tochdr toc_hdr;
 	int track, err;
@@ -207,7 +209,7 @@ static int read_toc(int fd, cdrom_tocentry btoc)
 //pclog("read_toc: first_track=%i last_track=%i\n", first_track, last_track);
 	memset(btoc, 0, sizeof(btoc));
 
-	for (track = btoc_hdr.cdth_trk0; track <= btoc_hdr.cdth_trk1; track++)
+	for (track = toc_hdr.cdth_trk0; track <= toc_hdr.cdth_trk1; track++)
 	{
 		btoc[track].cdte_track = track;
 		btoc[track].cdte_format = CDROM_MSF;
@@ -268,13 +270,10 @@ static int ioctl_ready(void)
 
 static int ioctl_get_last_block(unsigned char starttrack, int msf, int maxlen, int single)
 {
-        int len=4;
-        long size;
-        int c,d;
-        uint32_t temp;
-		int lb = 0;
-		int tv = 0;
-		cdrom_tocentry lbtoc[100];
+        int c;
+	int lb = 0;
+	int tv = 0;
+	struct cdrom_tocentry lbtoc[100];
 	int fd = open("/dev/cdrom", O_RDONLY|O_NONBLOCK);
 
 	if (fd <= 0)
@@ -290,7 +289,7 @@ static int ioctl_get_last_block(unsigned char starttrack, int msf, int maxlen, i
 		return 0;
 
         last_block = 0;
-        for (c = d; c <= last_track; c++)
+        for (c = 0; c <= last_track; c++)
         {
                 uint32_t address;
                 address = MSFtoLBA(toc[c].cdte_addr.msf.minute, toc[c].cdte_addr.msf.second, toc[c].cdte_addr.msf.frame);
@@ -430,45 +429,42 @@ static void ioctl_readsector(uint8_t *b, int sector)
 
 union
 {
-	struct cdrom_msf* msf;
+	struct cdrom_msf *msf;
 	char b[CD_FRAMESIZE_RAW];
 } raw_read_params;
 
 static int lba_to_msf(int lba)
 {
-        lba += 150;
         return (((lba / 75) / 60) << 16) + (((lba / 75) % 60) << 8) + (lba % 75);
 }
 
 static void ioctl_readsector_raw(uint8_t *b, int sector)
 {
-	int i = 0;
+	int err;
 	int imsf = lba_to_msf(sector);
 	int cdrom = open("/dev/cdrom", O_RDONLY|O_NONBLOCK);
+
         if (cdrom <= 0)
 		return;
 
 	raw_read_params.msf = malloc(sizeof(struct cdrom_msf));
 	raw_read_params.msf->cdmsf_frame0 = imsf & 0xff;
-	imsf >>= 8;
-	raw_read_params.msf->cdmsf_sec0 = imsf & 0xff;	
-	imsf >>= 8;
-	raw_read_params.msf->cdmsf_min0 = imsf & 0xff;	
+	raw_read_params.msf->cdmsf_sec0 = (imsf >> 8) & 0xff;
+	raw_read_params.msf->cdmsf_min0 = (imsf >> 16) & 0xff;
 
 	/* This will read the actual raw sectors from the disc. */
 	err = ioctl(cdrom, CDROMREADRAW, (void *) &raw_read_params);
 	if (err == -1)
 	{
 		pclog("read_toc: CDROMREADTOCHDR failed\n");
-		return 0;
-	}
-	
-	for (i = 0; i < 2352; i++)
-	{
-		b[i] = raw_read_params.b[i];
+		return;
 	}
 
+	memcpy(b, raw_read_params.b, 2352);
+
 	close(cdrom);
+
+	free(raw_read_params.msf);
 }
 
 static int ioctl_readtoc(unsigned char *b, unsigned char starttrack, int msf, int maxlen, int single)
@@ -656,7 +652,7 @@ static int ioctl_readtoc_raw(unsigned char *b, int maxlen)
 
 static uint32_t ioctl_size()
 {
-        return cdrom_capacity;
+	return cdrom_capacity;
 }
 
 static int ioctl_status()

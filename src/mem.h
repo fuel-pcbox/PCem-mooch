@@ -1,3 +1,6 @@
+#ifndef _MEM_H_
+#define _MEM_H_
+
 typedef struct mem_mapping_t
 {
         struct mem_mapping_t *prev, *next;
@@ -111,6 +114,9 @@ typedef struct page_t
         
         struct codeblock_t *block, *block_2;
         
+        /*Head of codeblock tree associated with this page*/
+        struct codeblock_t *head;
+        
         uint64_t code_present_mask, dirty_mask;
 } page_t;
 
@@ -153,3 +159,5 @@ void writememwl(uint32_t seg, uint32_t addr, uint16_t val);
 void mmu_invalidate(uint32_t addr);
 
 extern mem_mapping_t ram_low_mapping;
+
+#endif
