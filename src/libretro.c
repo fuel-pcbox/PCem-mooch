@@ -1045,7 +1045,7 @@ bool retro_load_game(const struct retro_game_info *info)
    check_variables(true);
 
    midi_init();
-   initpc(0, NULL);s
+   initpc(0, NULL);
 
 	resetpchard();
 
