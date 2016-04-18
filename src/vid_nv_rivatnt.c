@@ -153,6 +153,7 @@ const char* rivatnt_pfifo_interrupts[32] =
 };
 
 static uint8_t rivatnt_pci_read(int func, int addr, void *p);
+static void rivatnt_pci_write(int func, int addr, uint8_t val, void *p);
 
 static uint8_t rivatnt_in(uint16_t addr, void *p);
 static void rivatnt_out(uint16_t addr, uint8_t val, void *p);
@@ -253,6 +254,12 @@ static void rivatnt_pbus_write(uint32_t addr, uint32_t val, void *p)
   break;
   case 0x001140:
   rivatnt->pbus.intr_en = val;
+  break;
+  case 0x001800 ... 0x0018ff:
+  rivatnt_pci_write(0, (addr & 0xfc) + 0, (val >> 0) & 0xff);
+  rivatnt_pci_write(0, (addr & 0xfc) + 1, (val >> 8) & 0xff);
+  rivatnt_pci_write(0, (addr & 0xfc) + 2, (val >> 16) & 0xff);
+  rivatnt_pci_write(0, (addr & 0xfc) + 3, (val >> 24) & 0xff);
   break;
   }
 }
