@@ -307,9 +307,12 @@ static uint8_t rivatnt_pfifo_read(uint32_t addr, void *p)
   case 0x00250e: ret = (rivatnt->pfifo.chan_size >> 16) & 0xff; break;
   case 0x00250f: ret = (rivatnt->pfifo.chan_size >> 24) & 0xff; break;
   //HACK
+  case 0x002400: ret = 0x10; break;
+  case 0x002401: ret = 0x00; break;
   case 0x003204: ret = rivatnt->pfifo.caches[1].chanid; break;
   case 0x003214: ret = 0x10; break;
-  case 0x003215: ret = 0x01; break;
+  case 0x003215: ret = 0x00; break;
+  case 0x003220: ret = 0x01; break;
   }
 
   return ret;
