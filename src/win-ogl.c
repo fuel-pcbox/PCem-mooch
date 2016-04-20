@@ -239,6 +239,8 @@ void ogl_blit_memtoscreen(int x, int y, int y1, int y2, int w, int h)
    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
    glDisableVertexAttribArray(0);
    glDisableVertexAttribArray(1);
+   
+   SwapBuffers(ogl_hdc);
 }
 
 void ogl_blit_memtoscreen_8(int x, int y, int w, int h)
@@ -276,4 +278,6 @@ void ogl_blit_memtoscreen_8(int x, int y, int w, int h)
    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
    glDisableVertexAttribArray(0);
    glDisableVertexAttribArray(1);
+   
+   SwapBuffers(ogl_hdc);
 }
