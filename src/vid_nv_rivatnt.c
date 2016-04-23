@@ -153,6 +153,7 @@ const char* rivatnt_pfifo_interrupts[32] =
 };
 
 static uint8_t rivatnt_pci_read(int func, int addr, void *p);
+static void rivatnt_pci_write(int func, int addr, uint8_t val, void *p);
 
 static uint8_t rivatnt_in(uint16_t addr, void *p);
 static void rivatnt_out(uint16_t addr, uint8_t val, void *p);
@@ -254,6 +255,12 @@ static void rivatnt_pbus_write(uint32_t addr, uint32_t val, void *p)
   case 0x001140:
   rivatnt->pbus.intr_en = val;
   break;
+  case 0x001800 ... 0x0018ff:
+  rivatnt_pci_write(0, (addr & 0xfc) + 0, (val >> 0) & 0xff, rivatnt);
+  rivatnt_pci_write(0, (addr & 0xfc) + 1, (val >> 8) & 0xff, rivatnt);
+  rivatnt_pci_write(0, (addr & 0xfc) + 2, (val >> 16) & 0xff, rivatnt);
+  rivatnt_pci_write(0, (addr & 0xfc) + 3, (val >> 24) & 0xff, rivatnt);
+  break;
   }
 }
 
@@ -300,9 +307,12 @@ static uint8_t rivatnt_pfifo_read(uint32_t addr, void *p)
   case 0x00250e: ret = (rivatnt->pfifo.chan_size >> 16) & 0xff; break;
   case 0x00250f: ret = (rivatnt->pfifo.chan_size >> 24) & 0xff; break;
   //HACK
+  case 0x002400: ret = 0x10; break;
+  case 0x002401: ret = 0x00; break;
   case 0x003204: ret = rivatnt->pfifo.caches[1].chanid; break;
   case 0x003214: ret = 0x10; break;
-  case 0x003215: ret = 0x01; break;
+  case 0x003215: ret = 0x00; break;
+  case 0x003220: ret = 0x01; break;
   }
 
   return ret;
