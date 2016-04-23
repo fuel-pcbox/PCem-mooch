@@ -591,9 +591,9 @@ enum
         FBZ_DEPTH_WMASK = (1 << 10),
         FBZ_DITHER_2x2  = (1 << 11),
         
-        FBZ_DRAW_FRONT = 0x0000,
-        FBZ_DRAW_BACK  = 0x4000,
-        FBZ_DRAW_MASK  = 0xc000,
+        FBZ_DRAW_FRONT = (0 << 14),
+        FBZ_DRAW_BACK  = (1 << 14),
+        FBZ_DRAW_MASK  = (3 << 14),
 
         FBZ_DEPTH_BIAS = (1 << 16),
                 
