@@ -37,7 +37,9 @@
 #include "win-ddraw-fs.h"
 #include "win-d3d.h"
 #include "win-d3d-fs.h"
+#ifndef __MINGW64__
 #include "win-ogl.h"
+#endif
 
 #ifndef MAPVK_VK_TO_VSC
 #define MAPVK_VK_TO_VSC 0
@@ -60,12 +62,20 @@ static struct
         {
                 ddraw_init, ddraw_close, NULL,
                 d3d_init, d3d_close, d3d_resize,
+#ifndef __MINGW64__
 		ogl_init, ogl_close, ogl_resize,
+#else
+		NULL, NULL, NULL,
+#endif
         },
         {
                 ddraw_fs_init, ddraw_fs_close, NULL,
                 d3d_fs_init, d3d_fs_close, NULL,
-		ogl_init, ogl_close, ogl_resize
+#ifndef __MINGW64__
+		ogl_init, ogl_close, ogl_resize,
+#else
+		NULL, NULL, NULL,
+#endif
         },
 };
 
