@@ -582,6 +582,7 @@ enum
 
 enum
 {
+        FBZ_CLIP_ENABLE = (1 << 0),
         FBZ_CHROMAKEY = (1 << 1),
         FBZ_W_BUFFER = (1 << 3),
         FBZ_DEPTH_ENABLE = (1 << 4),
@@ -1763,7 +1764,7 @@ static void voodoo_half_triangle(voodoo_t *voodoo, voodoo_params_t *params, vood
         state->tex_h_mask = params->tex_h_mask;
         state->tex_shift = params->tex_shift;
 
-        if ((params->fbzMode & 1) && (ystart < params->clipLowY))
+        if ((params->fbzMode & FBZ_CLIP_ENABLE) && (ystart < params->clipLowY))
         {
                 int dy = params->clipLowY - ystart;
 
@@ -1782,7 +1783,7 @@ static void voodoo_half_triangle(voodoo_t *voodoo, voodoo_params_t *params, vood
                 ystart = params->clipLowY;
         }
 
-        if ((params->fbzMode & 1) && (yend > params->clipHighY))
+        if ((params->fbzMode & FBZ_CLIP_ENABLE) && (yend > params->clipHighY))
                 yend = params->clipHighY;
 
         state->y = ystart;
@@ -1856,7 +1857,7 @@ static void voodoo_half_triangle(voodoo_t *voodoo, voodoo_params_t *params, vood
                 if (voodoo_output)
                         pclog("%08llx %lli %lli\n", state->tmu0_t, state->tmu0_t >> (18+state->lod), (state->tmu0_t + (1 << 17+state->lod)) >> (18+state->lod));
 
-                if (params->fbzMode & 1)
+                if (params->fbzMode & FBZ_CLIP_ENABLE)
                 {
                         if (state->xdir > 0)
                         {
