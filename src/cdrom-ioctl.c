@@ -1,6 +1,7 @@
 /*Win32 CD-ROM support via IOCTL*/
 
 #include <windows.h>
+#include <stdint.h>
 #include <io.h>
 #include "ntddcdrm.h"
 #include "ibm.h"
