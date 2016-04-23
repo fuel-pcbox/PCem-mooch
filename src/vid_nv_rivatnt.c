@@ -256,10 +256,10 @@ static void rivatnt_pbus_write(uint32_t addr, uint32_t val, void *p)
   rivatnt->pbus.intr_en = val;
   break;
   case 0x001800 ... 0x0018ff:
-  rivatnt_pci_write(0, (addr & 0xfc) + 0, (val >> 0) & 0xff);
-  rivatnt_pci_write(0, (addr & 0xfc) + 1, (val >> 8) & 0xff);
-  rivatnt_pci_write(0, (addr & 0xfc) + 2, (val >> 16) & 0xff);
-  rivatnt_pci_write(0, (addr & 0xfc) + 3, (val >> 24) & 0xff);
+  rivatnt_pci_write(0, (addr & 0xfc) + 0, (val >> 0) & 0xff, rivatnt);
+  rivatnt_pci_write(0, (addr & 0xfc) + 1, (val >> 8) & 0xff, rivatnt);
+  rivatnt_pci_write(0, (addr & 0xfc) + 2, (val >> 16) & 0xff, rivatnt);
+  rivatnt_pci_write(0, (addr & 0xfc) + 3, (val >> 24) & 0xff, rivatnt);
   break;
   }
 }
