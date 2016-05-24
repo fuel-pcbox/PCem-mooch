@@ -1,0 +1,184 @@
+INCFLAGS += -I$(CORE_DIR)
+
+SOURCES_CXX := $(CORE_DIR)/dosbox/dbopl.cc \
+					$(CORE_DIR)/sound_dbopl.cc \
+					$(CORE_DIR)/sound_resid.cc \
+					$(CORE_DIR)/resid-fp/convolve.cc \
+					$(CORE_DIR)/resid-fp/envelope.cc \
+					$(CORE_DIR)/resid-fp/extfilt.cc \
+					$(CORE_DIR)/resid-fp/filter.cc \
+					$(CORE_DIR)/resid-fp/pot.cc \
+					$(CORE_DIR)/resid-fp/sid.cc \
+					$(CORE_DIR)/resid-fp/voice.cc \
+					$(CORE_DIR)/resid-fp/wave6581__ST.cc \
+					$(CORE_DIR)/resid-fp/wave6581_P_T.cc \
+					$(CORE_DIR)/resid-fp/wave6581_PS_.cc \
+					$(CORE_DIR)/resid-fp/wave6581_PST.cc \
+					$(CORE_DIR)/resid-fp/wave8580__ST.cc \
+					$(CORE_DIR)/resid-fp/wave8580_PS_.cc \
+					$(CORE_DIR)/resid-fp/wave8580_PST.cc \
+					$(CORE_DIR)/resid-fp/wave8580_P_T.cc \
+					$(CORE_DIR)/resid-fp/wave.cc
+
+SOURCES_C := $(CORE_DIR)/libretro.c \
+				 $(CORE_DIR)/386.c \
+				 $(CORE_DIR)/386_dynarec.c \
+				 $(CORE_DIR)/386_dynarec_ops.c \
+				 $(CORE_DIR)/808x.c \
+				 $(CORE_DIR)/acer386sx.c \
+				 $(CORE_DIR)/acerm3a.c \
+				 $(CORE_DIR)/ali1429.c \
+				 $(CORE_DIR)/amstrad.c \
+				 $(CORE_DIR)/cdrom-ioctl-linux.c \
+				 $(CORE_DIR)/cdrom-iso.c \
+				 $(CORE_DIR)/cdrom-null.c \
+			    $(CORE_DIR)/codegen.c \
+				 $(CORE_DIR)/codegen_ops.c \
+				 $(CORE_DIR)/codegen_timing_486.c \
+				 $(CORE_DIR)/codegen_timing_686.c
+				 $(CORE_DIR)/codegen_timing_pentium.c \
+				 $(CORE_DIR)/cpdegem_timing_winchip.c \ 
+				 $(CORE_DIR)/compaq.c \
+				 $(CORE_DIR)/config.c \
+				 $(CORE_DIR)/cpu.c \
+				 $(CORE_DIR)/dac.c \
+				 $(CORE_DIR)/device.c \
+				 $(CORE_DIR)/disc.c \
+				 $(CORE_DIR)/disc_fdi.c \
+				 $(CORE_DIR)/disc_img.c \
+				 $(CORE_DIR)/disc_sector.c \
+				 $(CORE_DIR)/dma.c \
+				 $(CORE_DIR)/fdc.c \
+				 $(CORE_DIR)/fdc37c665.c \
+				 $(CORE_DIR)/fdc37c932fr.c \
+				 $(CORE_DIR)/fdd.c \
+				 $(CORE_DIR)/fdi2raw.c \
+				 $(CORE_DIR)/gameport.c \
+				 $(CORE_DIR)/headland.c \
+				 $(CORE_DIR)/i430hx.c \
+				 $(CORE_DIR)/i430lx.c \
+				 $(CORE_DIR)/i430fx.c \
+				 $(CORE_DIR)/i430nx.c \
+				 $(CORE_DIR)/i430vx.c \
+				 $(CORE_DIR)/i440fx.c \
+				 $(CORE_DIR)/ide.c \
+				 $(CORE_DIR)/intel.c \
+				 $(CORE_DIR)/intel_flash.c \
+				 $(CORE_DIR)/io.c \
+				 $(CORE_DIR)/jim.c \
+				 $(CORE_DIR)/keyboard.c \
+				 $(CORE_DIR)/keyboard_amstrad.c \
+				 $(CORE_DIR)/keyboard_at.c \
+				 $(CORE_DIR)/keyboard_olim24.c \
+				 $(CORE_DIR)/keyboard_pcjr.c \
+				 $(CORE_DIR)/keyboard_xt.c \
+				 $(CORE_DIR)/linux-time.c \
+				 $(CORE_DIR)/lpt.c \
+				 $(CORE_DIR)/mcr.c \
+				 $(CORE_DIR)/mem.c \
+				 $(CORE_DIR)/memregs.c \
+				 $(CORE_DIR)/model.c \
+				 $(CORE_DIR)/mouse.c \
+				 $(CORE_DIR)/mouse_ps2.c \
+				 $(CORE_DIR)/mouse_serial.c \
+				 $(CORE_DIR)/neat.c \
+				 $(CORE_DIR)/nmi.c \
+				 $(CORE_DIR)/nvr.c \
+				 $(CORE_DIR)/olivetti_m24.c \
+				 $(CORE_DIR)/opti.c \
+				 $(CORE_DIR)/pc.c \
+				 $(CORE_DIR)/pc87306.c \
+				 $(CORE_DIR)/pci.c \
+				 $(CORE_DIR)/pic.c \
+				 $(CORE_DIR)/piix.c \
+				 $(CORE_DIR)/pit.c \
+				 $(CORE_DIR)/ppi.c \
+				 $(CORE_DIR)/ps1.c \
+				 $(CORE_DIR)/rom.c \
+				 $(CORE_DIR)/scat.c \
+				 $(CORE_DIR)/serial.c \
+				 $(CORE_DIR)/sis496.c \
+				 $(CORE_DIR)/sis50x.c \
+				 $(CORE_DIR)/sis85c471.c \
+				 $(CORE_DIR)/sio.c \
+				 $(CORE_DIR)/sound.c \
+				 $(CORE_DIR)/sound_ad1848.c \
+				 $(CORE_DIR)/sound_adlib.c \
+				 $(CORE_DIR)/sound_adlibgold.c \
+				 $(CORE_DIR)/sound_cms.c \
+				 $(CORE_DIR)/sound_emu8k.c \
+				 $(CORE_DIR)/sound_gus.c \
+				 $(CORE_DIR)/sound_mpu401_uart.c \
+				 $(CORE_DIR)/sound_opl.c \
+				 $(CORE_DIR)/sound_pas16.c \
+				 $(CORE_DIR)/sound_ps1.c \
+				 $(CORE_DIR)/sound_pssj.c \
+				 $(CORE_DIR)/sound_sb.c \
+				 $(CORE_DIR)/sound_sb_dsp.c \
+				 $(CORE_DIR)/sound_sn76489.c \
+				 $(CORE_DIR)/sound_speaker.c \
+				 $(CORE_DIR)/sound_ssi2001.c \
+				 $(CORE_DIR)/sound_wss.c \
+				 $(CORE_DIR)/sound_ym7128.c \
+				 $(CORE_DIR)/tandy_eeprom.c \
+				 $(CORE_DIR)/tandy_rom.c \
+				 $(CORE_DIR)/timer.c \
+				 $(CORE_DIR)/um8669f.c \
+				 $(CORE_DIR)/vid_ati_eeprom.c \
+				 $(CORE_DIR)/vid_ati_mach64.c \
+				 $(CORE_DIR)/vid_ati18800.c \
+				 $(CORE_DIR)/vid_ati28800.c \
+				 $(CORE_DIR)/vid_ati68860_ramdac.c \
+				 $(CORE_DIR)/vid_cga.c \
+				 $(CORE_DIR)/vid_cga_comp.c \
+				 $(CORE_DIR)/vid_cl5429.c \
+				 $(CORE_DIR)/vid_ega.c \
+				 $(CORE_DIR)/vid_et4000.c \
+				 $(CORE_DIR)/vid_et4000w32.c \
+				 $(CORE_DIR)/vid_hercules.c \
+				 $(CORE_DIR)/vid_icd2061.c \
+				 $(CORE_DIR)/vid_ics2595.c \
+				 $(CORE_DIR)/vid_incolor.c \
+				 $(CORE_DIR)/vid_mda.c \
+				 $(CORE_DIR)/vid_nv_riva128.c \
+				 $(CORE_DIR)/vid_nv_rivatnt.c \
+				 $(CORE_DIR)/vid_olivetti_m24.c \
+				 $(CORE_DIR)/vid_oti067.c \
+				 $(CORE_DIR)/vid_paradise.c \
+				 $(CORE_DIR)/vid_pc1512.c \
+				 $(CORE_DIR)/vid_pc1640.c \
+				 $(CORE_DIR)/vid_pc200.c \
+				 $(CORE_DIR)/vid_pcjr.c \
+				 $(CORE_DIR)/vid_s3.c \
+				 $(CORE_DIR)/vid_s3_virge.c \
+				 $(CORE_DIR)/vid_sdac_ramdac.c \
+				 $(CORE_DIR)/vid_stg_ramdac.c \
+				 $(CORE_DIR)/vid_svga.c \
+				 $(CORE_DIR)/vid_svga_render.c \
+				 $(CORE_DIR)/vid_tandy.c \
+				 $(CORE_DIR)/vid_tandysl.c \
+				 $(CORE_DIR)/vid_tgui9440.c \
+				 $(CORE_DIR)/vid_tkd8001_ramdac.c \
+				 $(CORE_DIR)/vid_tvga.c \
+				 $(CORE_DIR)/vid_unk_ramdac.c \
+				 $(CORE_DIR)/vid_vga.c \
+				 $(CORE_DIR)/vid_voodoo.c \
+				 $(CORE_DIR)/video.c \
+				 $(CORE_DIR)/w83877f.c \
+				 $(CORE_DIR)/wd76c10.c \
+				 $(CORE_DIR)/x86seg.c \
+				 $(CORE_DIR)/x87.c \
+				 $(CORE_DIR)/xtide.c 
+
+SOURCES_C += $(CORE_DIR)/thread-pthread.c
+
+
+ifeq ($(WITH_DYNAREC), arm)
+	#COMMONFLAGS += -DC_DYNREC -DC_TARGETCPU="ARMV7LE"
+else ifeq ($(WITH_DYNAREC), x86_64)
+	SOURCES_C += $(CORE_DIR)/codegen_x86-64.c
+	#COMMONFLAGS += -DC_DYNREC -DC_TARGETCPU="X86_64" -DC_HAVE_MPROTECT
+else ifeq ($(WITH_DYNAREC), x86)
+	SOURCES_C += $(CORE_DIR)/codegen_x86.c
+	#COMMONFLAGS += -DC_DYNREC -DC_TARGETCPU="X86"
+endif
